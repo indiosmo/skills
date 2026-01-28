@@ -1,5 +1,5 @@
 ---
-name: excalidraw
+name: authoring-excalidraw-files
 description: Generate architecture diagrams as .excalidraw files. Use when the user asks to create architecture diagrams, system diagrams, visualize codebase structure, infrastructure diagrams, or generate excalidraw files.
 ---
 

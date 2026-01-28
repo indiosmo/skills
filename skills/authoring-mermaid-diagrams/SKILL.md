@@ -1,5 +1,5 @@
 ---
-name: mermaid
+name: authoring-mermaid-diagrams
 description: Create, validate, and optimize Mermaid diagrams for software documentation. Use when Claude needs to: (1) Create flowcharts, sequence diagrams, state diagrams, class diagrams, ER diagrams, or architecture diagrams, (2) Validate Mermaid syntax, (3) Review and improve diagram aesthetics, (4) Fix broken Mermaid code, or (5) Choose the right diagram type for a use case.
 ---
 

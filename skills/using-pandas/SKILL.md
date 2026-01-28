@@ -1,5 +1,5 @@
 ---
-name: pandas-best-practices
+name: using-pandas
 description: "Idiomatic pandas usage patterns and performance best practices. Use when writing or reviewing pandas code to ensure: (1) Modern API usage (loc/iloc, method chaining, pipe), (2) Performance optimization (vectorization, dtypes, avoiding apply), (3) Proper data reshaping (tidy data, melt/pivot), (4) Correct handling of Copy-on-Write, categoricals, time series, (5) Avoiding common gotchas and antipatterns."
 ---
 
