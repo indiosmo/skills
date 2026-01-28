@@ -179,7 +179,7 @@ For Skills with multiple domains, organize content by domain to avoid loading ir
 ```
 bigquery-skill/
 ├── SKILL.md (overview and navigation)
-└── reference/
+└── references/
     ├── finance.md (revenue, billing metrics)
     ├── sales.md (opportunities, pipeline)
     ├── product.md (API usage, features)
