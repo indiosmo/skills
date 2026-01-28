@@ -7,10 +7,6 @@ description: "Search library/API documentation using Context7 and Ref MCP tools.
 
 Search and retrieve documentation for libraries, APIs, and frameworks using Context7 and Ref MCP tools.
 
-## Core Rule
-
-ALWAYS spawn a dedicated agent (Task tool with subagent_type=Explore) when searching documentation. This isolates the exploration from the main conversation context.
-
 ## Tool Selection
 
 | Scenario | Tool | Reason |
