@@ -274,14 +274,16 @@ def main():
     if len(sys.argv) < 4 or sys.argv[2] != '--path':
         print("Usage: init_skill.py <skill-name> --path <path>")
         print("\nSkill name requirements:")
-        print("  - Hyphen-case identifier (e.g., 'data-analyzer')")
+        print("  - Hyphen-case identifier (e.g., 'processing-pdfs')")
         print("  - Lowercase letters, digits, and hyphens only")
-        print("  - Max 40 characters")
+        print("  - Max 64 characters")
         print("  - Must match directory name exactly")
+        print("  - Prefer gerund form (verb + -ing) for action skills")
+        print("    e.g., 'processing-pdfs', 'creating-documents'")
         print("\nExamples:")
-        print("  init_skill.py my-new-skill --path skills/public")
-        print("  init_skill.py my-api-helper --path skills/private")
-        print("  init_skill.py custom-skill --path /custom/location")
+        print("  init_skill.py processing-pdfs --path skills/public")
+        print("  init_skill.py creating-reports --path skills/private")
+        print("  init_skill.py brand-guidelines --path /custom/location")
         sys.exit(1)
 
     skill_name = sys.argv[1]

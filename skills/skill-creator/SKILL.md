@@ -1,7 +1,6 @@
 ---
 name: skill-creator
 description: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Claude's capabilities with specialized knowledge, workflows, or tool integrations.
-license: Complete terms in LICENSE.txt
 ---
 
 # Skill Creator
@@ -67,6 +66,35 @@ Every SKILL.md consists of:
 
 - **Frontmatter** (YAML): Contains `name` and `description` fields. These are the only fields that Claude reads to determine when the skill gets used, thus it is very important to be clear and comprehensive in describing what the skill is, and when it should be used.
 - **Body** (Markdown): Instructions and guidance for using the skill. Only loaded AFTER the skill triggers (if at all).
+
+##### Naming Convention
+
+Use gerund form (verb + -ing) for skill names when describing an action-oriented skill:
+- `processing-pdfs` instead of `pdf-processor`
+- `creating-documents` instead of `document-creator`
+- `analyzing-data` instead of `data-analyzer`
+
+This makes the skill name describe the activity it helps with. Non-action skills (like `brand-guidelines`) don't need this pattern.
+
+##### Frontmatter Details
+
+**Standard fields** (required):
+- `name`: Skill identifier in hyphen-case (max 64 characters)
+- `description`: What the skill does AND when to use it (max 1024 characters, no angle brackets)
+
+**Claude Code extensions** (optional):
+- `allowed-tools`: Restrict which tools the skill can use
+- `argument-hint`: Hint shown to user for required arguments
+- `user-invocable`: Whether user can invoke directly (default: true)
+- `model`: Specify model (e.g., `haiku` for lightweight tasks)
+- `context`: Set to `fork` to run in a subagent
+- `agent`: Run skill as a background agent
+
+**Description writing guidelines:**
+- Always write in third person (not "I can help you" or "Use this to...")
+- Include both what the skill does AND when to use it
+- Keep under 1024 characters
+- Example: "Comprehensive PDF manipulation toolkit for extracting text, merging documents, and handling forms. Use when Claude needs to programmatically process PDF documents."
 
 #### Bundled Resources (optional)
 
@@ -199,6 +227,27 @@ Claude reads REDLINING.md or OOXML.md only when the user needs those features.
 - **Avoid deeply nested references** - Keep references one level deep from SKILL.md. All reference files should link directly from SKILL.md.
 - **Structure longer reference files** - For files longer than 100 lines, include a table of contents at the top so Claude can see the full scope when previewing.
 
+## Claude Code Specific Features
+
+When creating skills for Claude Code, these additional features are available:
+
+### String Substitutions
+
+Skills can use placeholders for dynamic content:
+- `$ARGUMENTS` - All arguments passed to the skill
+- `$ARGUMENTS[N]` or `$N` - Specific argument by index (0-based)
+- `${CLAUDE_SESSION_ID}` - Current session identifier
+
+### Skill Locations
+
+Claude Code loads skills from multiple locations (in priority order):
+1. **Enterprise** - Organization-wide skills
+2. **Personal** - User skills in `~/.claude/skills/`
+3. **Project** - Project skills in `.claude/skills/`
+4. **Plugin** - Skills from installed plugins
+
+For local development, place skills in `~/.claude/skills/` (personal) or `.claude/skills/` (project-specific).
+
 ## Skill Creation Process
 
 Skill creation involves these steps:
@@ -207,8 +256,8 @@ Skill creation involves these steps:
 2. Plan reusable skill contents (scripts, references, assets)
 3. Initialize the skill (run init_skill.py)
 4. Edit the skill (implement resources and write SKILL.md)
-5. Package the skill (run package_skill.py)
-6. Iterate based on real usage
+5. Test and iterate based on real usage
+6. (Optional) Package the skill for distribution
 
 Follow these steps in order, skipping only if there is a clear reason why they are not applicable.
 
@@ -305,21 +354,47 @@ Any example files and directories not needed for the skill should be deleted. Th
 
 Write the YAML frontmatter with `name` and `description`:
 
-- `name`: The skill name
+- `name`: The skill name (hyphen-case, max 64 characters)
 - `description`: This is the primary triggering mechanism for your skill, and helps Claude understand when to use the skill.
-  - Include both what the Skill does and specific triggers/contexts for when to use it.
-  - Include all "when to use" information here - Not in the body. The body is only loaded after triggering, so "When to Use This Skill" sections in the body are not helpful to Claude.
+  - Always write in third person (not "I can help you" or "This skill helps you")
+  - Include both what the Skill does and specific triggers/contexts for when to use it
+  - Include all "when to use" information here - Not in the body. The body is only loaded after triggering, so "When to Use This Skill" sections in the body are not helpful to Claude
+  - Max 1024 characters, no angle brackets
   - Example description for a `docx` skill: "Comprehensive document creation, editing, and analysis with support for tracked changes, comments, formatting preservation, and text extraction. Use when Claude needs to work with professional documents (.docx files) for: (1) Creating new documents, (2) Modifying or editing content, (3) Working with tracked changes, (4) Adding comments, or any other document tasks"
 
-Do not include any other fields in YAML frontmatter.
+Only include additional frontmatter fields (like `allowed-tools`, `model`, etc.) if specifically needed for the skill's functionality.
 
 ##### Body
 
 Write instructions for using the skill and its bundled resources.
 
-### Step 5: Packaging a Skill
+### Step 5: Test and Iterate
 
-Once development of the skill is complete, it must be packaged into a distributable .skill file that gets shared with the user. The packaging process automatically validates the skill first to ensure it meets all requirements:
+After editing the skill, test it with real tasks before considering it complete.
+
+#### Testing Guidelines
+
+**Test with multiple models** when possible:
+- **Haiku**: Fastest, good for testing basic functionality
+- **Sonnet**: Balanced, typical production use
+- **Opus**: Most capable, handles complex tasks
+
+Skills should work well across models. If a skill only works with Opus, simplify the instructions.
+
+**Evaluation-driven development**: Create test cases BEFORE writing extensive documentation. A skill that fails real tasks needs simpler instructions, not more documentation.
+
+**Iteration workflow:**
+
+1. Use the skill on real tasks
+2. Notice struggles or inefficiencies
+3. Identify how SKILL.md or bundled resources should be updated
+4. Implement changes and test again
+
+### Step 6: Package the Skill (Optional)
+
+**Note**: For Claude Code users, skills work directly from the filesystem without packaging. Only package when you need to distribute the skill as a single file.
+
+To package a skill into a distributable .skill file:
 
 ```bash
 scripts/package_skill.py <path/to/skill-folder>
@@ -343,14 +418,3 @@ The packaging script will:
 2. **Package** the skill if validation passes, creating a .skill file named after the skill (e.g., `my-skill.skill`) that includes all files and maintains the proper directory structure for distribution. The .skill file is a zip file with a .skill extension.
 
 If validation fails, the script will report the errors and exit without creating a package. Fix any validation errors and run the packaging command again.
-
-### Step 6: Iterate
-
-After testing the skill, users may request improvements. Often this happens right after using the skill, with fresh context of how the skill performed.
-
-**Iteration workflow:**
-
-1. Use the skill on real tasks
-2. Notice struggles or inefficiencies
-3. Identify how SKILL.md or bundled resources should be updated
-4. Implement changes and test again
