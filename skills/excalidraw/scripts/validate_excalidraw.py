@@ -121,7 +121,7 @@ def validate_excalidraw(data: dict, verbose: bool = False) -> list[ValidationErr
 
             # Check elbow arrow properties for multi-point arrows
             if len(points) > 2:
-                if el.get("elbowed") != True:
+                if not el.get("elbowed"):
                     errors.append(ValidationError("warning", "Multi-point arrow missing 'elbowed: true' - will render curved", el_id))
                 if el.get("roundness") is not None:
                     errors.append(ValidationError("warning", "Elbow arrow should have 'roundness: null' for sharp corners", el_id))
