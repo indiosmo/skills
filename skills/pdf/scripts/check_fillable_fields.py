@@ -1,3 +1,10 @@
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#   "pypdf",
+# ]
+# ///
+
 import sys
 from pypdf import PdfReader
 

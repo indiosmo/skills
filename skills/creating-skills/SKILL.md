@@ -1,9 +1,9 @@
 ---
-name: skill-creator
+name: creating-skills
 description: Guide for creating effective skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Claude's capabilities with specialized knowledge, workflows, or tool integrations.
 ---
 
-# Skill Creator
+# Creating Skills
 
 This skill provides guidance for creating effective skills.
 
@@ -106,6 +106,26 @@ Executable code (Python/Bash/etc.) for tasks that require deterministic reliabil
 - **Example**: `scripts/rotate_pdf.py` for PDF rotation tasks
 - **Benefits**: Token efficient, deterministic, may be executed without loading into context
 - **Note**: Scripts may still need to be read by Claude for patching or environment-specific adjustments
+- **Running scripts**: Use `uv run scripts/example.py` to execute Python scripts
+
+**PEP 723 inline metadata**: Python scripts should include a PEP 723 header to declare dependencies, allowing `uv` to automatically install them:
+
+```python
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#   "requests",
+#   "pyyaml>=6.0",
+# ]
+# ///
+
+import requests
+import yaml
+# ... rest of script
+```
+
+This enables `uv run script.py` to work without manual dependency installation.
 
 ##### References (`references/`)
 
@@ -137,7 +157,7 @@ A skill should only contain essential files that directly support its functional
 - CHANGELOG.md
 - etc.
 
-The skill should only contain the information needed for an AI agent to do the job at hand. It should not contain auxilary context about the process that went into creating it, setup and testing procedures, user-facing documentation, etc. Creating additional documentation files just adds clutter and confusion.
+The skill should only contain the information needed for an AI agent to do the job at hand. It should not contain auxiliary context about the process that went into creating it, setup and testing procedures, user-facing documentation, etc. Creating additional documentation files just adds clutter and confusion.
 
 ### Progressive Disclosure Design Principle
 
@@ -313,7 +333,7 @@ When creating a new skill from scratch, always run the `init_skill.py` script. T
 Usage:
 
 ```bash
-scripts/init_skill.py <skill-name> --path <output-directory>
+uv run scripts/init_skill.py <skill-name> --path <output-directory>
 ```
 
 The script:
@@ -397,13 +417,13 @@ Skills should work well across models. If a skill only works with Opus, simplify
 To package a skill into a distributable .skill file:
 
 ```bash
-scripts/package_skill.py <path/to/skill-folder>
+uv run scripts/package_skill.py <path/to/skill-folder>
 ```
 
 Optional output directory specification:
 
 ```bash
-scripts/package_skill.py <path/to/skill-folder> ./dist
+uv run scripts/package_skill.py <path/to/skill-folder> ./dist
 ```
 
 The packaging script will:
