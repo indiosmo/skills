@@ -20,7 +20,7 @@ from pathlib import Path
 
 
 class ValidationError:
-    def __init__(self, level: str, message: str, element_id: str = None):
+    def __init__(self, level: str, message: str, element_id: str | None = None):
         self.level = level  # "error" or "warning"
         self.message = message
         self.element_id = element_id
