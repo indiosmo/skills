@@ -16,6 +16,7 @@ Quick reference for fixing common problems and ensuring diagram quality.
 | Styling not applied | Colors not showing | Class not defined or typo | Check `classDef` and `:::` syntax |
 | Subgraph link fails | Can't link to subgraph | Linking to group ID | Link to nodes inside subgraph instead |
 | Special chars break | Syntax error | Unescaped characters | Quote the text or use escape codes |
+| Text clipped | Labels cut off in SVG | Font metrics mismatch | Use config with arial font + padding |
 
 ## Error Message Reference
 
@@ -132,6 +133,42 @@ Different renderers may produce slightly different outputs:
 
 **Best practice**: Validate with mmdc before committing.
 
+## Text Clipping in SVG Output
+
+**Symptom**: Text in nodes or edge labels appears cut off (e.g., "trade" shows as "trad", "partially_filled" shows as "partially_fille").
+
+**Cause**: Mermaid calculates text bounding boxes using font metrics that may differ from the actual rendering environment. The default font ("trebuchet ms") has inconsistent metrics across systems.
+
+**Fix**: Use the default config file included with the validation script, which:
+- Uses `arial,sans-serif` font (widely available, predictable metrics)
+- Increases padding in state diagrams (`padding: 16`, `textHeight: 20`)
+- Adds extra spacing for flowcharts
+
+The `validate_mermaid.py` script automatically uses this config. To disable it:
+```bash
+uv run scripts/validate_mermaid.py diagram.mmd --no-config
+```
+
+To use a custom config:
+```bash
+uv run scripts/validate_mermaid.py diagram.mmd -c my-config.json
+```
+
+**Manual fix** (if not using the script): Create a config file:
+```json
+{
+  "themeVariables": {
+    "fontFamily": "arial,sans-serif"
+  },
+  "state": {
+    "padding": 16,
+    "textHeight": 20
+  }
+}
+```
+
+Then pass to mmdc: `mmdc -i diagram.mmd -o diagram.svg -c config.json`
+
 ## Performance Issues
 
 ### Large Diagrams
@@ -163,3 +200,4 @@ Solutions:
 | Arrows missing | Use `-->` not `->` |
 | Style not working | Check `classDef` before use |
 | Sequence order wrong | Declare participants first |
+| Text clipped in SVG | Use config with arial font and increased padding |

@@ -123,6 +123,16 @@ uv run scripts/validate_mermaid.py diagram.mmd --output diagram.svg
 
 The script will report syntax errors with line numbers.
 
+The validation script uses a default config (`scripts/mermaid-config.json`) that prevents text clipping by using arial font and increased padding. To use a custom config or disable it:
+
+```bash
+# Custom config
+uv run scripts/validate_mermaid.py diagram.mmd -c my-config.json
+
+# No config (use mmdc defaults)
+uv run scripts/validate_mermaid.py diagram.mmd --no-config
+```
+
 ### Step 2: Visual Quality Review
 
 After syntax validation passes, review the rendered output for:
@@ -156,6 +166,8 @@ If the diagram renders but looks wrong:
 | Subgraph not grouping | Missing `end` keyword | Ensure every `subgraph` has `end` |
 | Direction ignored | Direction after nodes | Put direction first: `flowchart LR` |
 | Sequence diagram timeline wrong | Participants not declared | Declare participants in order |
+| Redundant state annotations | Adding notes like "Initial state" or "Terminal state" | Let visual syntax speak: `[*]` already conveys start/end states |
+| Text clipped in SVG | Font metrics mismatch | Use validation script (has default config) or explicit arial font with padding |
 
 ### Reserved Words to Quote
 

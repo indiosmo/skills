@@ -1,0 +1,23 @@
+{
+  "theme": "default",
+  "themeVariables": {
+    "fontSize": "14px",
+    "fontFamily": "arial,sans-serif"
+  },
+  "state": {
+    "textHeight": 20,
+    "padding": 16,
+    "dividerMargin": 12,
+    "radius": 5,
+    "forkWidth": 70,
+    "forkHeight": 7,
+    "miniPadding": 4,
+    "noteMargin": 12,
+    "labelHeight": 20
+  },
+  "flowchart": {
+    "padding": 16,
+    "nodeSpacing": 50,
+    "rankSpacing": 50
+  }
+}

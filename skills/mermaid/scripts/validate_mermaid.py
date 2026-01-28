@@ -21,10 +21,20 @@ def check_mmdc_installed() -> bool:
     return shutil.which("mmdc") is not None
 
 
+def get_default_config() -> Path | None:
+    """Get the default mermaid config file path if it exists."""
+    script_dir = Path(__file__).parent
+    config_path = script_dir / "mermaid-config.json"
+    if config_path.exists():
+        return config_path
+    return None
+
+
 def validate_mermaid(
     input_file: Path,
     output_file: Path | None = None,
     output_format: str = "svg",
+    config_file: Path | None = None,
 ) -> dict:
     """
     Validate a Mermaid diagram file.
@@ -33,6 +43,7 @@ def validate_mermaid(
         input_file: Path to the .mmd or .mermaid file
         output_file: Optional output path for rendered diagram
         output_format: Output format ('svg' or 'png')
+        config_file: Optional mermaid config JSON file (uses default if not specified)
 
     Returns:
         dict with keys:
@@ -62,12 +73,20 @@ def validate_mermaid(
     if output_file is None:
         output_file = input_file.with_suffix(f".{output_format}")
 
+    # Use default config if none specified
+    if config_file is None:
+        config_file = get_default_config()
+
     # Build mmdc command
     cmd = [
         "mmdc",
         "-i", str(input_file),
         "-o", str(output_file),
     ]
+
+    # Add config file if available
+    if config_file is not None:
+        cmd.extend(["-c", str(config_file)])
 
     # Run mmdc
     try:
@@ -123,13 +142,32 @@ def main():
         action="store_true",
         help="Output result as JSON",
     )
+    parser.add_argument(
+        "-c", "--config",
+        type=Path,
+        default=None,
+        help="Mermaid config JSON file (uses built-in default if not specified)",
+    )
+    parser.add_argument(
+        "--no-config",
+        action="store_true",
+        help="Disable default config file",
+    )
 
     args = parser.parse_args()
+
+    # Determine config file
+    config_file = args.config
+    if args.no_config:
+        config_file = None  # Explicitly disable
+    elif config_file is None:
+        config_file = get_default_config()  # Use default
 
     result = validate_mermaid(
         input_file=args.input,
         output_file=args.output,
         output_format=args.format,
+        config_file=config_file,
     )
 
     if args.json:
