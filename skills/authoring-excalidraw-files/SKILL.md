@@ -102,6 +102,191 @@ height = 70   // max(abs(point[1]))
 
 ---
 
+## Minimal Working Example
+
+Two boxes connected by an arrow (copy and adapt for any diagram):
+
+```json
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "claude-code-excalidraw-skill",
+  "elements": [
+    {
+      "id": "box-a",
+      "type": "rectangle",
+      "x": 100,
+      "y": 100,
+      "width": 160,
+      "height": 80,
+      "angle": 0,
+      "strokeColor": "#1971c2",
+      "backgroundColor": "#a5d8ff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": { "type": 3 },
+      "seed": 1,
+      "version": 1,
+      "versionNonce": 1,
+      "isDeleted": false,
+      "boundElements": [{ "type": "text", "id": "box-a-text" }],
+      "updated": 1,
+      "link": null,
+      "locked": false
+    },
+    {
+      "id": "box-a-text",
+      "type": "text",
+      "x": 105,
+      "y": 125,
+      "width": 150,
+      "height": 30,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": null,
+      "seed": 2,
+      "version": 1,
+      "versionNonce": 2,
+      "isDeleted": false,
+      "boundElements": null,
+      "updated": 1,
+      "link": null,
+      "locked": false,
+      "text": "Frontend",
+      "fontSize": 16,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "box-a",
+      "originalText": "Frontend",
+      "lineHeight": 1.25
+    },
+    {
+      "id": "box-b",
+      "type": "rectangle",
+      "x": 100,
+      "y": 280,
+      "width": 160,
+      "height": 80,
+      "angle": 0,
+      "strokeColor": "#7048e8",
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": { "type": 3 },
+      "seed": 3,
+      "version": 1,
+      "versionNonce": 3,
+      "isDeleted": false,
+      "boundElements": [{ "type": "text", "id": "box-b-text" }],
+      "updated": 1,
+      "link": null,
+      "locked": false
+    },
+    {
+      "id": "box-b-text",
+      "type": "text",
+      "x": 105,
+      "y": 305,
+      "width": 150,
+      "height": 30,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": null,
+      "seed": 4,
+      "version": 1,
+      "versionNonce": 4,
+      "isDeleted": false,
+      "boundElements": null,
+      "updated": 1,
+      "link": null,
+      "locked": false,
+      "text": "API Server",
+      "fontSize": 16,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "box-b",
+      "originalText": "API Server",
+      "lineHeight": 1.25
+    },
+    {
+      "id": "arrow-a-b",
+      "type": "arrow",
+      "x": 180,
+      "y": 180,
+      "width": 0,
+      "height": 100,
+      "angle": 0,
+      "strokeColor": "#1971c2",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 0,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": null,
+      "seed": 5,
+      "version": 1,
+      "versionNonce": 5,
+      "isDeleted": false,
+      "boundElements": null,
+      "updated": 1,
+      "link": null,
+      "locked": false,
+      "points": [[0, 0], [0, 100]],
+      "lastCommittedPoint": null,
+      "startBinding": null,
+      "endBinding": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "elbowed": true
+    }
+  ],
+  "appState": {
+    "gridSize": 20,
+    "viewBackgroundColor": "#ffffff"
+  },
+  "files": {}
+}
+```
+
+Key structure notes:
+- Each labeled shape needs TWO elements (shape + text with `containerId`)
+- Arrow `x,y` is at source edge: `(100 + 160/2, 100 + 80)` = `(180, 180)`
+- Arrow `height` matches the vertical distance: `280 - 180` = `100`
+- Elbow arrows: `roughness: 0`, `roundness: null`, `elbowed: true`
+
+---
+
 ## Workflow
 
 ### Step 1: Analyze Codebase
@@ -176,46 +361,14 @@ Open the `.excalidraw` file for visual inspection:
 - **Web**: Drag file to [excalidraw.com](https://excalidraw.com)
 - **VS Code**: Install "Excalidraw" extension and open file
 
-If issues found:
-1. Identify the problem element
+Note: Claude cannot see the visual output. The user must review the diagram and report any issues.
+
+If the user reports issues:
+1. Identify the problem element from their description
 2. Fix the JSON
 3. Re-validate
-4. Re-inspect
+4. Ask user to re-inspect
 5. Repeat until correct
-
----
-
-## Element Reference
-
-### Shapes
-
-| Component Type | Element Type | Background | Stroke |
-|----------------|--------------|------------|--------|
-| Frontend/UI | rectangle | `#a5d8ff` | `#1971c2` |
-| Backend/API | rectangle | `#d0bfff` | `#7048e8` |
-| Database | rectangle | `#b2f2bb` | `#2f9e44` |
-| Storage | rectangle | `#ffec99` | `#f08c00` |
-| Cache | rectangle | `#ffe8cc` | `#fd7e14` |
-| Message Queue | rectangle | `#fff3bf` | `#fab005` |
-| External API | rectangle | `#ffc9c9` | `#e03131` |
-| Orchestrator | rectangle | `#ffa8a8` | `#c92a2a` |
-| User/Actor | ellipse | `#e7f5ff` | `#1971c2` |
-
-### Arrow Patterns
-
-| Pattern | Points | Use Case |
-|---------|--------|----------|
-| Down | `[[0,0], [0,h]]` | Vertical connection |
-| Right | `[[0,0], [w,0]]` | Horizontal connection |
-| L-shape | `[[0,0], [dx,0], [dx,dy]]` | Offset connection |
-| U-turn | `[[0,0], [50,0], [50,dy], [dx,dy]]` | Callback |
-
-### Staggering Multiple Arrows
-
-When N arrows leave from same edge:
-- 2 arrows: 20%, 80% across edge
-- 3 arrows: 20%, 50%, 80%
-- 5 arrows: 20%, 35%, 50%, 65%, 80%
 
 ---
 

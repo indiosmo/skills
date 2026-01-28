@@ -371,4 +371,3 @@ result = (
 | `references/io-formats.md` | File format selection | Reading/writing data |
 | `references/timeseries.md` | Time series patterns | Working with dates |
 | `references/groupby-window.md` | GroupBy and windows | Split-apply-combine |
-| `references/cheatsheet.md` | Quick reference | Syntax lookup |

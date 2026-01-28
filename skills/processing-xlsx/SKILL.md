@@ -1,7 +1,6 @@
 ---
-name: xlsx
+name: processing-xlsx
 description: "Comprehensive spreadsheet creation, editing, and analysis with support for formulas, formatting, data analysis, and visualization. When Claude needs to work with spreadsheets (.xlsx, .xlsm, .csv, .tsv, etc) for: (1) Creating new spreadsheets with formulas and formatting, (2) Reading or analyzing data, (3) Modify existing spreadsheets while preserving formulas, (4) Data analysis and visualization in spreadsheets, or (5) Recalculating formulas"
-license: Proprietary. LICENSE.txt has complete terms
 ---
 
 # Requirements for Outputs
@@ -91,13 +90,11 @@ df.describe()  # Statistics
 df.to_excel('output.xlsx', index=False)
 ```
 
-## Excel File Workflows
-
 ## CRITICAL: Use Formulas, Not Hardcoded Values
 
 **Always use Excel formulas instead of calculating values in Python and hardcoding them.** This ensures the spreadsheet remains dynamic and updateable.
 
-### ❌ WRONG - Hardcoding Calculated Values
+### WRONG - Hardcoding Calculated Values
 ```python
 # Bad: Calculating in Python and hardcoding result
 total = df['Sales'].sum()
@@ -112,7 +109,7 @@ avg = sum(values) / len(values)
 sheet['D20'] = avg  # Hardcodes 42.5
 ```
 
-### ✅ CORRECT - Using Excel Formulas
+### CORRECT - Using Excel Formulas
 ```python
 # Good: Let Excel calculate the sum
 sheet['B10'] = '=SUM(B2:B9)'
@@ -126,16 +123,18 @@ sheet['D20'] = '=AVERAGE(D2:D19)'
 
 This applies to ALL calculations - totals, percentages, ratios, differences, etc. The spreadsheet should be able to recalculate when source data changes.
 
-## Common Workflow
+## Excel File Workflow
+
 1. **Choose tool**: pandas for data, openpyxl for formulas/formatting
 2. **Create/Load**: Create new workbook or load existing file
 3. **Modify**: Add/edit data, formulas, and formatting
 4. **Save**: Write to file
-5. **Recalculate formulas (MANDATORY IF USING FORMULAS)**: Use the recalc.py script
+5. **Recalculate formulas (MANDATORY IF USING FORMULAS)**: Use the `recalc.py` script located in this skill's directory
    ```bash
-   uv run recalc.py output.xlsx
+   uv run /path/to/skills/xlsx/recalc.py output.xlsx
    ```
-6. **Verify and fix any errors**: 
+   Note: Replace `/path/to/skills/xlsx/` with the actual path where this skill is installed.
+6. **Verify and fix any errors**:
    - The script returns JSON with error details
    - If `status` is `errors_found`, check `error_summary` for specific error types and locations
    - Fix the identified errors and recalculate again
@@ -203,16 +202,18 @@ wb.save('modified.xlsx')
 
 ## Recalculating formulas
 
-Excel files created or modified by openpyxl contain formulas as strings but not calculated values. Use the provided `recalc.py` script to recalculate formulas:
+Excel files created or modified by openpyxl contain formulas as strings but not calculated values. Use the `recalc.py` script bundled with this skill to recalculate formulas:
 
 ```bash
-uv run recalc.py <excel_file> [timeout_seconds]
+uv run /path/to/skills/xlsx/recalc.py <excel_file> [timeout_seconds]
 ```
 
 Example:
 ```bash
-uv run recalc.py output.xlsx 30
+uv run /path/to/skills/xlsx/recalc.py output.xlsx 30
 ```
+
+Note: Replace `/path/to/skills/xlsx/` with the actual path where this skill is installed.
 
 The script:
 - Automatically sets up LibreOffice macro on first run
@@ -226,22 +227,22 @@ The script:
 Quick checks to ensure formulas work correctly:
 
 ### Essential Verification
-- [ ] **Test 2-3 sample references**: Verify they pull correct values before building full model
-- [ ] **Column mapping**: Confirm Excel columns match (e.g., column 64 = BL, not BK)
-- [ ] **Row offset**: Remember Excel rows are 1-indexed (DataFrame row 5 = Excel row 6)
+- **Test 2-3 sample references**: Verify they pull correct values before building full model
+- **Column mapping**: Confirm Excel columns match (e.g., column 64 = BL, not BK)
+- **Row offset**: Remember Excel rows are 1-indexed (DataFrame row 5 = Excel row 6)
 
 ### Common Pitfalls
-- [ ] **NaN handling**: Check for null values with `pd.notna()`
-- [ ] **Far-right columns**: FY data often in columns 50+ 
-- [ ] **Multiple matches**: Search all occurrences, not just first
-- [ ] **Division by zero**: Check denominators before using `/` in formulas (#DIV/0!)
-- [ ] **Wrong references**: Verify all cell references point to intended cells (#REF!)
-- [ ] **Cross-sheet references**: Use correct format (Sheet1!A1) for linking sheets
+- **NaN handling**: Check for null values with `pd.notna()`
+- **Far-right columns**: FY data often in columns 50+
+- **Multiple matches**: Search all occurrences, not just first
+- **Division by zero**: Check denominators before using `/` in formulas (#DIV/0!)
+- **Wrong references**: Verify all cell references point to intended cells (#REF!)
+- **Cross-sheet references**: Use correct format (Sheet1!A1) for linking sheets
 
 ### Formula Testing Strategy
-- [ ] **Start small**: Test formulas on 2-3 cells before applying broadly
-- [ ] **Verify dependencies**: Check all cells referenced in formulas exist
-- [ ] **Test edge cases**: Include zero, negative, and very large values
+- **Start small**: Test formulas on 2-3 cells before applying broadly
+- **Verify dependencies**: Check all cells referenced in formulas exist
+- **Test edge cases**: Include zero, negative, and very large values
 
 ### Interpreting recalc.py Output
 The script returns JSON with error details:

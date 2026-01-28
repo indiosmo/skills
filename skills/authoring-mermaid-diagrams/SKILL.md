@@ -9,16 +9,7 @@ Create professional Mermaid diagrams with proper syntax, clear layout, and valid
 
 ## Prerequisites
 
-Check that the Mermaid CLI is available:
-
-```bash
-mmdc --version
-```
-
-If not installed, install via npm:
-```bash
-npm install -g @mermaid-js/mermaid-cli
-```
+The Mermaid CLI (`mmdc`) must be available. Install via `npm install -g @mermaid-js/mermaid-cli` if needed.
 
 ## Workflow Overview
 
@@ -157,83 +148,12 @@ If the diagram renders but looks wrong:
 | Subgraphs overlapping | Reduce nesting depth or split into multiple diagrams |
 | Arrows going wrong way | Check connection order: `from --> to` |
 
-## Common Gotchas
-
-| Problem | Cause | Solution |
-|---------|-------|----------|
-| `Parse error` on node text | Reserved word or special character | Wrap in quotes: `node["end"]` |
-| Arrows not rendering | Wrong arrow syntax | Use `-->` not `->` for flowcharts |
-| Subgraph not grouping | Missing `end` keyword | Ensure every `subgraph` has `end` |
-| Direction ignored | Direction after nodes | Put direction first: `flowchart LR` |
-| Sequence diagram timeline wrong | Participants not declared | Declare participants in order |
-| Redundant state annotations | Adding notes like "Initial state" or "Terminal state" | Let visual syntax speak: `[*]` already conveys start/end states |
-| Text clipped in SVG | Font metrics mismatch | Use validation script (has default config) or explicit arial font with padding |
-
-### Reserved Words to Quote
-
-These words must be quoted when used as node labels:
-- `end`, `graph`, `subgraph`, `direction`
-- `click`, `style`, `class`, `classDef`
-- `default`, `linkStyle`
-
-```mermaid
-flowchart LR
-    start[Start] --> finish["end"]  %% "end" must be quoted
-```
-
-## Quick Syntax Reference
-
-### Node Shapes
-
-```
-node[Rectangle]
-node(Rounded)
-node([Stadium])
-node[[Subroutine]]
-node[(Database)]
-node((Circle))
-node{Diamond}
-node{{Hexagon}}
-node[/Parallelogram/]
-node[\Parallelogram Alt\]
-node[/Trapezoid\]
-node[\Trapezoid Alt/]
-```
-
-### Arrow Types
-
-```
-A --> B       Solid arrow
-A --- B       Solid line (no arrow)
-A -.-> B      Dotted arrow
-A -.- B       Dotted line
-A ==> B       Thick arrow
-A === B       Thick line
-A --text--> B Arrow with label
-A -->|text| B Arrow with label (alt)
-```
-
-### Styling
-
-```mermaid
-flowchart LR
-    %% Define styles
-    classDef primary fill:#4CAF50,stroke:#2E7D32,color:#fff
-    classDef warning fill:#FF9800,stroke:#F57C00,color:#000
-
-    %% Apply styles
-    nodeA[Primary Node]:::primary
-    nodeB[Warning Node]:::warning
-
-    nodeA --> nodeB
-```
-
 ## Reference Files
 
-- `references/diagram-types.md` - Detailed syntax and examples for each diagram type
-- `references/syntax-quick-ref.md` - Complete node shapes, arrows, and styling reference
-- `references/layout-patterns.md` - Subgraphs, nesting, and layout strategies
-- `references/common-issues.md` - Troubleshooting guide and quality checklist
+- `references/diagram-types.md` - Full syntax and examples for flowcharts, sequence, state, class, ER, and architecture diagrams
+- `references/syntax-quick-ref.md` - Node shapes, arrow types, styling classes, text formatting, and escape sequences
+- `references/layout-patterns.md` - Subgraph organization, nesting strategies, and direction optimization
+- `references/common-issues.md` - Parse errors, reserved words, text clipping fixes, and debugging steps
 
 ## Example: Complete Workflow
 

@@ -1,11 +1,7 @@
 ---
-name: docs
+name: searching-docs
 description: "Search library/API documentation using Context7 and Ref MCP tools. Use when Claude needs to: (1) Look up API syntax or code snippets, (2) Search library documentation, (3) Research implementation patterns, (4) Debug issues using docs, or (5) Explore unfamiliar libraries or frameworks."
 ---
-
-# Documentation Search Skill
-
-Search and retrieve documentation for libraries, APIs, and frameworks using Context7 and Ref MCP tools.
 
 ## Tool Selection
 
@@ -38,3 +34,13 @@ For comprehensive research, use both tools:
 2. Ref for community solutions, tutorials, and edge cases
 
 When the agent returns, synthesize findings into actionable guidance for the user.
+
+## Tool Usage Examples
+
+**Context7 workflow:**
+1. Call `resolve-library-id` with the library name to get the Context7 library ID
+2. Call `query-docs` with the returned library ID and your specific question
+
+**Ref workflow:**
+1. Call `ref_search_documentation` with a descriptive query including language/framework names
+2. Call `ref_read_url` with the exact URL from results (include the #hash portion)

@@ -2,6 +2,17 @@
 
 Detailed syntax, examples, and guidance for each supported diagram type.
 
+## Table of Contents
+
+1. [Flowchart](#1-flowchart) - Processes, decisions, algorithms, workflows
+2. [Sequence Diagram](#2-sequence-diagram) - Interactions between components over time
+3. [State Diagram](#3-state-diagram) - State machines, lifecycles, status transitions
+4. [Class Diagram](#4-class-diagram) - OOP design, type relationships, class structure
+5. [Entity Relationship Diagram](#5-entity-relationship-diagram) - Database schemas, data relationships
+6. [Architecture Diagram](#6-architecture-diagramc4block) - System architecture, components, interactions
+
+---
+
 ## 1. Flowchart
 
 **Purpose**: Visualize processes, decisions, algorithms, and workflows.

@@ -72,7 +72,7 @@ def get_field_info(reader: PdfReader):
     field_info_by_id = {}
     possible_radio_names = set()
 
-    for field_id, field in fields.items():
+    for field_id, field in fields.items(): # type: ignore
         # Skip if this is a container field with children, except that it might be
         # a parent group for radio button options.
         if field.get("/Kids"):

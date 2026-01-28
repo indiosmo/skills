@@ -1,6 +1,7 @@
 import unittest
 import json
 import io
+
 from check_bounding_boxes import get_bounding_box_messages
 
 
