@@ -165,14 +165,22 @@ beautiful-mermaid themes work with:
 
 **Not supported**: Architecture diagrams (use mmdc with CSS styling instead)
 
-### Renderer Fallback
+### Two-Step Workflow
 
-When using `--renderer auto`:
-1. Architecture diagrams automatically use mmdc (no theming)
-2. Other diagram types use beautiful-mermaid when installed
-3. Falls back to mmdc if beautiful-mermaid is unavailable
+For best results, use a two-step approach:
 
-To ensure themed output, use `--renderer beautiful` explicitly (will error on architecture diagrams).
+1. **Syntax validation**: Always validate with `--renderer mmdc` first (authoritative parser)
+2. **Final rendering**: Render with `--renderer beautiful` for theming (when available)
+
+```bash
+# Step 1: Validate syntax
+uv run scripts/validate_mermaid.py diagram.mmd --renderer mmdc -o diagram-check.svg
+
+# Step 2: Render with theme
+uv run scripts/validate_mermaid.py diagram.mmd --renderer beautiful --theme dracula -o diagram.svg
+```
+
+**Note:** Architecture diagrams only support mmdc (skip Step 2).
 
 ## Troubleshooting
 

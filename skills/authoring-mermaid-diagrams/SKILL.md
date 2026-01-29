@@ -25,8 +25,8 @@ This enables 15 built-in themes (tokyo-night, dracula, github-dark, etc.) and te
 
 1. **Choose Diagram Type** - Select the appropriate diagram type for your use case
 2. **Write Diagram** - Use idiomatic patterns and clear naming
-3. **Validate Syntax** - Run through mmdc to catch syntax errors
-4. **Review Diagram Code** - Check for common issues
+3. **Validate Syntax** - Run through mmdc to catch spec errors
+4. **Render Output** - Use beautiful-mermaid for final output (when available)
 5. **Visual Review** - Check the rendered output for layout issues
 6. **Iterate** - Refine based on feedback
 
@@ -112,29 +112,45 @@ flowchart LR
 | Bottom to Top | `BT` | Bottom-up flows |
 | Right to Left | `RL` | Reverse flows |
 
-## Validation Workflow
+## Validation and Rendering Workflow
 
-### Step 1: Syntax Validation
+### Step 1: Syntax Validation (mmdc)
 
-Save your diagram to a `.mmd` file and validate:
+Save your diagram to a `.mmd` file and validate syntax using mmdc:
 
 ```bash
-uv run scripts/validate_mermaid.py diagram.mmd -o diagram.svg
+uv run scripts/validate_mermaid.py diagram.mmd --renderer mmdc -o diagram.svg
 ```
 
-The script will report syntax errors with line numbers.
+The script will report syntax errors with line numbers. Always use mmdc for syntax validation as it is the authoritative Mermaid spec parser.
 
 The validation script uses a default config (`scripts/mermaid-config.json`) that prevents text clipping by using arial font and increased padding. To use a custom config or disable it:
 
 ```bash
 # Custom config
-uv run scripts/validate_mermaid.py diagram.mmd -c my-config.json
+uv run scripts/validate_mermaid.py diagram.mmd --renderer mmdc -c my-config.json
 
 # No config (use mmdc defaults)
-uv run scripts/validate_mermaid.py diagram.mmd --no-config
+uv run scripts/validate_mermaid.py diagram.mmd --renderer mmdc --no-config
 ```
 
-### Step 2: Visual Quality Review
+### Step 2: Render with beautiful-mermaid (Preferred)
+
+After syntax validation passes, render the final output with beautiful-mermaid for better theming:
+
+```bash
+uv run scripts/validate_mermaid.py diagram.mmd --renderer beautiful --theme github-light -o diagram.svg
+```
+
+**Renderer selection rules:**
+| Diagram Type | Renderer | Notes |
+|--------------|----------|-------|
+| Flowchart, Sequence, State, Class, ER | `--renderer beautiful` | Preferred for theming |
+| Architecture | `--renderer mmdc` | beautiful-mermaid not supported |
+
+If beautiful-mermaid is not installed, skip this step and use the mmdc output from Step 1.
+
+### Step 3: Visual Quality Review
 
 After syntax validation passes, review the rendered output for:
 
@@ -147,7 +163,7 @@ After syntax validation passes, review the rendered output for:
 - [ ] **Spacing**: Nodes not too cramped or too spread out
 - [ ] **Color Usage**: Styling aids understanding, not just decoration
 
-### Step 3: Common Fixes
+### Step 4: Common Fixes
 
 If the diagram renders but looks wrong:
 
@@ -197,24 +213,26 @@ uv run scripts/validate_mermaid.py diagram.mmd --bg "#1a1b26" --fg "#c0caf5" -o 
 
 ### Renderer Selection
 
-The validation script automatically chooses the best renderer:
+Use a two-step approach for best results:
+
+1. **Syntax validation**: Always use `--renderer mmdc` (authoritative Mermaid parser)
+2. **Final rendering**: Use `--renderer beautiful` when available and supported
 
 | Renderer | Command | Use Case |
 |----------|---------|----------|
-| Auto (default) | `--renderer auto` | Automatically selects based on diagram type and features |
-| beautiful-mermaid | `--renderer beautiful` | Force theming/ASCII (fails on architecture diagrams) |
-| mmdc | `--renderer mmdc` | Force mmdc for all diagrams |
+| mmdc | `--renderer mmdc` | Syntax validation (always use first) |
+| beautiful-mermaid | `--renderer beautiful` | Final rendering with theming (preferred) |
+| Auto | `--renderer auto` | Convenience mode (not recommended for workflow) |
 
 ```bash
-# Auto-detect (default) - uses beautiful-mermaid when available, mmdc for architecture
-uv run scripts/validate_mermaid.py diagram.mmd -o diagram.svg
+# Step 1: Validate syntax with mmdc
+uv run scripts/validate_mermaid.py diagram.mmd --renderer mmdc -o diagram-validated.svg
 
-# Force mmdc
-uv run scripts/validate_mermaid.py diagram.mmd --renderer mmdc -o diagram.svg
-
-# Force beautiful-mermaid (errors on architecture diagrams)
-uv run scripts/validate_mermaid.py diagram.mmd --renderer beautiful --theme dracula -o diagram.svg
+# Step 2: Render final output with beautiful-mermaid
+uv run scripts/validate_mermaid.py diagram.mmd --renderer beautiful --theme github-light -o diagram.svg
 ```
+
+**Note:** For architecture diagrams, skip Step 2 as beautiful-mermaid does not support them.
 
 For comprehensive theming documentation, see `references/theming-guide.md`.
 
@@ -298,19 +316,19 @@ flowchart TD
     retry --> request
 ```
 
-3. **Validate** (basic):
+3. **Validate syntax** (mmdc):
 ```bash
-uv run scripts/validate_mermaid.py auth-flow.mmd -o auth-flow.svg
+uv run scripts/validate_mermaid.py auth-flow.mmd --renderer mmdc -o auth-flow-check.svg
 ```
 
-4. **Validate with theme**:
+4. **Render with theme** (beautiful-mermaid):
 ```bash
-uv run scripts/validate_mermaid.py auth-flow.mmd --theme github-dark -o auth-flow-dark.svg
+uv run scripts/validate_mermaid.py auth-flow.mmd --renderer beautiful --theme github-dark -o auth-flow.svg
 ```
 
-5. **Generate ASCII for docs**:
+5. **Generate ASCII for docs** (optional):
 ```bash
-uv run scripts/validate_mermaid.py auth-flow.mmd --unicode -o auth-flow.txt
+uv run scripts/validate_mermaid.py auth-flow.mmd --renderer beautiful --unicode -o auth-flow.txt
 ```
 
 6. **Review**: Check the SVG output for readability
