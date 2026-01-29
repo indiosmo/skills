@@ -2,6 +2,23 @@
 
 This is a **Skills Repository** for Claude Code - a collection of modular packages that extend Claude's capabilities with specialized knowledge, workflows, and tools. Skills are "onboarding guides" for specific domains that transform Claude into a specialized agent.
 
+## Getting Started
+
+```bash
+# Clone the repository
+git clone <repo-url> ~/skills
+
+# Install all dependencies (Python + Node.js)
+./setup.sh
+
+# Symlink skills you want to use
+mkdir -p ~/.claude/skills
+ln -s ~/skills/skills/authoring-mermaid-diagrams ~/.claude/skills/
+ln -s ~/skills/skills/processing-pdfs ~/.claude/skills/
+```
+
+The `setup.sh` script checks for required tools (uv, npm), installs Python dependencies via `uv sync`, and runs `npm install` for any skills with Node.js dependencies.
+
 ## Commands
 
 ```bash

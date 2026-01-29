@@ -169,6 +169,97 @@ uv run scripts/validate_mermaid.py diagram.mmd -c my-config.json
 
 Then pass to mmdc: `mmdc -i diagram.mmd -o diagram.svg -c config.json`
 
+## beautiful-mermaid Issues
+
+### "Unsupported diagram type: architecture"
+
+**Cause**: Architecture diagrams are not supported by beautiful-mermaid.
+
+**Fix**: Use mmdc renderer instead:
+```bash
+# Auto mode will fall back to mmdc
+uv run scripts/validate_mermaid.py architecture.mmd -o architecture.svg
+
+# Or explicitly use mmdc
+uv run scripts/validate_mermaid.py architecture.mmd --renderer mmdc -o architecture.svg
+```
+
+**Note**: Theming options (`--theme`, `--bg`, `--fg`) are not available for architecture diagrams.
+
+### "Node.js not found"
+
+**Cause**: Node.js is not installed or not in PATH.
+
+**Fix**:
+1. Install Node.js from https://nodejs.org/
+2. Verify installation: `node --version`
+3. Ensure it's in your PATH
+
+### "beautiful-mermaid not installed"
+
+**Cause**: The npm package hasn't been installed in the scripts directory.
+
+**Fix**:
+```bash
+cd skills/authoring-mermaid-diagrams/scripts
+npm install
+```
+
+This installs beautiful-mermaid and its dependencies locally.
+
+### "render_beautiful.js not found"
+
+**Cause**: The Node.js wrapper script is missing.
+
+**Fix**: Ensure you have the complete skill installation. The file should be at:
+`skills/authoring-mermaid-diagrams/scripts/render_beautiful.js`
+
+### Theme Not Found
+
+**Cause**: Invalid theme name specified.
+
+**Fix**:
+```bash
+# List available themes
+uv run scripts/validate_mermaid.py --list-themes
+
+# Use exact theme name (case-sensitive)
+uv run scripts/validate_mermaid.py diagram.mmd --theme tokyo-night -o diagram.svg
+```
+
+### ASCII Output Layout Issues
+
+**Symptom**: Text-based diagram has cramped or misaligned elements.
+
+**Fix**: Adjust padding options:
+```bash
+# Increase horizontal padding
+uv run scripts/validate_mermaid.py diagram.mmd --unicode --padding-x 3 -o diagram.txt
+
+# Increase vertical padding
+uv run scripts/validate_mermaid.py diagram.mmd --unicode --padding-y 2 -o diagram.txt
+
+# Both
+uv run scripts/validate_mermaid.py diagram.mmd --unicode --padding-x 3 --padding-y 2 -o diagram.txt
+```
+
+**Note**: Very complex diagrams may not render well in ASCII/Unicode format. Consider using SVG for detailed diagrams.
+
+### ASCII/Unicode Output with Unsupported Renderer
+
+**Error**: "ASCII/Unicode output requires beautiful-mermaid"
+
+**Cause**: Attempting ASCII output with `--renderer mmdc`.
+
+**Fix**: Remove the `--renderer mmdc` flag or use `--renderer auto`:
+```bash
+# Correct
+uv run scripts/validate_mermaid.py diagram.mmd --unicode -o diagram.txt
+
+# Also correct (auto will select beautiful-mermaid)
+uv run scripts/validate_mermaid.py diagram.mmd --renderer auto --unicode -o diagram.txt
+```
+
 ## Performance Issues
 
 ### Large Diagrams

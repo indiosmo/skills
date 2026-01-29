@@ -9,7 +9,17 @@ Create professional Mermaid diagrams with proper syntax, clear layout, and valid
 
 ## Prerequisites
 
-The Mermaid CLI (`mmdc`) must be available. Install via `npm install -g @mermaid-js/mermaid-cli` if needed.
+**Required: Mermaid CLI** - The `mmdc` command must be available:
+```bash
+npm install -g @mermaid-js/mermaid-cli
+```
+
+**Optional: beautiful-mermaid** - For enhanced theming and ASCII output:
+```bash
+cd skills/authoring-mermaid-diagrams/scripts && npm install
+```
+
+This enables 15 built-in themes (tokyo-night, dracula, github-dark, etc.) and text-based diagram rendering for terminals.
 
 ## Workflow Overview
 
@@ -109,7 +119,7 @@ flowchart LR
 Save your diagram to a `.mmd` file and validate:
 
 ```bash
-uv run scripts/validate_mermaid.py diagram.mmd --output diagram.svg
+uv run scripts/validate_mermaid.py diagram.mmd -o diagram.svg
 ```
 
 The script will report syntax errors with line numbers.
@@ -148,12 +158,116 @@ If the diagram renders but looks wrong:
 | Subgraphs overlapping | Reduce nesting depth or split into multiple diagrams |
 | Arrows going wrong way | Check connection order: `from --> to` |
 
+## Theming
+
+beautiful-mermaid provides 15 built-in themes for professional diagram styling.
+
+### Available Themes
+
+| Theme | Type | Best For |
+|-------|------|----------|
+| `github-light` | Light | Default, GitHub-style documentation |
+| `tokyo-night-light` | Light | Soft contrast, easy on eyes |
+| `catppuccin-latte` | Light | Warm, pastel tones |
+| `nord-light` | Light | Arctic, cool tones |
+| `github-light` | Light | GitHub-style documentation |
+| `solarized-light` | Light | Classic light theme |
+| `zinc-dark` | Dark | Clean dark mode |
+| `tokyo-night` | Dark | Popular dark theme |
+| `tokyo-night-storm` | Dark | Deeper tokyo-night variant |
+| `catppuccin-mocha` | Dark | Rich, warm dark theme |
+| `nord` | Dark | Arctic dark palette |
+| `dracula` | Dark | Popular purple-accented dark |
+| `github-dark` | Dark | GitHub dark mode style |
+| `solarized-dark` | Dark | Classic dark theme |
+| `one-dark` | Dark | Atom One Dark style |
+
+### Using Themes
+
+```bash
+# List available themes
+uv run scripts/validate_mermaid.py --list-themes
+
+# Render with a specific theme
+uv run scripts/validate_mermaid.py diagram.mmd --theme tokyo-night -o diagram.svg
+
+# Custom colors (overrides theme)
+uv run scripts/validate_mermaid.py diagram.mmd --bg "#1a1b26" --fg "#c0caf5" -o diagram.svg
+```
+
+### Renderer Selection
+
+The validation script automatically chooses the best renderer:
+
+| Renderer | Command | Use Case |
+|----------|---------|----------|
+| Auto (default) | `--renderer auto` | Automatically selects based on diagram type and features |
+| beautiful-mermaid | `--renderer beautiful` | Force theming/ASCII (fails on architecture diagrams) |
+| mmdc | `--renderer mmdc` | Force mmdc for all diagrams |
+
+```bash
+# Auto-detect (default) - uses beautiful-mermaid when available, mmdc for architecture
+uv run scripts/validate_mermaid.py diagram.mmd -o diagram.svg
+
+# Force mmdc
+uv run scripts/validate_mermaid.py diagram.mmd --renderer mmdc -o diagram.svg
+
+# Force beautiful-mermaid (errors on architecture diagrams)
+uv run scripts/validate_mermaid.py diagram.mmd --renderer beautiful --theme dracula -o diagram.svg
+```
+
+For comprehensive theming documentation, see `references/theming-guide.md`.
+
+## ASCII Output
+
+beautiful-mermaid can render diagrams as text for terminal environments.
+
+### Output Modes
+
+| Mode | Flag | Characters | Best For |
+|------|------|------------|----------|
+| Unicode | `--unicode` | Box-drawing chars | Modern terminals |
+| ASCII | `--ascii` | Basic ASCII only | Legacy terminals, logs |
+
+### Usage
+
+```bash
+# Unicode output (recommended)
+uv run scripts/validate_mermaid.py diagram.mmd --unicode -o diagram.txt
+
+# ASCII output
+uv run scripts/validate_mermaid.py diagram.mmd --ascii -o diagram.txt
+
+# With padding adjustments
+uv run scripts/validate_mermaid.py diagram.mmd --unicode --padding-x 2 --padding-y 1 -o diagram.txt
+```
+
+### Use Cases
+
+- Terminal-based documentation viewers
+- Log file embedding
+- Email/plain-text contexts
+- Accessibility (screen readers)
+- CI/CD pipeline output
+
+### Limitations
+
+ASCII/Unicode output is only available for diagram types supported by beautiful-mermaid:
+- Flowcharts
+- Sequence diagrams
+- State diagrams
+- Class diagrams
+- ER diagrams
+
+Architecture diagrams are **not supported** - use SVG output with mmdc instead.
+
 ## Reference Files
 
 - `references/diagram-types.md` - Full syntax and examples for flowcharts, sequence, state, class, ER, and architecture diagrams
 - `references/syntax-quick-ref.md` - Node shapes, arrow types, styling classes, text formatting, and escape sequences
 - `references/layout-patterns.md` - Subgraph organization, nesting strategies, and direction optimization
 - `references/common-issues.md` - Parse errors, reserved words, text clipping fixes, and debugging steps
+- `references/theming-guide.md` - beautiful-mermaid themes, custom colors, and advanced styling
 
 ## Example: Complete Workflow
 
@@ -184,11 +298,21 @@ flowchart TD
     retry --> request
 ```
 
-3. **Validate**:
+3. **Validate** (basic):
 ```bash
-uv run scripts/validate_mermaid.py auth-flow.mmd --output auth-flow.svg
+uv run scripts/validate_mermaid.py auth-flow.mmd -o auth-flow.svg
 ```
 
-4. **Review**: Check the SVG output for readability
+4. **Validate with theme**:
+```bash
+uv run scripts/validate_mermaid.py auth-flow.mmd --theme github-dark -o auth-flow-dark.svg
+```
 
-5. **Iterate**: Adjust direction, add styling if needed
+5. **Generate ASCII for docs**:
+```bash
+uv run scripts/validate_mermaid.py auth-flow.mmd --unicode -o auth-flow.txt
+```
+
+6. **Review**: Check the SVG output for readability
+
+7. **Iterate**: Adjust direction, add styling if needed
