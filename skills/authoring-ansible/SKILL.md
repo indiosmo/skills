@@ -15,7 +15,7 @@ description: >
 
 ## Project Layout
 
-Use per-environment inventory directories. Roles are the primary organizational unit.
+Roles are the primary organizational unit. Use dimensional groups (what/where/when) in a single inventory directory and target with `--limit`.
 
 ```
 ansible-project/
@@ -25,20 +25,17 @@ ansible-project/
   playbooks/
     webservers.yml
     dbservers.yml
-  inventories/
-    production/
-      hosts.yml             # or hosts.ini, or dynamic inventory plugin config
-      group_vars/
-        all/
-          vars.yml           # plaintext variables
-          vault.yml          # ansible-vault encrypted
-        webservers.yml
-      host_vars/
-        db01.yml
-    staging/
-      hosts.yml
-      group_vars/
-      host_vars/
+  inventory/
+    01-what.yml             # function groups (or single hosts.yml for small inventories)
+    02-where.yml            # location groups
+    03-when.yml             # lifecycle groups: prod, staging, test
+    group_vars/
+      all/
+        vars.yml            # plaintext variables
+        vault.yml           # ansible-vault encrypted
+      webservers.yml
+    host_vars/
+      db01.yml
   roles/
     common/
       defaults/main.yml     # user-overridable defaults (low precedence)
@@ -56,10 +53,20 @@ ansible-project/
 ```
 
 Key layout decisions:
-- Separate inventories per environment -- prevents accidental production runs from dev.
+- Dimensional groups (what/where/when) in a single inventory -- environments are lifecycle groups, not separate directory trees. Target with `--limit "webservers:&prod"`.
 - `group_vars/{group}/vars.yml` + `group_vars/{group}/vault.yml` -- keeps variable names visible while values stay encrypted (the "vault indirection pattern").
 - `site.yml` imports tier playbooks; run `ansible-playbook site.yml --limit webservers` for targeted execution.
-- For cloud infrastructure, prefer dynamic inventory plugins (`amazon.aws.aws_ec2`, `azure.azcollection.azure_rm`, `google.cloud.gcp_compute`) over static hosts files.
+## Inventory Management
+
+Prefer YAML format over INI -- INI has inconsistent type parsing between inline host vars and `:vars` sections.
+
+Always use aliases for hosts. The left-hand inventory name is what you reference in playbooks, logs, and `--limit`; `ansible_host` holds the actual connection target. This decouples automation logic from infrastructure details.
+
+Organize hosts along three dimensions -- function (webservers, dbservers), geography (us_east, eu_west), and lifecycle (prod, staging) -- then target with intersection patterns (`--limit "webservers:&prod:&us_east"`) instead of creating combinatorial group names.
+
+Debug inventory with `ansible-inventory --graph` (hierarchy), `--list` (full JSON), or `--host <name> -vvv` (trace variable sources for a single host).
+
+See [references/inventory.md](references/inventory.md) for the complete inventory guide: YAML/INI syntax, aliases, group hierarchies, host patterns, `ansible-inventory` debugging, group design patterns, and common mistakes.
 
 ## Linting Setup
 
@@ -67,7 +74,7 @@ Key layout decisions:
 
 ```yaml
 ---
-profile: moderate  # min < basic < moderate < safety < shared < production
+profile: moderate  # good starting point; bump to safety for stricter enforcement
 
 exclude_paths:
   - .cache/
@@ -240,6 +247,46 @@ Use `import_tasks` by default. Switch to `include_tasks` only when you need loop
 ```
 
 Use `failed_when` for controlled failure conditions. Avoid `ignore_errors: true` -- it masks real failures. Use `failed_when: false` if you truly want to suppress all errors on a task, as it is explicit about intent.
+
+## Idempotency
+
+Every task, role, and playbook must be idempotent: running it N times must produce the same result as running it once, with `changed=0` on subsequent runs. This is the central design constraint of Ansible automation.
+
+### Writing idempotent tasks
+
+- Use declarative modules (`ansible.builtin.apt`, `ansible.builtin.copy`, `ansible.builtin.user`, etc.) over `shell`/`command`. Modules track state and report `changed` accurately.
+- When `shell`/`command` is unavoidable, always set `changed_when` and use `creates`/`removes` guards:
+
+```yaml
+- name: Run database migration
+  ansible.builtin.command:
+    cmd: /opt/app/migrate --up
+    creates: /opt/app/.migration_complete   # skips if file exists
+  changed_when: "'Applied' in migrate_result.stdout"
+  register: migrate_result
+```
+
+- Use `ansible.builtin.lineinfile`/`blockinfile` instead of appending with `shell: echo >> file` (appending is never idempotent).
+- Use handlers with `notify` instead of unconditional restart tasks (see Key Antipatterns below).
+- For `ansible.builtin.get_url` and `ansible.builtin.unarchive`, set `checksum` or use `creates` to prevent re-downloading/re-extracting every run.
+
+### Common idempotency breakers
+
+| Pattern | Problem | Fix |
+|---------|---------|-----|
+| `shell: echo "line" >> file` | Appends on every run | `lineinfile` with `line:` |
+| `command: useradd foo` | Fails if user exists | `ansible.builtin.user: state: present` |
+| `shell: curl ... \| bash` | Re-runs installer every time | `get_url` + `creates:` guard |
+| Unconditional service restart | `changed` every run | `notify` handler |
+| `set_fact` with timestamps | Always different | Tag `molecule-idempotence-notest` |
+
+### Verify idempotency with Molecule
+
+Always confirm idempotency using Molecule. The `molecule idempotence` command runs converge a second time and fails if any task reports `changed > 0`.
+
+During development, use `molecule converge && molecule idempotence` to iterate quickly. Use `molecule test` for the full lifecycle (which includes the idempotence step by default).
+
+For tasks that legitimately cannot be idempotent (timestamp generation, token rotation), tag with `molecule-idempotence-notest` -- but treat this as an exception requiring justification, not a routine escape hatch. See [references/testing.md](references/testing.md) for tag details and CI integration.
 
 ## Key Antipatterns
 
@@ -472,7 +519,7 @@ dependency:
         that: ansible_facts.services['nginx.service'].state == 'running'
 ```
 
-Development workflow: `molecule converge` (iterate) then `molecule test` (full lifecycle with idempotence check).
+Development workflow: `molecule converge` (iterate) then `molecule idempotence` (confirm no changes on re-run) then `molecule test` (full lifecycle). Always include the idempotence step -- do not skip it.
 
 See [references/testing.md](references/testing.md) for multi-platform testing, custom create/destroy playbooks, CI/CD integration, and advanced scenarios.
 
