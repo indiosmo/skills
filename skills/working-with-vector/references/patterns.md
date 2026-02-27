@@ -194,6 +194,55 @@ inputs = ["http_metrics"]
 address = "0.0.0.0:9598"
 ```
 
+**Missing fields are silently skipped.** If a `[[metrics]]` block references a `field` that doesn't exist in an event, no metric is emitted for that block -- no error, no empty metric. This means you can define the superset of all possible metrics and each event will only produce what it actually contains.
+
+**The `name` field supports [template syntax](https://vector.dev/docs/reference/configuration/template-syntax/).** This enables fully dynamic metrics when combined with VRL fan-out. Instead of adding a static `[[metrics]]` block per metric type, fan-out the log into one event per metric key, then use a single templated block:
+
+```toml
+# Step 1: fan-out payload keys into individual events
+[transforms.counters_expanded]
+type = "remap"
+inputs = ["counters_filtered"]
+source = '''
+tags = {}
+tags.host = string!(.host)
+tags.component = string!(.component)
+tags.counter_set = string!(.name)
+
+payload = object!(.payload)
+events = []
+for_each(payload) -> |key, value| {
+  event = {}
+  for_each(tags) -> |tk, tv| {
+    event = set!(event, [tk], tv)
+  }
+  event.timestamp = .timestamp
+  event.counter_name = key
+  event.counter_value = value
+  events = push(events, event)
+}
+. = events
+'''
+
+# Step 2: single dynamic metric block handles all counter types
+[transforms.counters_metrics]
+type = "log_to_metric"
+inputs = ["counters_expanded"]
+
+  [[transforms.counters_metrics.metrics]]
+  type = "counter"
+  field = "counter_value"
+  name = "app_{{counter_name}}_total"
+  namespace = "app"
+  increment_by_value = true
+    [transforms.counters_metrics.metrics.tags]
+    host = "{{host}}"
+    component = "{{component}}"
+    counter_set = "{{counter_set}}"
+```
+
+New payload keys automatically become metrics without config changes.
+
 Use `tag_cardinality_limit` to protect downstream systems from high-cardinality tags:
 ```toml
 [transforms.limit_tags]

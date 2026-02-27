@@ -113,6 +113,20 @@ Standard string, type-check, and encoding functions work as expected (`downcase`
 
 Prototype complex `parse_regex!` and `parse_grok!` patterns interactively with `vector vrl` before embedding in config.
 
+### Emitting multiple events (fan-out)
+
+Setting `.` to an array in a remap transform causes Vector to emit one event per element. This is the idiomatic way to "explode" a single log into multiple events without Lua:
+
+```coffee
+payload = object!(.payload)
+events = []
+for_each(payload) -> |key, value| {
+  event = {"name": key, "value": value, "host": .host}
+  events = push(events, event)
+}
+. = events
+```
+
 ### VRL constraints (by design)
 
 - No general-purpose loops (single-pass transforms only)
@@ -121,6 +135,32 @@ Prototype complex `parse_regex!` and `parse_grok!` patterns interactively with `
 - No recursion
 - No cross-event state
 - Metric events are restrictive -- only tags and certain fields can be modified
+
+### Timezone handling
+
+Logs often lack timezone info in the timestamp string. Since v0.44, `parse_timestamp` accepts an IANA timezone as a third argument:
+
+```coffee
+# Explicit timezone on the function call
+.timestamp = parse_timestamp!(.raw_ts, format: "%Y-%m-%d %H:%M:%S%.f", timezone: "America/Sao_Paulo")
+```
+
+Alternatively, set `timezone` on the remap transform to apply it to all VRL timestamp functions in that block:
+
+```toml
+[transforms.parse]
+type = "remap"
+inputs = ["source"]
+timezone = "America/Sao_Paulo"
+source = '''
+  # parse_timestamp will use the transform-level timezone for naive timestamps
+  .timestamp = parse_timestamp!(.raw_ts, format: "%Y-%m-%d %H:%M:%S%.f")
+'''
+```
+
+The global config also supports `timezone` as a default for all transforms. Resolution order: timezone in the string itself > function argument > transform-level > global > UTC.
+
+Do not hardcode UTC offsets (e.g. appending " -0300") -- this breaks across DST transitions and is fragile if timezone rules change.
 
 ### Idiomatic VRL patterns
 
@@ -217,7 +257,7 @@ Avoid these frequent pitfalls (see [references/production.md](references/product
 - Generic component IDs (`transform_1`, `sink_2`) -- use descriptive names like `parse_nginx_logs`, `route_by_severity`
 - Hardcoded secrets -- always use `${ENV_VAR}` interpolation
 - Deploying without running `vector validate` and `vector test`
-- Using Lua when VRL can handle the use case
+- Using Lua when VRL can handle the use case. In particular, VRL fan-out (`. = array`) replaces the most common Lua use case (emitting multiple events). The Lua event API is also version-dependent -- `Event.new()` does not exist; creating new events requires constructing `{log = {field = value}}` tables, and deep-copying event objects is fragile due to metatables.
 - Blindly using `!` on every fallible function instead of handling errors explicitly
 - Placing filters late in the pipeline after expensive transforms
 - Using memory buffers for data you cannot afford to lose
