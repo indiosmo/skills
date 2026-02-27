@@ -1,21 +1,13 @@
 ---
 name: authoring-ansible
-description: >
-  Write, review, and debug Ansible automation: playbooks, roles, inventories,
-  and collections with idiomatic patterns, security hardening, and testing.
-  Use when creating or modifying Ansible playbooks and roles, reviewing Ansible
-  code for best practices, setting up ansible-lint or Molecule testing,
-  organizing Ansible repositories, managing secrets with Vault, hardening
-  privilege escalation, or troubleshooting Ansible automation. Triggers on:
-  Ansible playbooks, roles, inventories, YAML automation files, ansible-lint
-  configs, Molecule test scenarios, Ansible Vault, group_vars, host_vars.
+description: "Write, review, and debug Ansible automation: playbooks, roles, inventories, and collections with idiomatic patterns, security hardening, and testing. Use when creating or modifying Ansible playbooks and roles, reviewing Ansible code for best practices, setting up ansible-lint or Molecule testing, organizing Ansible repositories, managing secrets with Vault, hardening privilege escalation, or troubleshooting Ansible automation. Triggers on: Ansible playbooks, roles, inventories, YAML automation files, ansible-lint configs, Molecule test scenarios, Ansible Vault, group_vars, host_vars."
 ---
 
 # Authoring Ansible
 
 ## Project Layout
 
-Roles are the primary organizational unit. Use dimensional groups (what/where/when) in a single inventory directory and target with `--limit`.
+Roles are the primary organizational unit. Use dimensional groups (what/where/when) in a single inventory and target with `--limit`.
 
 ```
 ansible-project/
@@ -26,9 +18,7 @@ ansible-project/
     webservers.yml
     dbservers.yml
   inventory/
-    01-what.yml             # function groups (or single hosts.yml for small inventories)
-    02-where.yml            # location groups
-    03-when.yml             # lifecycle groups: prod, staging, test
+    hosts.yml               # dimensional groups: what/where/when
     group_vars/
       all/
         vars.yml            # plaintext variables
@@ -52,21 +42,20 @@ ansible-project/
   .yamllint
 ```
 
-Key layout decisions:
-- Dimensional groups (what/where/when) in a single inventory -- environments are lifecycle groups, not separate directory trees. Target with `--limit "webservers:&prod"`.
-- `group_vars/{group}/vars.yml` + `group_vars/{group}/vault.yml` -- keeps variable names visible while values stay encrypted (the "vault indirection pattern").
+- `group_vars/{group}/vars.yml` + `vault.yml` keeps variable names visible while values stay encrypted (vault indirection pattern).
 - `site.yml` imports tier playbooks; run `ansible-playbook site.yml --limit webservers` for targeted execution.
+
 ## Inventory Management
 
-Prefer YAML format over INI -- INI has inconsistent type parsing between inline host vars and `:vars` sections.
+Prefer YAML over INI -- INI has inconsistent type parsing between inline host vars and `:vars` sections.
 
 Always use aliases for hosts. The left-hand inventory name is what you reference in playbooks, logs, and `--limit`; `ansible_host` holds the actual connection target. This decouples automation logic from infrastructure details.
 
-Organize hosts along three dimensions -- function (webservers, dbservers), geography (us_east, eu_west), and lifecycle (prod, staging) -- then target with intersection patterns (`--limit "webservers:&prod:&us_east"`) instead of creating combinatorial group names.
+Organize hosts along three dimensions -- function (webservers, dbservers), location (east, west), and lifecycle (prod, staging) -- then target with intersection patterns (`--limit "webservers:&prod"`) instead of creating combinatorial group names. Use `children:` only when one group genuinely contains another.
 
-Debug inventory with `ansible-inventory --graph` (hierarchy), `--list` (full JSON), or `--host <name> -vvv` (trace variable sources for a single host).
+Debug inventory with `ansible-inventory --graph` (hierarchy), `--list` (full JSON), or `--host <name>` (merged variables). Add `-vvv` to trace variable sources.
 
-See [references/inventory.md](references/inventory.md) for the complete inventory guide: YAML/INI syntax, aliases, group hierarchies, host patterns, `ansible-inventory` debugging, group design patterns, and common mistakes.
+See [references/inventory.md](references/inventory.md) for YAML/INI syntax, aliases, group hierarchies, host patterns, debugging, group design patterns, and common mistakes.
 
 ## Linting Setup
 
@@ -83,12 +72,9 @@ exclude_paths:
 
 warn_list:
   - experimental
-
-# enable_list:
-#   - no-same-owner
 ```
 
-The `safety` profile is the strictest fully-implemented profile. `shared` and `production` contain rules that are not yet enforced -- use them as aspirational targets only.
+The `safety` profile is the strictest fully-implemented profile. `shared` and `production` contain rules not yet enforced.
 
 Run: `ansible-lint` (auto-discovers playbooks). Fix auto-fixable violations: `ansible-lint --fix`.
 
@@ -121,13 +107,13 @@ rules:
     max-spaces-inside: 1
 ```
 
-When providing a custom `.yamllint`, the `braces`, `comments.min-spaces-from-content`, and `octal-values` settings above are **required** for ansible-lint compatibility. Deviating from them causes ansible-lint to reject the custom config.
+When providing a custom `.yamllint`, the `braces`, `comments.min-spaces-from-content`, and `octal-values` settings above are required for ansible-lint compatibility.
 
 See [references/linting.md](references/linting.md) for the full rule catalog, profiles, CI/CD integration, and skip mechanisms.
 
 ## Playbook Authoring
 
-### Essentials that ansible-lint enforces
+### Essentials
 
 Always use FQCN, name every task, use `true`/`false` (not `yes`/`no`), quote file modes, set explicit state:
 
@@ -164,9 +150,9 @@ Always use FQCN, name every task, use `true`/`false` (not `yes`/`no`), quote fil
       become: true
 ```
 
-### Variable precedence mental model
+### Variable precedence
 
-Do not memorize all levels. Know these tiers (lowest to highest):
+Know these tiers (lowest to highest):
 
 | Tier | Where | Use for |
 |------|-------|---------|
@@ -176,12 +162,12 @@ Do not memorize all levels. Know these tiers (lowest to highest):
 | Play vars / vars_files | `vars:` in play | Play-scoped values |
 | Role vars | `roles/x/vars/main.yml` | Internal constants (hard to override) |
 | include_vars / set_fact | Dynamic | Runtime-computed values |
-| Extra vars (`-e`) | CLI | Always wins, cannot be overridden |
+| Extra vars (`-e`) | CLI | Always wins |
 
 Gotchas:
-- `defaults/main.yml` (tier 1) vs `vars/main.yml` (tier 5) -- vastly different precedence despite similar locations. Use `defaults/` for anything users should customize; `vars/` for constants.
-- `include_vars` and `set_fact` beat almost everything except extra vars. A stray `set_fact` can silently override inventory variables.
-- Child groups beat parent groups in inventory. `group_vars/webservers.yml` beats `group_vars/all.yml`.
+- `defaults/main.yml` (tier 1) vs `vars/main.yml` (tier 5) -- vastly different precedence despite similar locations. Use `defaults/` for user-configurable values; `vars/` for constants.
+- `set_fact` beats almost everything except extra vars. A stray `set_fact` can silently override inventory variables.
+- Child groups beat parent groups. `group_vars/webservers.yml` beats `group_vars/all.yml`.
 
 ### import_tasks vs include_tasks
 
@@ -190,8 +176,8 @@ Gotchas:
 | Parsed at | Playbook load time | Runtime |
 | Works with `--list-tasks` | Yes | No |
 | Supports loops | No | Yes |
-| `when:` behavior | Applied to **every imported task** individually | Evaluated **once** on the include itself |
-| Handler visibility | Handlers visible outside | Handlers NOT visible outside |
+| `when:` behavior | Applied to every imported task individually | Evaluated once on the include itself |
+| Handler visibility | Visible outside | NOT visible outside |
 
 Use `import_tasks` by default. Switch to `include_tasks` only when you need loops or conditional file selection.
 
@@ -202,7 +188,6 @@ Use `import_tasks` by default. Switch to `include_tasks` only when you need loop
 - Use `listen` to decouple notification name from handler name:
 
 ```yaml
-# handlers/main.yml
 - name: Restart nginx
   ansible.builtin.systemd:
     name: nginx
@@ -246,49 +231,11 @@ Use `import_tasks` by default. Switch to `include_tasks` only when you need loop
         state: started
 ```
 
-Use `failed_when` for controlled failure conditions. Avoid `ignore_errors: true` -- it masks real failures. Use `failed_when: false` if you truly want to suppress all errors on a task, as it is explicit about intent.
+Avoid `ignore_errors: true` -- it masks real failures. Use `failed_when: false` when you truly want to suppress all errors, as it is explicit about intent.
 
-## Idempotency
+## Idempotency and Best Practices
 
-Every task, role, and playbook must be idempotent: running it N times must produce the same result as running it once, with `changed=0` on subsequent runs. This is the central design constraint of Ansible automation.
-
-### Writing idempotent tasks
-
-- Use declarative modules (`ansible.builtin.apt`, `ansible.builtin.copy`, `ansible.builtin.user`, etc.) over `shell`/`command`. Modules track state and report `changed` accurately.
-- When `shell`/`command` is unavoidable, always set `changed_when` and use `creates`/`removes` guards:
-
-```yaml
-- name: Run database migration
-  ansible.builtin.command:
-    cmd: /opt/app/migrate --up
-    creates: /opt/app/.migration_complete   # skips if file exists
-  changed_when: "'Applied' in migrate_result.stdout"
-  register: migrate_result
-```
-
-- Use `ansible.builtin.lineinfile`/`blockinfile` instead of appending with `shell: echo >> file` (appending is never idempotent).
-- Use handlers with `notify` instead of unconditional restart tasks (see Key Antipatterns below).
-- For `ansible.builtin.get_url` and `ansible.builtin.unarchive`, set `checksum` or use `creates` to prevent re-downloading/re-extracting every run.
-
-### Common idempotency breakers
-
-| Pattern | Problem | Fix |
-|---------|---------|-----|
-| `shell: echo "line" >> file` | Appends on every run | `lineinfile` with `line:` |
-| `command: useradd foo` | Fails if user exists | `ansible.builtin.user: state: present` |
-| `shell: curl ... \| bash` | Re-runs installer every time | `get_url` + `creates:` guard |
-| Unconditional service restart | `changed` every run | `notify` handler |
-| `set_fact` with timestamps | Always different | Tag `molecule-idempotence-notest` |
-
-### Verify idempotency with Molecule
-
-Always confirm idempotency using Molecule. The `molecule idempotence` command runs converge a second time and fails if any task reports `changed > 0`.
-
-During development, use `molecule converge && molecule idempotence` to iterate quickly. Use `molecule test` for the full lifecycle (which includes the idempotence step by default).
-
-For tasks that legitimately cannot be idempotent (timestamp generation, token rotation), tag with `molecule-idempotence-notest` -- but treat this as an exception requiring justification, not a routine escape hatch. See [references/testing.md](references/testing.md) for tag details and CI integration.
-
-## Key Antipatterns
+Every task must be idempotent: running it N times produces the same result as running it once, with `changed=0` on subsequent runs.
 
 ### Use modules, not shell commands
 
@@ -304,11 +251,16 @@ For tasks that legitimately cannot be idempotent (timestamp generation, token ro
     state: present
 ```
 
-This applies to: package management, user/group management, file operations, service control, git operations. If an Ansible module exists, use it.
-
-When shell/command is unavoidable, always set `changed_when` and prefer `command` over `shell` (no shell injection surface):
+When shell/command is unavoidable, always set `changed_when` and prefer `command` over `shell` (no shell injection surface). Guard interpolated variables with the `quote` filter:
 
 ```yaml
+# DANGEROUS
+- ansible.builtin.shell: "grep {{ username }} /etc/passwd"
+
+# SAFE
+- ansible.builtin.shell: "grep {{ username | quote }} /etc/passwd"
+
+# BEST -- use creates/removes guards
 - name: Run database migration
   ansible.builtin.command:
     cmd: /opt/app/bin/migrate --up
@@ -317,34 +269,10 @@ When shell/command is unavoidable, always set `changed_when` and prefer `command
   changed_when: "'Applied' in migrate_result.stdout"
 ```
 
-### Guard every shell variable
-
-When `shell` module is required, always escape interpolated variables with the `quote` filter:
-
-```yaml
-# DANGEROUS -- shell injection possible
-- ansible.builtin.shell: "grep {{ username }} /etc/passwd"
-
-# SAFE
-- ansible.builtin.shell: "grep {{ username | quote }} /etc/passwd"
-```
-
-### Prefix role variables
-
-```yaml
-# BAD -- collides with other roles
-port: 8080
-user: myapp
-
-# GOOD -- namespaced to role
-myapp_port: 8080
-myapp_user: myapp
-```
-
 ### Notify handlers instead of inline restarts
 
 ```yaml
-# BAD -- restarts every run regardless of changes
+# BAD -- restarts every run
 - name: Deploy config
   ansible.builtin.template:
     src: app.conf.j2
@@ -362,7 +290,17 @@ myapp_user: myapp
   notify: Restart app
 ```
 
-### Set `become` per-task, not per-play
+### Prefix role variables
+
+```yaml
+# BAD -- collides with other roles
+port: 8080
+
+# GOOD -- namespaced to role
+myapp_port: 8080
+```
+
+### Set become per-task, not per-play
 
 ```yaml
 # BAD -- everything runs as root
@@ -386,46 +324,49 @@ myapp_user: myapp
       become: true
 ```
 
+### Common idempotency breakers
+
+| Pattern | Problem | Fix |
+|---------|---------|-----|
+| `shell: echo "line" >> file` | Appends on every run | `lineinfile` with `line:` |
+| `command: useradd foo` | Fails if user exists | `ansible.builtin.user: state: present` |
+| `shell: curl ... \| bash` | Re-runs every time | `get_url` + `creates:` guard |
+| Unconditional service restart | `changed` every run | `notify` handler |
+| `set_fact` with timestamps | Always different | Tag `molecule-idempotence-notest` |
+
+### Verify idempotency with Molecule
+
+Use `molecule converge && molecule idempotence` to iterate quickly. `molecule test` runs the full lifecycle including the idempotence step. For tasks that legitimately cannot be idempotent, tag with `molecule-idempotence-notest`. See [references/testing.md](references/testing.md).
+
 ## Common Gotchas
 
-**`{{ }}` in `when:`** -- `when:` already evaluates Jinja. Double-wrapping causes hard-to-debug errors:
-
+**`{{ }}` in `when:`** -- `when:` already evaluates Jinja. Double-wrapping causes errors:
 ```yaml
-# BAD -- nested evaluation
+# BAD
 when: "{{ my_var == 'foo' }}"
-
 # GOOD
 when: my_var == 'foo'
 ```
 
-**Bare booleans in YAML** -- Unquoted `yes`, `no`, `on`, `off` are parsed as booleans by YAML, not strings. This silently breaks comparisons and dictionary keys:
-
+**Bare booleans in YAML** -- Unquoted `yes`, `no`, `on`, `off` are parsed as booleans, not strings:
 ```yaml
-# BAD -- 'on' is parsed as boolean True
+# BAD -- 'on' becomes boolean True
 feature_flags:
-  on: enabled    # key becomes True, not the string "on"
-
+  on: enabled
 # GOOD
 feature_flags:
   "on": enabled
 ```
 
-**`collections:` keyword** -- Do not use `collections:` at play level to avoid typing FQCN. It breaks portability, hides which collection a module comes from, and ansible-lint rejects it (`fqcn[keyword]`). Always use full FQCN.
+**`collections:` keyword** -- Do not use `collections:` at play level. It breaks portability, hides module origins, and ansible-lint rejects it (`fqcn[keyword]`). Always use full FQCN.
 
-**`set_fact` persists for the host** -- Facts set with `set_fact` survive across plays in the same run. A `set_fact` in play 1 can silently override an inventory variable in play 2:
+**`set_fact` persists for the host** -- Facts survive across plays in the same run. A `set_fact` in play 1 can override an inventory variable in play 2. Prefer `vars:` at play/task level when values do not need to persist.
 
-```yaml
-# Play 1 sets http_port=9090 for host A
-# Play 2 expects http_port from inventory (8080) -- but gets 9090
-```
+**`delegate_to` + `become`** -- `become` applies on the delegated host. A task delegated to localhost with `become: true` escalates on localhost, which may be unintended.
 
-Use `set_fact: cacheable: false` (the default) and keep fact names unique. Prefer `vars:` at play/task level when values do not need to persist.
+**Dictionary merging** -- Ansible replaces dictionaries entirely rather than merging. If `group_vars/all` defines `app_config: {port: 80, workers: 4}` and a host overrides `app_config: {port: 9090}`, `workers` is gone. Use flat variables or the `combine` filter.
 
-**`delegate_to` + `become`** -- `become` applies on the delegated host, not the inventory host. A task delegated to localhost with `become: true` escalates on localhost, which may be unintended.
-
-**Dictionary merging** -- By default, Ansible replaces dictionaries entirely rather than merging them. If `group_vars/all` defines `app_config: {port: 80, workers: 4}` and a host overrides `app_config: {port: 9090}`, the result has `port: 9090` only -- `workers` is gone. Either use flat variables or combine dicts explicitly with the `combine` filter.
-
-**`register` on skipped/failed tasks** -- A registered variable from a skipped task has `.skipped == true` but no `.stdout`. Always check `result is not skipped` or `result is defined` before accessing attributes.
+**`register` on skipped tasks** -- A registered variable from a skipped task has `.skipped == true` but no `.stdout`. Always check `result is not skipped` before accessing attributes.
 
 ## Security Essentials
 
@@ -434,14 +375,12 @@ Use `set_fact: cacheable: false` (the default) and keep fact names unique. Prefe
 ```yaml
 # group_vars/production/vars.yml (plaintext, grep-able)
 db_password: "{{ vault_db_password }}"
-api_key: "{{ vault_api_key }}"
 
 # group_vars/production/vault.yml (encrypted: ansible-vault encrypt)
 vault_db_password: "s3cret"
-vault_api_key: "abc123"
 ```
 
-`ansible-vault rekey` works on file-level encryption but NOT on inline `encrypt_string` values. For secrets that rotate frequently, use an external secrets manager (HashiCorp Vault, AWS SSM) instead.
+`ansible-vault rekey` works on file-level encryption only, NOT on inline `encrypt_string` values. For frequently rotated secrets, use an external secrets manager.
 
 ### no_log on sensitive tasks
 
@@ -453,19 +392,17 @@ vault_api_key: "abc123"
   no_log: true
 ```
 
-Limitations: `no_log` does not prevent exposure in `-vvvv` tracebacks, some callback plugins, or loop `results` on older Ansible versions. Treat it as defense-in-depth, not sole protection.
+`no_log` does not prevent exposure in `-vvvv` tracebacks, some callback plugins, or loop results on older versions. Treat it as defense-in-depth, not sole protection.
 
 ### ansible.cfg security
 
-Never run Ansible from untrusted directories -- Ansible loads `ansible.cfg` from the current directory, which can override connection settings or enable malicious callback plugins. Set `ANSIBLE_CONFIG` explicitly in CI.
-
-Keep `host_key_checking = True` (the default). Disabling it enables MITM attacks. Manage `known_hosts` properly instead.
+Never run Ansible from untrusted directories -- Ansible loads `ansible.cfg` from the current directory. Set `ANSIBLE_CONFIG` explicitly in CI. Keep `host_key_checking = True` (the default).
 
 See [references/security.md](references/security.md) for Vault IDs, external secrets managers, SSH hardening, audit logging, and supply chain security.
 
 ## Molecule Testing
 
-Molecule tests roles and playbooks in ephemeral environments. Use the ansible-native approach (Molecule 6+) where create/destroy are standard Ansible playbooks.
+Molecule tests roles in ephemeral environments. Use the ansible-native approach (Molecule 6+) where create/destroy are standard Ansible playbooks.
 
 ### Minimal role test setup
 
@@ -477,7 +414,7 @@ roles/myrole/molecule/default/
 ```
 
 ```yaml
-# molecule.yml (ansible-native, Molecule 6+)
+# molecule.yml
 ---
 dependency:
   name: galaxy
@@ -509,7 +446,6 @@ dependency:
     - name: Assert nginx is installed
       ansible.builtin.assert:
         that: "'nginx' in ansible_facts.packages"
-        fail_msg: "nginx not installed"
 
     - name: Check nginx is running
       ansible.builtin.service_facts:
@@ -519,22 +455,20 @@ dependency:
         that: ansible_facts.services['nginx.service'].state == 'running'
 ```
 
-Development workflow: `molecule converge` (iterate) then `molecule idempotence` (confirm no changes on re-run) then `molecule test` (full lifecycle). Always include the idempotence step -- do not skip it.
+Development workflow: `molecule converge` (iterate), `molecule idempotence` (confirm no changes on re-run), `molecule test` (full lifecycle).
 
 See [references/testing.md](references/testing.md) for multi-platform testing, custom create/destroy playbooks, CI/CD integration, and advanced scenarios.
 
 ## Performance
 
 - **Forks**: Increase `forks` in `ansible.cfg` (default 5). Set to ~20-50 for large inventories.
-- **Pipelining**: Set `pipelining = True` under `[ssh_connection]`. Requires `Defaults !requiretty` in sudoers on managed hosts.
-- **Fact caching**: Use `fact_caching = jsonfile` with `fact_caching_connection = /tmp/ansible_facts` to skip re-gathering on repeat runs.
+- **Pipelining**: Set `pipelining = True` under `[ssh_connection]`. Requires `Defaults !requiretty` in sudoers.
+- **Fact caching**: `fact_caching = jsonfile` with `fact_caching_connection = /tmp/ansible_facts`.
 - **gather_subset**: Use `gather_subset: [min]` or `gather_facts: false` when full facts are not needed.
-- **Strategy**: Default `linear` waits for all hosts per task. Use `strategy: free` to let fast hosts proceed independently.
-- **Async**: For long tasks, use `async: 3600` + `poll: 0` for fire-and-forget, then check with `async_status`.
+- **Strategy**: Use `strategy: free` to let fast hosts proceed independently (default `linear` waits for all hosts per task).
+- **Async**: For long tasks, `async: 3600` + `poll: 0` for fire-and-forget, then check with `async_status`.
 
 ## Validation Pipeline
-
-Run these in order (each catches different issues):
 
 ```bash
 yamllint .                                      # YAML syntax
