@@ -17,13 +17,20 @@ Every script starts from this skeleton:
 
 ```bash
 #!/usr/bin/env bash
+# Purpose: <one-line summary of what this script does>
+# Usage:   <script-name> [options] <required-args>
+#          Example: deploy.sh --env staging v1.2.3
+# Notes:   <any important caveats, dependencies, or side effects>
 set -euo pipefail
 
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Helper functions: die writes to stderr and exits; log writes timestamped
+# messages to stderr so they don't pollute stdout captures.
 die() { printf '%s\n' "$*" >&2; exit 1; }
 log() { printf '%s %s\n' "$(date '+%H:%M:%S')" "$*" >&2; }
 
+# Cleanup: runs on every exit (normal, error, or signal) to remove temp files.
 cleanup() {
   local exit_code=$?
   rm -f "${TMPFILE:-}"
@@ -38,6 +45,7 @@ main() {
   log "Done"
 }
 
+# Entry point guard: allows script to be sourced by tests without running main.
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
   main "$@"
 fi
@@ -50,6 +58,47 @@ Key elements:
 - `die` and `log` helpers; errors always to stderr
 - `trap cleanup EXIT` for resource cleanup
 - `readonly` for constants
+
+## Comments
+
+Bash is dense and non-obvious. Comments are not optional.
+
+**Top-level header (required on every script):**
+
+```bash
+#!/usr/bin/env bash
+# Purpose: Deploys a service to the target environment.
+# Usage:   deploy.sh [--dry-run] <environment> <version>
+#          Example: deploy.sh --dry-run staging v1.2.3
+# Notes:   Requires AWS credentials in environment. Modifies ECS task definitions.
+```
+
+**Section comments:** Add a one-line comment before each logical section explaining
+its purpose. Bash constructs like traps, pipefail interactions, and associative
+arrays are not self-documenting.
+
+```bash
+# Parse flags before positional arguments to handle mixed argument order.
+while [[ $# -gt 0 ]]; do ...
+
+# Validate all inputs up front before making any changes.
+validate_inputs "$environment" "$version"
+
+# Build the image tag and push to ECR before updating the task definition.
+push_image "$version"
+```
+
+Comment the "why", not the "what":
+
+```bash
+# GOOD: explains the non-obvious reason
+# Use || true to prevent pipefail from exiting when grep finds no matches.
+grep "ERROR" "$logfile" | wc -l || true
+
+# BAD: restates the code
+# Increment count
+(( ++count ))
+```
 
 ## Strict Mode Caveats
 
