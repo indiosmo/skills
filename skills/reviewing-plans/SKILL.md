@@ -1,6 +1,6 @@
 ---
 name: reviewing-plans
-description: Review and red-team implementation plans for completeness, correctness, and potential flaws before finalization. Use when Claude has drafted an implementation plan (from plan mode or otherwise) and needs to verify it before producing the final version. Dispatches parallel review agents (Claude and optionally Codex via MCP) to find logic errors, missed edge cases, potential regressions, incomplete steps, and specification gaps, then consolidates reviews into a refined final plan.
+description: Review and red-team implementation plans for completeness, correctness, and potential flaws before finalization. Use when Claude has drafted an implementation plan (from plan mode or otherwise) and needs to verify it before producing the final version. Dispatches parallel review agents -- always a Claude agent, and always a Codex agent when the mcp__codex__codex tool is available -- to find logic errors, missed edge cases, potential regressions, incomplete steps, and specification gaps, then consolidates reviews into a refined final plan.
 ---
 
 # Reviewing Plans
@@ -27,7 +27,9 @@ Send a single message with multiple tool calls to run reviews concurrently.
 
 Use the Agent tool with `subagent_type: "general-purpose"`. Pass the fully substituted review prompt. Instruct the agent to read relevant source files to verify the plan's assumptions against actual code.
 
-**Codex review agent** (dispatch only if `mcp__codex__codex` is available in the current tool set):
+**Codex review agent** (MUST dispatch when available):
+
+Before dispatching, check whether `mcp__codex__codex` exists in the available tool set (including deferred tools). If it is available, you MUST dispatch it alongside the Claude review agent in the same parallel tool call. Do NOT skip it or wait for the user to ask. The whole point of this skill is to get independent parallel reviews.
 
 Call `mcp__codex__codex` with:
 
@@ -36,7 +38,7 @@ Call `mcp__codex__codex` with:
 - `approval-policy`: `"never"`
 - `sandbox`: `"read-only"`
 
-If `mcp__codex__codex` is not available, proceed with only the Claude review agent.
+Only if `mcp__codex__codex` is confirmed to not exist in the tool set (not listed in available tools or deferred tools), proceed with the Claude review agent alone.
 
 ### 3. Consolidate reviews
 
