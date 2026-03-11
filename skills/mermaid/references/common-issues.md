@@ -201,7 +201,7 @@ uv run scripts/validate_mermaid.py architecture.mmd --renderer mmdc -o architect
 
 **Fix**:
 ```bash
-cd skills/authoring-mermaid-diagrams/scripts
+cd skills/mermaid/scripts
 npm install
 ```
 
@@ -212,7 +212,7 @@ This installs beautiful-mermaid and its dependencies locally.
 **Cause**: The Node.js wrapper script is missing.
 
 **Fix**: Ensure you have the complete skill installation. The file should be at:
-`skills/authoring-mermaid-diagrams/scripts/render_beautiful.js`
+`skills/mermaid/scripts/render_beautiful.js`
 
 ### Theme Not Found
 

@@ -13,8 +13,8 @@ git clone <repo-url> ~/skills
 
 # Symlink skills you want to use
 mkdir -p ~/.claude/skills
-ln -s ~/skills/skills/authoring-mermaid-diagrams ~/.claude/skills/
-ln -s ~/skills/skills/processing-pdfs ~/.claude/skills/
+ln -s ~/skills/skills/mermaid ~/.claude/skills/
+ln -s ~/skills/skills/pdf ~/.claude/skills/
 ```
 
 The `setup.sh` script checks for required tools (uv, npm), installs Python dependencies via `uv sync`, and runs `npm install` for any skills with Node.js dependencies.
@@ -26,7 +26,7 @@ The `setup.sh` script checks for required tools (uv, npm), installs Python depen
 uv run pytest
 
 # Run a single test
-uv run pytest tests/processing-pdfs/test_check_bounding_boxes.py
+uv run pytest tests/pdf/test_check_bounding_boxes.py
 
 # Run Python scripts (uses PEP 723 inline dependencies)
 uv run scripts/example.py

@@ -1,5 +1,5 @@
 ---
-name: authoring-plantuml-diagrams
+name: plantuml
 description: Author PlantUML diagrams (sequence, activity, state) as .puml files. Use when the user asks to create sequence diagrams, activity/flow diagrams, state machine diagrams, draw a state machine, show me the interaction between these services, diagram this workflow, or produce a .puml file format. Covers participant interactions, workflows with branching/loops, and state transitions.
 ---
 

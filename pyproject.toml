@@ -19,12 +19,12 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = [
-    "skills/processing-pdfs/scripts",
-    "skills/processing-xlsx/scripts",
+    "skills/pdf/scripts",
+    "skills/xlsx/scripts",
 ]
 
 [tool.pyright]
 extraPaths = [
-    "skills/processing-pdfs/scripts",
-    "skills/processing-xlsx/scripts",
+    "skills/pdf/scripts",
+    "skills/xlsx/scripts",
 ]

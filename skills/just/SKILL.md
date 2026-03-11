@@ -1,5 +1,5 @@
 ---
-name: authoring-just-recipes
+name: just
 description: >
   Write, review, and debug just (https://github.com/casey/just) command runner recipes and
   justfiles. Covers recipe syntax, parameters, dependencies, attributes, variables, settings,

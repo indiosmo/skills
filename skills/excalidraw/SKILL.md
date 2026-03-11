@@ -1,5 +1,5 @@
 ---
-name: authoring-excalidraw-files
+name: excalidraw
 description: Generate architecture diagrams as .excalidraw files. Use when the user asks to create architecture diagrams, system diagrams, flowcharts, data flow diagrams, network topology diagrams, box-and-arrow diagrams, visualize codebase structure, infrastructure diagrams, or generate excalidraw files. Also triggers on phrases like "draw a diagram", "make a visual", "create a visual of the architecture", or "visualize this codebase."
 ---
 

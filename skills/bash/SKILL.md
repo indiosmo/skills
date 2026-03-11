@@ -1,5 +1,5 @@
 ---
-name: writing-bash-scripts
+name: bash
 description: >-
   Write reliable, maintainable Bash scripts with proper error handling, quoting,
   and defensive patterns. Use when creating new Bash scripts, reviewing existing

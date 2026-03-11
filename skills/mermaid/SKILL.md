@@ -1,5 +1,5 @@
 ---
-name: authoring-mermaid-diagrams
+name: mermaid
 description: Create, validate, and optimize Mermaid diagrams for software documentation. Use when asked to visualize, diagram, chart a process, draw a workflow, document architecture, create a system diagram, or produce a data model diagram. Covers flowcharts, sequence diagrams, state diagrams, class diagrams, ER diagrams, and architecture diagrams. Also handles Mermaid syntax validation, diagram aesthetics review, fixing broken Mermaid code, and choosing the right diagram type for a use case.
 ---
 
@@ -16,7 +16,7 @@ npm install -g @mermaid-js/mermaid-cli
 
 **Optional: beautiful-mermaid** - For enhanced theming and ASCII output:
 ```bash
-cd skills/authoring-mermaid-diagrams/scripts && npm install
+cd skills/mermaid/scripts && npm install
 ```
 
 This enables 15 built-in themes (tokyo-night, dracula, github-dark, etc.) and text-based diagram rendering for terminals.

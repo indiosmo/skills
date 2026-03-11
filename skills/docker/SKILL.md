@@ -1,5 +1,5 @@
 ---
-name: dockerizing-services
+name: docker
 description: >-
   Practical Docker and Docker Compose patterns for local development, container
   security, networking, volume strategies, and multi-service orchestration. Use

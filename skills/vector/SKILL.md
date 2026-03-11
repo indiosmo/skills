@@ -1,5 +1,5 @@
 ---
-name: working-with-vector
+name: vector
 description: "Write, review, and debug Vector (vector.dev) observability pipelines: configuration files (TOML/YAML), VRL transforms, source/sink wiring, unit tests, deployment topologies, and production hardening. Use when creating or modifying Vector configs, writing VRL transforms, designing pipeline topologies, troubleshooting Vector pipelines, reviewing Vector configurations for correctness and best practices, building a log pipeline, setting up an observability pipeline, or routing logs between systems."
 ---
 
