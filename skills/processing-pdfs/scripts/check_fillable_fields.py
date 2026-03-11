@@ -1,15 +1,7 @@
-# /// script
-# requires-python = ">=3.10"
-# dependencies = [
-#   "pypdf",
-# ]
-# ///
-
 import sys
 from pypdf import PdfReader
 
 
-# Script for Claude to run to determine whether a PDF has fillable form fields. See forms.md.
 
 
 reader = PdfReader(sys.argv[1])
