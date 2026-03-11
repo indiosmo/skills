@@ -4,6 +4,20 @@ Complete reference for Excalidraw JSON structure and element types.
 
 ---
 
+## Table of Contents
+
+- [File Structure](#file-structure)
+- [Element Types](#element-types)
+- [Required Element Properties](#required-element-properties)
+- [Text Binding System](#text-binding-system)
+- [Arrow System](#arrow-system)
+- [Frames](#frames)
+- [Grouping (Alternative to Frames)](#grouping-alternative-to-frames)
+- [Dynamic ID Generation](#dynamic-id-generation)
+- [Critical Caveats Summary](#critical-caveats-summary)
+
+---
+
 ## File Structure
 
 ```json
@@ -42,9 +56,9 @@ Complete reference for Excalidraw JSON structure and element types.
 | `line` | Grouping boundaries, separators | N/A |
 | `frame` | Logical groupings with clipping | Good |
 
-### BANNED: Diamond Shapes
+### Avoid Diamond Shapes
 
-**NEVER use `type: "diamond"` in generated diagrams.**
+Do not use `type: "diamond"` in generated diagrams.
 
 Diamond arrow connections are fundamentally broken in raw Excalidraw JSON:
 - Excalidraw applies `roundness` to diamond vertices during rendering
@@ -64,7 +78,7 @@ Diamond arrow connections are fundamentally broken in raw Excalidraw JSON:
 
 ## Required Element Properties
 
-Every element MUST have these base properties:
+Every element requires these base properties:
 
 ```json
 {
@@ -128,9 +142,9 @@ Every element MUST have these base properties:
 
 ## Text Binding System
 
-**Every labeled shape requires TWO elements.**
+Every labeled shape requires two elements.
 
-The `label` property does NOT work in raw JSON. You must create:
+The `label` property does not work in raw JSON. You must create:
 1. A shape with `boundElements` referencing the text
 2. A separate text element with `containerId` referencing the shape
 
@@ -225,7 +239,7 @@ Always use pattern: `{shape-id}-text` for text element IDs.
 
 ### Elbow Arrow Requirements
 
-For 90-degree corners (not curved), ALL THREE properties are required:
+For 90-degree corners (not curved), all three properties are required together:
 
 ```json
 {
@@ -237,7 +251,7 @@ For 90-degree corners (not curved), ALL THREE properties are required:
 
 ### Arrow Position
 
-Arrow `x,y` must be at the source shape's edge, NOT the center:
+Arrow `x,y` must be at the source shape's edge, not the center:
 
 | Edge | Formula |
 |------|---------|
@@ -304,7 +318,7 @@ Elements inside a frame have `frameId` set:
 
 ### Ordering Requirement
 
-**Frame children must come BEFORE the frame element in the elements array.**
+Frame children must come before the frame element in the elements array.
 
 ```json
 {
@@ -376,9 +390,9 @@ Generate IDs from component names discovered in codebase:
 
 ## Critical Caveats Summary
 
-1. **Never use diamond shapes** - Arrow connections are broken
-2. **Labels require TWO elements** - Shape + text, not `label` property
-3. **Elbow arrows need THREE properties** - `roughness: 0`, `roundness: null`, `elbowed: true`
+1. **Avoid diamond shapes** - Arrow connections are broken
+2. **Labels require two elements** - Shape + text, not `label` property
+3. **Elbow arrows need three properties** - `roughness: 0`, `roundness: null`, `elbowed: true`
 4. **Arrow x,y is at shape edge** - Not center
 5. **Arrow width/height = bounding box** - Of points array
 6. **Frame children before frame** - In elements array order

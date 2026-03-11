@@ -1,5 +1,19 @@
 # Ansible Inventory Reference
 
+## Table of Contents
+
+- [Format: YAML vs INI](#format-yaml-vs-ini)
+- [Default Groups](#default-groups)
+- [Host Ranges](#host-ranges)
+- [Inventory Aliases and Connection Variables](#inventory-aliases-and-connection-variables)
+- [Inventory Organization](#inventory-organization)
+- [Host Patterns](#host-patterns)
+- [Debugging with ansible-inventory](#debugging-with-ansible-inventory)
+- [Inventory Special Variables](#inventory-special-variables)
+- [Common Mistakes](#common-mistakes)
+- [Dynamic Inventory](#dynamic-inventory)
+- [Inventory-Specific Performance](#inventory-specific-performance)
+
 ## Format: YAML vs INI
 
 Prefer YAML. INI has a type-safety trap: inline host variables (`host1 http_port=80`) are parsed as Python literals via `ast.literal_eval`, but `:vars` section values are always strings. YAML gives consistent native types everywhere.
@@ -308,6 +322,79 @@ ansible-inventory -i inventory/ --host web01.example.com -vvv
 **Deeply nested group hierarchies.** Increases variable resolution overhead and complexity. Fix: keep hierarchies flat (2-3 levels max) and use intersection patterns.
 
 **`.ini` files in inventory directories.** Files ending in `.ini` are silently ignored by default. Rename to plain text or `.yml`.
+
+## Dynamic Inventory
+
+Instead of maintaining static host lists, inventory plugins query external sources at runtime. Ansible includes plugins for major cloud providers and other infrastructure systems.
+
+### Inventory plugins
+
+Common plugins: `amazon.aws.aws_ec2`, `google.cloud.gcp_compute`, `azure.azcollection.azure_rm`. Enable them in `ansible.cfg`:
+
+```ini
+[inventory]
+enable_plugins = amazon.aws.aws_ec2, google.cloud.gcp_compute, azure.azcollection.azure_rm
+```
+
+Plugin inventory files must end with the plugin-specific suffix (e.g., `aws_ec2.yml`, `gcp.yml`, `azure_rm.yml`).
+
+Example `aws_ec2.yml`:
+
+```yaml
+---
+plugin: amazon.aws.aws_ec2
+regions:
+  - us-east-1
+  - us-west-2
+keyed_groups:
+  - key: tags.Environment
+    prefix: env
+  - key: instance_type
+    prefix: type
+filters:
+  instance-state-name: running
+compose:
+  ansible_host: private_ip_address
+```
+
+`keyed_groups` automatically creates Ansible groups from instance attributes. The example above creates groups like `env_production`, `type_t3_micro`. `compose` maps instance fields to Ansible variables.
+
+Verify with `ansible-inventory -i aws_ec2.yml --graph`.
+
+### Custom inventory scripts
+
+For sources without a built-in plugin, use an executable script that outputs JSON. The script must support `--list` (return all hosts and groups) and `--host <hostname>` (return variables for one host).
+
+Minimal script structure:
+
+```python
+#!/usr/bin/env python3
+import json
+import sys
+
+def get_inventory():
+    return {
+        "webservers": {
+            "hosts": ["web01", "web02"],
+            "vars": {"http_port": 80}
+        },
+        "_meta": {
+            "hostvars": {
+                "web01": {"ansible_host": "10.0.1.10"},
+                "web02": {"ansible_host": "10.0.1.11"}
+            }
+        }
+    }
+
+if "--list" in sys.argv:
+    print(json.dumps(get_inventory()))
+elif "--host" in sys.argv:
+    print(json.dumps({}))
+```
+
+The `_meta.hostvars` key allows returning per-host variables in the `--list` response, avoiding a separate `--host` call for each host.
+
+Mark the script executable (`chmod +x`) and pass it as an inventory source: `ansible-playbook -i inventory_script.py site.yml`.
 
 ## Inventory-Specific Performance
 

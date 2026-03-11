@@ -9,6 +9,7 @@ Advanced build patterns from the official Docker documentation.
 - [User Creation](#user-creation)
 - [COPY vs ADD](#copy-vs-add)
 - [Layer Caching](#layer-caching)
+- [BuildKit Cache Mounts](#buildkit-cache-mounts)
 - [CMD and ENTRYPOINT](#cmd-and-entrypoint)
 - [Environment Variables in Builds](#environment-variables-in-builds)
 
@@ -113,6 +114,41 @@ Default to COPY. Only use ADD when you need tar extraction or remote URL fetchin
   ```
 - Version-pin packages to force cache busting when needed: `package=1.3.*`
 - Sort multi-line arguments alphanumerically for readability and diff clarity
+
+### BuildKit Cache Mounts
+
+Cache mounts (`--mount=type=cache`) persist a directory across builds without baking it into any image layer. This is one of the most impactful patterns for build speed -- package manager caches survive even when the dependency manifest changes, so only new/changed packages are downloaded.
+
+```dockerfile
+# Node (npm)
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
+
+# Node (yarn)
+RUN --mount=type=cache,target=/usr/local/share/.cache/yarn \
+    yarn install --frozen-lockfile
+
+# Python (pip)
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements.txt
+
+# Go modules
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    go build -o /app ./cmd/server
+
+# Rust (cargo)
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/app/target \
+    cargo build --release
+
+# apt
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends curl git
+```
+
+Cache mounts require BuildKit (the default builder since Docker 23.0). For older Docker versions, enable it with `DOCKER_BUILDKIT=1`. The `sharing=locked` option serializes concurrent access, which is necessary for package managers like apt that do not handle parallel writes to their cache directories.
 
 ## CMD and ENTRYPOINT
 

@@ -1,30 +1,20 @@
 ---
 name: verification-before-completion
-description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always
+description: Ensures all completion claims are backed by fresh verification evidence. Triggers whenever about to claim work is complete, tests pass, builds succeed, bugs are fixed, or any positive status; also applies before committing, creating PRs, closing issues, or reporting status.
 ---
 
 # Verification Before Completion
 
 ## Overview
 
-Claiming work is complete without verification is dishonesty, not efficiency.
+Claiming work is complete without verification leads to false claims that erode trust and cause rework. Skipping verification does not save time -- it shifts the cost onto your collaborator, who must then discover the real state and redo work.
 
 **Core principle:** Evidence before claims, always.
-
-**Violating the letter of this rule is violating the spirit of this rule.**
-
-## The Iron Law
-
-```
-NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
-```
-
-If you haven't run the verification command in this message, you cannot claim it passes.
 
 ## The Gate Function
 
 ```
-BEFORE claiming any status or expressing satisfaction:
+BEFORE claiming completion or reporting success:
 
 1. IDENTIFY: What command proves this claim?
 2. RUN: Execute the FULL command (fresh, complete)
@@ -34,106 +24,102 @@ BEFORE claiming any status or expressing satisfaction:
    - If YES: State claim WITH evidence
 5. ONLY THEN: Make the claim
 
-Skip any step = lying, not verifying
+Skipping any step means making an unverified claim.
 ```
 
-## Common Failures
+## Verification Requirements
 
-| Claim | Requires | Not Sufficient |
-|-------|----------|----------------|
-| Tests pass | Test command output: 0 failures | Previous run, "should pass" |
-| Linter clean | Linter output: 0 errors | Partial check, extrapolation |
-| Build succeeds | Build command: exit 0 | Linter passing, logs look good |
-| Bug fixed | Test original symptom: passes | Code changed, assumed fixed |
-| Regression test works | Red-green cycle verified | Test passes once |
-| Agent completed | VCS diff shows changes | Agent reports "success" |
-| Requirements met | Line-by-line checklist | Tests passing |
+| Claim | What You Must Run | What Is Not Sufficient |
+|-------|-------------------|------------------------|
+| Tests pass | Test command output showing 0 failures | A previous run, or "should pass" |
+| Linter clean | Linter output showing 0 errors | Partial check, extrapolation |
+| Build succeeds | Build command with exit 0 | Linter passing, "logs look good" |
+| Bug fixed | Reproduce original symptom, confirm it no longer occurs | Code changed, assumed fixed |
+| Regression test works | Red-green cycle: test fails without fix, passes with fix | Test passes once without verifying it can fail |
+| Agent completed task | VCS diff shows correct changes | Agent self-reporting "success" |
+| Requirements met | Line-by-line checklist against the plan | Tests passing alone |
 
-## Red Flags - STOP
+## Warning Signs to Watch For
 
-- Using "should", "probably", "seems to"
-- Expressing satisfaction before verification ("Great!", "Perfect!", "Done!", etc.)
-- About to commit/push/PR without verification
-- Trusting agent success reports
-- Relying on partial verification
-- Thinking "just this once"
-- Tired and wanting work over
-- **ANY wording implying success without having run verification**
+Stop and verify if you notice yourself:
 
-## Rationalization Prevention
+- Using hedging language: "should", "probably", "seems to"
+- Expressing satisfaction before running commands ("Done!", "That should do it")
+- About to commit, push, or open a PR without fresh verification output
+- Trusting an agent's success report without independent confirmation
+- Relying on partial verification (linter passed, so build must be fine)
+- Rationalizing why this case is an exception ("just this once", "I'm confident")
+- Treating a previous passing run as proof of the current state
 
-| Excuse | Reality |
-|--------|---------|
-| "Should work now" | RUN the verification |
-| "I'm confident" | Confidence ≠ evidence |
-| "Just this once" | No exceptions |
-| "Linter passed" | Linter ≠ compiler |
-| "Agent said success" | Verify independently |
-| "I'm tired" | Exhaustion ≠ excuse |
-| "Partial check is enough" | Partial proves nothing |
-| "Different words so rule doesn't apply" | Spirit over letter |
+The underlying problem in each case is the same: making a claim without current evidence to support it.
 
 ## Key Patterns
 
 **Tests:**
 ```
-✅ [Run test command] [See: 34/34 pass] "All tests pass"
-❌ "Should pass now" / "Looks correct"
+CORRECT: [Run test command] -> [See: 34/34 pass] -> "All tests pass"
+INCORRECT: "Should pass now" / "Looks correct"
 ```
 
 **Regression tests (TDD Red-Green):**
 ```
-✅ Write → Run (pass) → Revert fix → Run (MUST FAIL) → Restore → Run (pass)
-❌ "I've written a regression test" (without red-green verification)
+CORRECT: Write test -> Run (pass) -> Revert fix -> Run (MUST FAIL) -> Restore fix -> Run (pass)
+INCORRECT: "I've written a regression test" (without red-green verification)
 ```
 
 **Build:**
 ```
-✅ [Run build] [See: exit 0] "Build passes"
-❌ "Linter passed" (linter doesn't check compilation)
+CORRECT: [Run build] -> [See: exit 0] -> "Build passes"
+INCORRECT: "Linter passed" (linter does not check compilation)
 ```
 
 **Requirements:**
 ```
-✅ Re-read plan → Create checklist → Verify each → Report gaps or completion
-❌ "Tests pass, phase complete"
+CORRECT: Re-read plan -> Create checklist -> Verify each item -> Report gaps or completion
+INCORRECT: "Tests pass, phase complete"
 ```
 
 **Agent delegation:**
 ```
-✅ Agent reports success → Check VCS diff → Verify changes → Report actual state
-❌ Trust agent report
+CORRECT: Agent reports success -> Check VCS diff -> Verify changes -> Report actual state
+INCORRECT: Trust agent report without checking
 ```
+
+## Finding the Right Command
+
+If you are unsure what command to run for verification, check these sources in the project:
+
+- **CI config**: `.github/workflows/`, `.gitlab-ci.yml`, `Jenkinsfile` -- shows what the CI pipeline actually runs
+- **package.json**: `scripts` section (npm test, npm run build, npm run lint)
+- **Makefile**: common targets like `make test`, `make build`, `make check`
+- **pyproject.toml / setup.cfg**: `[tool.pytest]`, `[tool.mypy]`, `[tool.ruff]` sections; also check `scripts` in `[project.scripts]`
+- **Cargo.toml**: `cargo test`, `cargo build`, `cargo clippy`
+- **Project README or CONTRIBUTING docs**: often list the exact verification steps
+
+When in doubt, look at what CI runs -- that is the authoritative set of checks.
 
 ## Why This Matters
 
-From 24 failure memories:
-- your human partner said "I don't believe you" - trust broken
-- Undefined functions shipped - would crash
-- Missing requirements shipped - incomplete features
-- Time wasted on false completion → redirect → rework
-- Violates: "Honesty is a core value. If you lie, you'll be replaced."
+Unverified claims cause real problems:
+
+- Collaborators lose trust when claims turn out to be wrong
+- Undefined functions or missing imports ship and crash at runtime
+- Requirements get marked complete when they are not, leading to incomplete features
+- Time is wasted on false completion followed by rediscovery and rework
+
+Verification takes seconds. Recovering from false claims takes much longer.
 
 ## When To Apply
 
-**ALWAYS before:**
-- ANY variation of success/completion claims
-- ANY expression of satisfaction
-- ANY positive statement about work state
-- Committing, PR creation, task completion
-- Moving to next task
-- Delegating to agents
+**Before these actions:**
+- Claiming work is complete, tests pass, builds succeed, or bugs are fixed
+- Summarizing status to a collaborator
+- Committing code or creating a PR
+- Closing an issue or marking a task done
+- Moving on to the next task after finishing one
 
-**Rule applies to:**
-- Exact phrases
-- Paraphrases and synonyms
-- Implications of success
-- ANY communication suggesting completion/correctness
+This does not apply to every interim statement during active work -- it applies at the boundaries where you are reporting a result or taking an action based on that result.
 
 ## The Bottom Line
 
-**No shortcuts for verification.**
-
-Run the command. Read the output. THEN claim the result.
-
-This is non-negotiable.
+Run the command. Read the output. Then claim the result.

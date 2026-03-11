@@ -2,6 +2,20 @@
 
 Patterns for split-apply-combine and windowed computations.
 
+## Table of Contents
+
+- [GroupBy Fundamentals](#groupby-fundamentals)
+- [Aggregation](#aggregation)
+- [Transformation](#transformation)
+- [Filtration](#filtration)
+- [Grouping by Multiple Columns](#grouping-by-multiple-columns)
+- [Grouping Options](#grouping-options)
+- [GroupBy + Apply](#groupby--apply)
+- [Window Operations](#window-operations)
+- [GroupBy + Window (Rolling by Group)](#groupby--window-rolling-by-group)
+- [Common Patterns](#common-patterns)
+- [Performance Tips](#performance-tips)
+
 ---
 
 ## GroupBy Fundamentals

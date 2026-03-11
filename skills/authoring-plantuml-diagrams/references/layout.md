@@ -2,6 +2,13 @@
 
 Techniques for improving visual layout of PlantUML diagrams, organized by scope.
 
+## Contents
+
+- [Universal Techniques](#universal-techniques) -- direction, spacing, line type, layout engines, arrow control, hidden/norank links, together blocks, scale
+- [Sequence Diagrams](#sequence-diagrams) -- participant ordering, vertical/horizontal spacing, box grouping, compact messages
+- [Activity Diagrams](#activity-diagrams) -- swimlanes, partitions, vertical if branches, arrow styling
+- [State Diagrams](#state-diagrams) -- arrow directions, composite states, concurrent regions
+
 ## Universal Techniques
 
 ### Global Direction
@@ -213,87 +220,3 @@ state Active {
 }
 ```
 
-## Class Diagrams
-
-### Package Grouping
-
-```plantuml
-package "Domain" {
-  class Order
-  class Customer
-}
-```
-
-### together Blocks
-
-```plantuml
-together {
-  class Order
-  class OrderLine
-}
-```
-
-### Link Direction Strategy
-
-Draw links from parent to child (top to bottom). For upward links, reverse the endpoints:
-
-```plantuml
-Parent <-- Child    ' keeps Parent above Child
-```
-
-### Uniform Width
-
-```plantuml
-skinparam minClassWidth 120
-skinparam sameClassWidth true
-```
-
-## Component / Deployment Diagrams
-
-### Container Types
-
-Use different keywords for different visual shapes: `node`, `cloud`, `database`, `frame`, `folder`, `storage`, `queue`, `stack`, `card`.
-
-### Left-to-Right for Architecture
-
-```plantuml
-left to right direction
-
-[Client] --> [API Gateway] --> [Service]
-```
-
-### Nesting for Grouping
-
-```plantuml
-node "Production" {
-  node "Web Server" {
-    [Nginx]
-    [App]
-  }
-  database "PostgreSQL"
-}
-```
-
-## Use Case Diagrams
-
-### Left-to-Right (Recommended)
-
-```plantuml
-left to right direction
-```
-
-### Rectangle Boundaries
-
-```plantuml
-rectangle "System" {
-  usecase "Login" as UC1
-  usecase "Register" as UC2
-}
-```
-
-### Actor Placement via Direction
-
-```plantuml
-Customer -right-> (Place Order)
-(Place Order) <-left- Admin
-```

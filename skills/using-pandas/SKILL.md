@@ -1,6 +1,6 @@
 ---
 name: using-pandas
-description: "Idiomatic pandas usage patterns and performance best practices. Use when writing or reviewing pandas code to ensure: (1) Modern API usage (loc/iloc, method chaining, pipe), (2) Performance optimization (vectorization, dtypes, avoiding apply), (3) Proper data reshaping (tidy data, melt/pivot), (4) Correct handling of Copy-on-Write, categoricals, time series, (5) Avoiding common gotchas and antipatterns."
+description: "Activate for ANY task involving tabular data, DataFrames, CSV wrangling, data cleaning, groupby, merge/join, pivot, melt, reshaping, aggregation, or time series analysis -- even if they don't explicitly mention 'pandas' or 'best practices'. Covers idiomatic pandas patterns, performance optimization (vectorization, dtypes, avoiding apply), proper data reshaping (tidy data, melt/pivot), merge/join correctness, Copy-on-Write, categoricals, string operations, and common gotchas."
 ---
 
 # Pandas Best Practices
@@ -49,7 +49,7 @@ result = (
 
 ### 3. Vectorization Over Iteration
 
-Never iterate rows when vectorized operations exist:
+Never iterate rows when vectorized operations exist. Row iteration drops from vectorized C/NumPy kernels to Python-speed loops, often 100x slower:
 
 ```python
 # Bad: Row iteration
@@ -100,8 +100,10 @@ df.iloc[:, 0:3] # Columns 0-2
 
 ### Never Use Chained Indexing
 
+Chained indexing (`df[...][...]`) is ambiguous because intermediate steps may return a view or a copy, so assignments may silently fail:
+
 ```python
-# Bad: Chained indexing (unpredictable behavior)
+# Bad: Chained indexing (view vs copy ambiguity)
 df[df['a'] > 0]['b'] = 1  # May not work, SettingWithCopyWarning
 
 # Good: Single .loc
@@ -123,7 +125,7 @@ df.loc[idx[:, 'category_a'], 'value']  # Specific second level
 
 ### Avoid DataFrame.apply(axis=1)
 
-`apply(axis=1)` iterates in Python - extremely slow:
+`apply(axis=1)` iterates row-by-row in Python rather than dispatching to C/NumPy, typically 100x slower. Replace with vectorized operations:
 
 ```python
 # Bad: Row-wise apply
@@ -133,51 +135,15 @@ df['result'] = df.apply(lambda row: row['a'] + row['b'] * 2, axis=1)
 df['result'] = df['a'] + df['b'] * 2
 ```
 
-### Build DataFrames Efficiently
+`apply` is acceptable for: column-wise operations (`axis=0`, which is already vectorized), complex string operations not available in the `.str` accessor, and multi-column logic that genuinely resists vectorization (but try `np.where`/`np.select` first).
 
-```python
-# Bad: Iterative building (O(n^2))
-df = pd.DataFrame()
-for item in items:
-    df = pd.concat([df, pd.DataFrame([item])])
+### Key Performance Rules
 
-# Good: Collect then create (O(n))
-rows = [item for item in items]
-df = pd.DataFrame(rows)
-```
+- **Build DataFrames in one shot**: collect rows in a list, then `pd.DataFrame(rows)`. Iterative `concat` is O(n^2).
+- **Use built-in GroupBy methods** (`sum`, `mean`, `max`) over `.apply()` with lambdas.
+- **Choose appropriate dtypes**: `category` for low-cardinality strings, `string[pyarrow]` for general strings (pandas 2.0+), `pd.to_numeric(..., downcast='integer')` for numerics.
 
-### Use pd.concat() Not append
-
-```python
-# Combine DataFrames
-df = pd.concat([df1, df2, df3], ignore_index=True)
-```
-
-### Prefer Built-in GroupBy Methods
-
-```python
-# Slow: Custom function
-df.groupby('key')['value'].apply(lambda x: x.max() - x.min())
-
-# Fast: Built-in
-g = df.groupby('key')['value']
-g.max() - g.min()
-```
-
-### Choose Appropriate dtypes
-
-```python
-# Low-cardinality strings -> category
-df['status'] = df['status'].astype('category')
-
-# PyArrow strings (pandas 2.0+)
-df['name'] = df['name'].astype('string[pyarrow]')
-
-# Downcast numerics
-df['small_int'] = pd.to_numeric(df['small_int'], downcast='integer')
-```
-
-See `references/performance.md` for detailed optimization patterns.
+See `references/performance.md` for the full catalog of optimization patterns.
 
 ---
 
@@ -248,6 +214,76 @@ df = (
 
 ---
 
+## Merging and Joining
+
+### Join Types
+
+```python
+# Inner: only matching keys (default)
+pd.merge(left, right, on='key', how='inner')
+
+# Left: all left rows, matched right rows (NaN where no match)
+pd.merge(left, right, on='key', how='left')
+
+# Right: all right rows, matched left rows
+pd.merge(left, right, on='key', how='right')
+
+# Outer: all rows from both sides
+pd.merge(left, right, on='key', how='outer')
+```
+
+### Catching Many-to-Many with validate
+
+Use `validate` to assert the expected join cardinality. Without it, accidental many-to-many joins silently explode row counts:
+
+```python
+pd.merge(orders, customers, on='customer_id', validate='many_to_one')
+# Options: 'one_to_one', 'one_to_many', 'many_to_one', 'many_to_many'
+```
+
+### Key Dtype Mismatches
+
+Merges produce zero matches when key columns have different dtypes (e.g., `int64` vs `object`). Always align dtypes before merging:
+
+```python
+# If left has int keys and right has string keys
+right['key'] = right['key'].astype(int)
+pd.merge(left, right, on='key')
+```
+
+### Overlapping Column Names
+
+When both DataFrames share non-key column names, use `suffixes` to disambiguate:
+
+```python
+pd.merge(left, right, on='key', suffixes=('_left', '_right'))
+```
+
+---
+
+## String Operations
+
+Use the `.str` accessor for vectorized string operations instead of `apply` with Python string methods:
+
+```python
+# Pattern matching
+df[df['name'].str.contains('smith', case=False, na=False)]
+
+# Extract with regex capture groups
+df['area_code'] = df['phone'].str.extract(r'\((\d{3})\)')
+
+# Replace patterns
+df['clean'] = df['text'].str.replace(r'\s+', ' ', regex=True)
+
+# Other common operations
+df['name'].str.lower()
+df['name'].str.strip()
+df['name'].str.split(',', expand=True)
+df['name'].str.len()
+```
+
+---
+
 ## Common Gotchas
 
 ### Truth Value Ambiguity
@@ -288,6 +324,8 @@ df['int_col'] = pd.array([1, 2, None, 4], dtype='Int64')  # Capital I
 ```
 
 ### Chained Assignment
+
+Same view-vs-copy ambiguity as chained indexing. The first expression may return a copy, so the assignment is lost:
 
 ```python
 # May fail silently
@@ -365,9 +403,9 @@ result = (
 
 ## Reference Files
 
-| File | Contents | When to Consult |
-|------|----------|-----------------|
-| `references/performance.md` | Optimization patterns | Code running slowly |
-| `references/io-formats.md` | File format selection | Reading/writing data |
-| `references/timeseries.md` | Time series patterns | Working with dates |
-| `references/groupby-window.md` | GroupBy and windows | Split-apply-combine |
+| File | When to Read |
+|------|--------------|
+| `references/performance.md` | Read when code is slow, when choosing dtypes, when building DataFrames from loops, or when deciding between `apply` vs vectorization. |
+| `references/io-formats.md` | Read when choosing between CSV/Parquet/Feather/JSON/Excel, when reading large files in chunks, or when configuring cloud/remote file access. |
+| `references/timeseries.md` | Read when working with DatetimeIndex, resampling frequencies, rolling/expanding windows on dates, timezone handling, or period arithmetic. |
+| `references/groupby-window.md` | Read when writing groupby aggregations, transforms, or filters; when combining groupby with rolling/expanding windows; or when building ranked/cumulative columns per group. |

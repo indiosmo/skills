@@ -1,6 +1,6 @@
 ---
 name: authoring-excalidraw-files
-description: Generate architecture diagrams as .excalidraw files. Use when the user asks to create architecture diagrams, system diagrams, visualize codebase structure, infrastructure diagrams, or generate excalidraw files.
+description: Generate architecture diagrams as .excalidraw files. Use when the user asks to create architecture diagrams, system diagrams, flowcharts, data flow diagrams, network topology diagrams, box-and-arrow diagrams, visualize codebase structure, infrastructure diagrams, or generate excalidraw files. Also triggers on phrases like "draw a diagram", "make a visual", "create a visual of the architecture", or "visualize this codebase."
 ---
 
 # Excalidraw Architecture Diagram Generator
@@ -38,18 +38,18 @@ Generate architecture diagrams as `.excalidraw` files from codebase analysis or 
 
 ## Critical Rules
 
-### 1. NEVER Use Diamond Shapes
+### 1. Avoid Diamond Shapes (arrows break)
 
-Diamond arrow connections are broken in raw Excalidraw JSON. Use styled rectangles instead:
+Diamond arrow connections are broken in raw Excalidraw JSON because Excalidraw applies `roundness` to diamond vertices during rendering, causing arrows to appear disconnected. Use styled rectangles instead:
 
 | Semantic Meaning | Rectangle Style |
 |------------------|-----------------|
 | Orchestrator/Hub | Coral (`#ffa8a8`/`#c92a2a`) + strokeWidth: 3 |
 | Decision Point | Orange (`#ffd8a8`/`#e8590c`) + dashed stroke |
 
-### 2. Labels Require TWO Elements
+### 2. Labels Require Two Elements
 
-The `label` property does NOT work in raw JSON. Every labeled shape needs:
+The `label` property does not work in raw JSON. Every labeled shape needs:
 
 ```json
 // 1. Shape with boundElements reference
@@ -68,9 +68,9 @@ The `label` property does NOT work in raw JSON. Every labeled shape needs:
 }
 ```
 
-### 3. Elbow Arrows Need Three Properties
+### 3. Elbow Arrows Need Three Properties Together
 
-For 90-degree corners (not curved):
+For 90-degree corners (not curved), all three are required:
 
 ```json
 {
@@ -83,7 +83,7 @@ For 90-degree corners (not curved):
 
 ### 4. Arrow Position at Shape Edge
 
-Arrows must start/end at shape edges, not centers:
+Arrows should start/end at shape edges, not centers:
 
 | Edge | Formula |
 |------|---------|
@@ -99,6 +99,10 @@ points = [[0, 0], [-440, 0], [-440, 70]]
 width = 440   // max(abs(point[0]))
 height = 70   // max(abs(point[1]))
 ```
+
+### 6. Arrow Bindings (optional but recommended)
+
+For better visual attachment, arrows can use `startBinding` and `endBinding` to anchor to specific shapes. This keeps arrows connected when elements are repositioned. When using bindings, also add the arrow to the shape's `boundElements` array. See `references/arrows.md` for binding properties and `fixedPoint` values.
 
 ---
 
@@ -280,7 +284,7 @@ Two boxes connected by an arrow (copy and adapt for any diagram):
 ```
 
 Key structure notes:
-- Each labeled shape needs TWO elements (shape + text with `containerId`)
+- Each labeled shape needs two elements (shape + text with `containerId`)
 - Arrow `x,y` is at source edge: `(100 + 160/2, 100 + 80)` = `(180, 180)`
 - Arrow `height` matches the vertical distance: `280 - 180` = `100`
 - Elbow arrows: `roughness: 0`, `roundness: null`, `elbowed: true`
@@ -319,6 +323,18 @@ Row 5: Data layer (y: 700)
 Columns: x = 100, 300, 500, 700, 900
 Element size: 160-200px x 80-90px
 ```
+
+**Scaling layout for different component counts:**
+
+| Components | Spacing Adjustment |
+|------------|--------------------|
+| 1-3 per row | Use default 200px column spacing and 150px row spacing. Center elements horizontally. |
+| 4-6 per row | Keep 200px column spacing. Canvas will be wider; this is fine. |
+| 7+ per row | Reduce column spacing to 180px, or split into two rows at the same logical tier. |
+| Few rows (2-3) | Increase row spacing to 200px so the diagram does not look cramped vertically. |
+| Many rows (6+) | Reduce row spacing to 130px, or use smaller element heights (70px) to keep the diagram compact. |
+
+General principle: maintain at least 50px of clear space between any two elements. When a tier has many more components than others, widen that tier and center narrower tiers above/below it.
 
 ### Step 3: Generate Elements
 
@@ -391,7 +407,7 @@ Before writing file:
 
 | Issue | Fix |
 |-------|-----|
-| Labels don't appear | Use TWO elements (shape + text), not `label` property |
+| Labels don't appear | Use two elements (shape + text), not `label` property |
 | Arrows curved | Add `elbowed: true`, `roundness: null`, `roughness: 0` |
 | Arrows floating | Calculate x,y from shape edge, not center |
 | Arrows overlapping | Stagger start positions across edge |

@@ -1,6 +1,6 @@
 ---
 name: authoring-mermaid-diagrams
-description: Create, validate, and optimize Mermaid diagrams for software documentation. Use when Claude needs to: (1) Create flowcharts, sequence diagrams, state diagrams, class diagrams, ER diagrams, or architecture diagrams, (2) Validate Mermaid syntax, (3) Review and improve diagram aesthetics, (4) Fix broken Mermaid code, or (5) Choose the right diagram type for a use case.
+description: Create, validate, and optimize Mermaid diagrams for software documentation. Use when asked to visualize, diagram, chart a process, draw a workflow, document architecture, create a system diagram, or produce a data model diagram. Covers flowcharts, sequence diagrams, state diagrams, class diagrams, ER diagrams, and architecture diagrams. Also handles Mermaid syntax validation, diagram aesthetics review, fixing broken Mermaid code, and choosing the right diagram type for a use case.
 ---
 
 # Mermaid Diagram Skill
@@ -176,29 +176,7 @@ If the diagram renders but looks wrong:
 
 ## Theming
 
-beautiful-mermaid provides 15 built-in themes for professional diagram styling.
-
-### Available Themes
-
-| Theme | Type | Best For |
-|-------|------|----------|
-| `github-light` | Light | Default, GitHub-style documentation |
-| `tokyo-night-light` | Light | Soft contrast, easy on eyes |
-| `catppuccin-latte` | Light | Warm, pastel tones |
-| `nord-light` | Light | Arctic, cool tones |
-| `github-light` | Light | GitHub-style documentation |
-| `solarized-light` | Light | Classic light theme |
-| `zinc-dark` | Dark | Clean dark mode |
-| `tokyo-night` | Dark | Popular dark theme |
-| `tokyo-night-storm` | Dark | Deeper tokyo-night variant |
-| `catppuccin-mocha` | Dark | Rich, warm dark theme |
-| `nord` | Dark | Arctic dark palette |
-| `dracula` | Dark | Popular purple-accented dark |
-| `github-dark` | Dark | GitHub dark mode style |
-| `solarized-dark` | Dark | Classic dark theme |
-| `one-dark` | Dark | Atom One Dark style |
-
-### Using Themes
+beautiful-mermaid provides 15 built-in themes (5 light, 10 dark) for professional diagram styling. Themes use a two-color foundation system that derives all diagram colors from background and foreground values.
 
 ```bash
 # List available themes
@@ -211,30 +189,7 @@ uv run scripts/validate_mermaid.py diagram.mmd --theme tokyo-night -o diagram.sv
 uv run scripts/validate_mermaid.py diagram.mmd --bg "#1a1b26" --fg "#c0caf5" -o diagram.svg
 ```
 
-### Renderer Selection
-
-Use a two-step approach for best results:
-
-1. **Syntax validation**: Always use `--renderer mmdc` (authoritative Mermaid parser)
-2. **Final rendering**: Use `--renderer beautiful` when available and supported
-
-| Renderer | Command | Use Case |
-|----------|---------|----------|
-| mmdc | `--renderer mmdc` | Syntax validation (always use first) |
-| beautiful-mermaid | `--renderer beautiful` | Final rendering with theming (preferred) |
-| Auto | `--renderer auto` | Convenience mode (not recommended for workflow) |
-
-```bash
-# Step 1: Validate syntax with mmdc
-uv run scripts/validate_mermaid.py diagram.mmd --renderer mmdc -o diagram-validated.svg
-
-# Step 2: Render final output with beautiful-mermaid
-uv run scripts/validate_mermaid.py diagram.mmd --renderer beautiful --theme github-light -o diagram.svg
-```
-
-**Note:** For architecture diagrams, skip Step 2 as beautiful-mermaid does not support them.
-
-For comprehensive theming documentation, see `references/theming-guide.md`.
+For the full theme list, color details, selection guide, and custom theme creation, see `references/theming-guide.md`.
 
 ## ASCII Output
 

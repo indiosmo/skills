@@ -1,6 +1,6 @@
 ---
 name: working-with-vector
-description: "Write, review, and debug Vector (vector.dev) observability pipelines: configuration files (TOML/YAML), VRL transforms, source/sink wiring, unit tests, deployment topologies, and production hardening. Use when creating or modifying Vector configs, writing VRL transforms, designing pipeline topologies, troubleshooting Vector pipelines, or reviewing Vector configurations for correctness and best practices."
+description: "Write, review, and debug Vector (vector.dev) observability pipelines: configuration files (TOML/YAML), VRL transforms, source/sink wiring, unit tests, deployment topologies, and production hardening. Use when creating or modifying Vector configs, writing VRL transforms, designing pipeline topologies, troubleshooting Vector pipelines, reviewing Vector configurations for correctness and best practices, building a log pipeline, setting up an observability pipeline, or routing logs between systems."
 ---
 
 # Working With Vector
@@ -35,7 +35,7 @@ Use `vector vrl` to prototype transforms interactively.
 
 ## Configuration
 
-Vector supports TOML, YAML, and JSON. Prefer TOML or YAML.
+Vector supports TOML, YAML, and JSON. Prefer TOML or YAML -- JSON is verbose and does not support comments, making configs harder to maintain.
 
 Minimal example (TOML):
 
@@ -97,6 +97,14 @@ if .status >= 500 { .severity = "error" } else { .severity = "info" }
 
 # Abort (drop event when drop_on_abort = true)
 if .level == "debug" { abort }
+
+# Iteration -- VRL has no general loops but provides for_each for objects and arrays
+for_each(object!(.tags)) -> |key, value| {
+  # process each key-value pair
+}
+for_each(array!(.items)) -> |index, value| {
+  # process each element
+}
 ```
 
 ### Key functions
@@ -109,6 +117,7 @@ Standard string, type-check, and encoding functions work as expected (`downcase`
 | Enrichment | `get_enrichment_table_record!` |
 | Time | `now()`, `format_timestamp!`, `to_unix_timestamp` |
 | Object | `del`, `merge`, `compact`, `flatten` |
+| Environment | `get_env_var` |
 | Debug | `log` (rate-limited), `assert!`, `assert_eq!` |
 
 Prototype complex `parse_regex!` and `parse_grok!` patterns interactively with `vector vrl` before embedding in config.
@@ -126,6 +135,15 @@ for_each(payload) -> |key, value| {
 }
 . = events
 ```
+
+### `drop_on_abort` vs `reroute_dropped`
+
+Both options control what happens to events that hit `abort` in a remap transform, but they are mutually exclusive:
+
+- `drop_on_abort = true` (the default) -- aborted events are silently discarded. Use this when you simply want to filter out events and do not need to inspect failures.
+- `reroute_dropped = true` -- aborted events are sent to a `.dropped` output (e.g., `transform_id.dropped`) instead of being discarded. Use this when you need a dead-letter queue or want visibility into what was dropped. Setting `reroute_dropped = true` implicitly sets `drop_on_abort = true`.
+
+If neither is set, `drop_on_abort` defaults to `true` and aborted events vanish. To capture dropped events, explicitly set `reroute_dropped = true` and wire a sink to the `.dropped` output.
 
 ### VRL constraints (by design)
 
@@ -259,7 +277,7 @@ Avoid these frequent pitfalls (see [references/production.md](references/product
 - Deploying without running `vector validate` and `vector test`
 - Using Lua when VRL can handle the use case. In particular, VRL fan-out (`. = array`) replaces the most common Lua use case (emitting multiple events). The Lua event API is also version-dependent -- `Event.new()` does not exist; creating new events requires constructing `{log = {field = value}}` tables, and deep-copying event objects is fragile due to metatables.
 - Blindly using `!` on every fallible function instead of handling errors explicitly
-- Placing filters late in the pipeline after expensive transforms
+- Placing filters late in the pipeline after expensive transforms -- wastes CPU on events that will be discarded
 - Using memory buffers for data you cannot afford to lose
-- Ephemeral `data_dir` (loses checkpoints and disk buffers on restart)
-- Running without self-monitoring (`internal_metrics` source)
+- Ephemeral `data_dir` (loses checkpoints and disk buffers on restart) -- causes reprocessing of already-seen data and loss of disk buffer contents
+- Running without self-monitoring (`internal_metrics` source) -- no visibility into pipeline health, cannot detect data loss

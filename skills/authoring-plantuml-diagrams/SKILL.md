@@ -1,11 +1,16 @@
 ---
 name: authoring-plantuml-diagrams
-description: Author PlantUML diagrams (sequence, activity, state) as .puml files. Use when the user asks to create sequence diagrams, activity/flow diagrams, state machine diagrams, or any PlantUML diagram. Covers participant interactions, workflows with branching/loops, and state transitions.
+description: Author PlantUML diagrams (sequence, activity, state) as .puml files. Use when the user asks to create sequence diagrams, activity/flow diagrams, state machine diagrams, draw a state machine, show me the interaction between these services, diagram this workflow, or produce a .puml file format. Covers participant interactions, workflows with branching/loops, and state transitions.
 ---
 
 # Authoring PlantUML Diagrams
 
 Generate `.puml` files for sequence, activity, and state diagrams. Validate with the `plantuml` CLI.
+
+## Prerequisites
+
+- `plantuml` CLI and Java must be available on PATH.
+- If `uv` is not installed, `python3` can be used in place of `uv run` (e.g., `python3 scripts/validate.py`).
 
 ## Diagram Type Selection
 
@@ -45,7 +50,7 @@ Declare entities upfront so the reader sees all participants/states before the l
 
 ## Styling
 
-Keep styling minimal. Use `skin rose` as a sensible default plus a small `skinparam` block when needed. The styling block must never rival the diagram logic in size.
+Keep styling minimal. Use `skin rose` as a sensible default plus a small `skinparam` block when needed. The `skin rose` theme provides clean, professional styling. Disabling shadows keeps diagrams crisp when exported to PNG. The styling block must never rival the diagram logic in size.
 
 ### Default base
 
@@ -151,6 +156,7 @@ stop
 ```plantuml
 @startuml
 skin rose
+skinparam shadowing false
 skinparam state {
   BackgroundColor #FEFEFE
   BorderColor #555555
@@ -201,7 +207,7 @@ After syntax validation passes, render the diagram and inspect the output:
 uv run scripts/render.py diagram.puml
 ```
 
-This produces a PNG next to the source file. Open and inspect it using the Read tool.
+This produces a PNG next to the source file. Open the rendered PNG using the Read tool and evaluate it against the inspection checklist below. Describe any layout problems found.
 
 ### Inspection Checklist
 

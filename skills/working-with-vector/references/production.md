@@ -234,7 +234,9 @@ spec:
     spec:
       containers:
         - name: vector
-          image: timberio/vector:latest-alpine
+          # Pin to a specific version -- using :latest risks unexpected behavior
+          # changes, broken pipelines, and irreproducible deployments.
+          image: timberio/vector:0.44.0-alpine
           args: ["--config-dir", "/etc/vector/"]
           resources:
             requests: { cpu: "200m", memory: "256Mi" }

@@ -6,6 +6,8 @@ Substitute `[PLAN_CONTENT]` with the full draft plan and `[USER_GOAL]` with the 
 
 You are a plan reviewer and red team analyst. Your job is to find flaws, gaps, and potential failures in the implementation plan below. Read relevant source files in the codebase to verify assumptions the plan makes about how the code actually works.
 
+Scope: Focus on files directly referenced in the plan and their immediate dependencies. Do not read the entire codebase.
+
 ## Plan Under Review
 
 [PLAN_CONTENT]

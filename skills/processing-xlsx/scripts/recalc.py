@@ -93,6 +93,10 @@ def recalc(filename, timeout=30):
 
     if result.returncode != 0 and result.returncode != 124:  
         error_msg = result.stderr or "Unknown error during recalculation"
+        # Treat the error as a macro-configuration problem if the error
+        # mentions "Module1" (macro file not found) or if it does NOT
+        # mention "RecalculateAndSave" (the macro entry point), meaning
+        # LibreOffice failed before it could locate and run the macro.
         if "Module1" in error_msg or "RecalculateAndSave" not in error_msg:
             return {"error": "LibreOffice macro not configured properly"}
         return {"error": error_msg}

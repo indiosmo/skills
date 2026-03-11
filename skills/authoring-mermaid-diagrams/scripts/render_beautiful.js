@@ -61,8 +61,20 @@ function parseArgs(args) {
 }
 
 function detectDiagramType(content) {
-  const trimmed = content.trim();
-  const firstLine = trimmed.split('\n')[0].toLowerCase();
+  const lines = content.trim().split('\n');
+  let firstLine = '';
+  for (const line of lines) {
+    const stripped = line.trim();
+    if (!stripped || stripped.startsWith('%%')) {
+      continue;
+    }
+    firstLine = stripped.toLowerCase();
+    break;
+  }
+
+  if (!firstLine) {
+    return { type: 'unknown', supported: false };
+  }
 
   for (const unsupported of UNSUPPORTED_TYPES) {
     if (firstLine.startsWith(unsupported)) {
@@ -76,7 +88,6 @@ function detectDiagramType(content) {
     }
   }
 
-  // Default to flowchart if starts with graph keyword
   if (firstLine.startsWith('graph')) {
     return { type: 'flowchart', supported: true };
   }

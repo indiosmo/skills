@@ -2,6 +2,18 @@
 
 Guidelines for writing fast pandas code.
 
+## Table of Contents
+
+- [Constructor Patterns](#constructor-patterns)
+- [Vectorization Over Iteration](#vectorization-over-iteration)
+- [Dtype Optimization](#dtype-optimization)
+- [GroupBy Optimization](#groupby-optimization)
+- [Algorithm Selection](#algorithm-selection)
+- [Memory Management](#memory-management)
+- [Index Optimization](#index-optimization)
+- [Scaling Beyond pandas](#scaling-beyond-pandas)
+- [Profiling](#profiling)
+
 ---
 
 ## Constructor Patterns

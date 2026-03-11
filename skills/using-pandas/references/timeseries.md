@@ -2,6 +2,20 @@
 
 Best practices for working with time series data in pandas.
 
+## Table of Contents
+
+- [DatetimeIndex Fundamentals](#datetimeindex-fundamentals)
+- [Partial String Indexing](#partial-string-indexing)
+- [Resampling](#resampling)
+- [Rolling Windows](#rolling-windows)
+- [Expanding Windows](#expanding-windows)
+- [Exponential Weighted Moving Average (EWMA)](#exponential-weighted-moving-average-ewma)
+- [Shifting and Differencing](#shifting-and-differencing)
+- [Timezone Handling](#timezone-handling)
+- [DateOffset](#dateoffset)
+- [Period and PeriodIndex](#period-and-periodindex)
+- [Common Patterns](#common-patterns)
+
 ---
 
 ## DatetimeIndex Fundamentals

@@ -100,7 +100,7 @@ df.to_excel('output.xlsx', index=False)
 
 **Always use Excel formulas instead of calculating values in Python and hardcoding them.** This ensures the spreadsheet remains dynamic and updateable.
 
-### ❌ WRONG - Hardcoding Calculated Values
+### WRONG - Hardcoding Calculated Values
 ```python
 # Bad: Calculating in Python and hardcoding result
 total = df['Sales'].sum()
@@ -115,7 +115,7 @@ avg = sum(values) / len(values)
 sheet['D20'] = avg  # Hardcodes 42.5
 ```
 
-### ✅ CORRECT - Using Excel Formulas
+### CORRECT - Using Excel Formulas
 ```python
 # Good: Let Excel calculate the sum
 sheet['B10'] = '=SUM(B2:B9)'
@@ -224,27 +224,37 @@ The script:
 - Returns JSON with detailed error locations and counts
 - Works on both Linux and macOS
 
+## Office XML Manipulation Scripts
+
+The `scripts/office/` directory contains tools for working directly with Office Open XML archives (DOCX, PPTX, XLSX). These are useful when you need to inspect or modify the raw XML inside an Office file, for example to fix corrupted markup, adjust elements that openpyxl cannot reach, or validate document structure against OOXML schemas.
+
+- **`scripts/office/unpack.py`** -- Extracts an Office file into a directory of pretty-printed XML files for inspection and editing. For DOCX files it can also merge adjacent runs and simplify tracked changes.
+- **`scripts/office/pack.py`** -- Re-packs an unpacked directory back into a valid Office file, with optional schema validation and auto-repair.
+- **`scripts/office/validate.py`** -- Validates unpacked Office XML against OOXML XSD schemas and checks tracked-change consistency (DOCX).
+
+Typical workflow: unpack a file, edit the XML, validate, then pack it back.
+
 ## Formula Verification Checklist
 
 Quick checks to ensure formulas work correctly:
 
 ### Essential Verification
-- [ ] **Test 2-3 sample references**: Verify they pull correct values before building full model
-- [ ] **Column mapping**: Confirm Excel columns match (e.g., column 64 = BL, not BK)
-- [ ] **Row offset**: Remember Excel rows are 1-indexed (DataFrame row 5 = Excel row 6)
+- **Test 2-3 sample references**: Verify they pull correct values before building full model
+- **Column mapping**: Confirm Excel columns match (e.g., column 64 = BL, not BK)
+- **Row offset**: Remember Excel rows are 1-indexed (DataFrame row 5 = Excel row 6)
 
 ### Common Pitfalls
-- [ ] **NaN handling**: Check for null values with `pd.notna()`
-- [ ] **Far-right columns**: FY data often in columns 50+ 
-- [ ] **Multiple matches**: Search all occurrences, not just first
-- [ ] **Division by zero**: Check denominators before using `/` in formulas (#DIV/0!)
-- [ ] **Wrong references**: Verify all cell references point to intended cells (#REF!)
-- [ ] **Cross-sheet references**: Use correct format (Sheet1!A1) for linking sheets
+- **NaN handling**: Check for null values with `pd.notna()`
+- **Far-right columns**: FY data often in columns 50+ 
+- **Multiple matches**: Search all occurrences, not just first
+- **Division by zero**: Check denominators before using `/` in formulas (#DIV/0!)
+- **Wrong references**: Verify all cell references point to intended cells (#REF!)
+- **Cross-sheet references**: Use correct format (Sheet1!A1) for linking sheets
 
 ### Formula Testing Strategy
-- [ ] **Start small**: Test formulas on 2-3 cells before applying broadly
-- [ ] **Verify dependencies**: Check all cells referenced in formulas exist
-- [ ] **Test edge cases**: Include zero, negative, and very large values
+- **Start small**: Test formulas on 2-3 cells before applying broadly
+- **Verify dependencies**: Check all cells referenced in formulas exist
+- **Test edge cases**: Include zero, negative, and very large values
 
 ### Interpreting scripts/recalc.py Output
 The script returns JSON with error details:

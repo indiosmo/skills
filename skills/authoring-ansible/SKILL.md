@@ -1,6 +1,6 @@
 ---
 name: authoring-ansible
-description: "Write, review, and debug Ansible automation: playbooks, roles, inventories, and collections with idiomatic patterns, security hardening, and testing. Use when creating or modifying Ansible playbooks and roles, reviewing Ansible code for best practices, setting up ansible-lint or Molecule testing, organizing Ansible repositories, managing secrets with Vault, hardening privilege escalation, or troubleshooting Ansible automation. Triggers on: Ansible playbooks, roles, inventories, YAML automation files, ansible-lint configs, Molecule test scenarios, Ansible Vault, group_vars, host_vars."
+description: "Write, review, and debug Ansible automation: playbooks, roles, inventories, and using collections with idiomatic patterns, security hardening, and testing. Use when creating or modifying Ansible playbooks and roles, reviewing Ansible code for best practices, setting up ansible-lint or Molecule testing, organizing Ansible repositories, managing secrets with Vault, hardening privilege escalation, or troubleshooting Ansible automation. Triggers on: Ansible playbooks, roles, inventories, YAML automation files, ansible-lint configs, Molecule test scenarios, Ansible Vault, group_vars, host_vars."
 ---
 
 # Authoring Ansible
@@ -115,7 +115,7 @@ See [references/linting.md](references/linting.md) for the full rule catalog, pr
 
 ### Essentials
 
-Always use FQCN, name every task, use `true`/`false` (not `yes`/`no`), quote file modes, set explicit state:
+Always use FQCN (Fully Qualified Collection Name), name every task, use `true`/`false` (not `yes`/`no`), quote file modes, set explicit state:
 
 ```yaml
 ---
@@ -177,7 +177,7 @@ Gotchas:
 | Works with `--list-tasks` | Yes | No |
 | Supports loops | No | Yes |
 | `when:` behavior | Applied to every imported task individually | Evaluated once on the include itself |
-| Handler visibility | Visible outside | NOT visible outside |
+| Handler visibility | Visible outside | NOT visible outside -- handlers defined in a dynamically included file cannot be notified from tasks outside that include |
 
 Use `import_tasks` by default. Switch to `include_tasks` only when you need loops or conditional file selection.
 
@@ -367,6 +367,49 @@ feature_flags:
 **Dictionary merging** -- Ansible replaces dictionaries entirely rather than merging. If `group_vars/all` defines `app_config: {port: 80, workers: 4}` and a host overrides `app_config: {port: 9090}`, `workers` is gone. Use flat variables or the `combine` filter.
 
 **`register` on skipped tasks** -- A registered variable from a skipped task has `.skipped == true` but no `.stdout`. Always check `result is not skipped` before accessing attributes.
+
+## Jinja2 Templating
+
+### Common Filters
+
+| Filter | Purpose | Example |
+|--------|---------|---------|
+| `default(value)` | Provide fallback when variable is undefined | `{{ my_var \| default('fallback') }}` |
+| `mandatory` | Fail with a clear error if variable is undefined | `{{ my_var \| mandatory }}` |
+| `combine(dict)` | Merge dictionaries (right side wins) | `{{ defaults \| combine(overrides) }}` |
+| `selectattr(attr, test, value)` | Filter list of dicts by attribute | `{{ users \| selectattr('active', 'equalto', true) }}` |
+| `map(attribute=name)` | Extract a single attribute from list of dicts | `{{ users \| map(attribute='name') \| list }}` |
+
+### Whitespace Control
+
+Jinja2 tags produce blank lines in rendered output. Use dash-trimming to remove them:
+
+```yaml
+# Without control -- leaves blank lines
+{% if enable_ssl %}
+ssl_certificate /etc/ssl/cert.pem;
+{% endif %}
+
+# With control -- clean output
+{%- if enable_ssl %}
+ssl_certificate /etc/ssl/cert.pem;
+{%- endif %}
+```
+
+`{%-` trims whitespace before the tag. `-%}` trims whitespace after the tag. Use on control-flow tags (`if`, `for`, `endif`, `endfor`), not on expression tags (`{{ }}`).
+
+### The `omit` Sentinel
+
+Use `omit` with `default` to conditionally exclude a module parameter entirely, as if it were never specified:
+
+```yaml
+- name: Create user with optional groups
+  ansible.builtin.user:
+    name: "{{ username }}"
+    groups: "{{ user_groups | default(omit) }}"
+```
+
+When `user_groups` is undefined, the `groups` parameter is omitted from the module call and the module uses its own default behavior. This is different from passing an empty string or `None`.
 
 ## Security Essentials
 

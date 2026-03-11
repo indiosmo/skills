@@ -20,7 +20,7 @@ from pathlib import Path
 # Diagram types supported by beautiful-mermaid
 BEAUTIFUL_SUPPORTED_TYPES = {'flowchart', 'graph', 'sequencediagram', 'statediagram', 'classdiagram', 'erdiagram'}
 # Types that require mmdc
-MMDC_ONLY_TYPES = {'architecture'}
+MMDC_ONLY_TYPES = {'architecture', 'block'}
 
 
 def check_mmdc_installed() -> bool:
@@ -65,7 +65,7 @@ def detect_diagram_type(content: str) -> str:
             continue
         # Extract first word
         first_word = stripped.split()[0] if stripped.split() else ''
-        # Handle direction suffix (e.g., 'flowchart-v2' -> 'flowchart')
+        # Handle version suffix (e.g., 'stateDiagram-v2' -> 'statediagram')
         first_word = first_word.split('-')[0]
         return first_word
     return 'unknown'

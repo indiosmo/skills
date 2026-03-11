@@ -6,7 +6,9 @@ description: >-
   ones, fixing shell scripting bugs, or adding tests to shell scripts. Covers
   strict mode with caveats, trap-based cleanup, ShellCheck integration, and
   BATS testing. Triggers on: bash scripts, shell scripts, .sh files, shellcheck,
-  bats tests, shell scripting best practices.
+  bats tests, shell scripting best practices, debugging a pipeline failure in a
+  shell script, writing a CI/CD step that runs shell commands, wrapping a CLI
+  tool in a script, quoting/word-splitting issues.
 ---
 
 # Writing Bash Scripts
@@ -22,6 +24,7 @@ Every script starts from this skeleton:
 #          Example: deploy.sh --env staging v1.2.3
 # Notes:   <any important caveats, dependencies, or side effects>
 set -euo pipefail
+shopt -s inherit_errexit
 
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -53,7 +56,7 @@ fi
 
 Key elements:
 - `#!/usr/bin/env bash` -- always target bash, not sh
-- `set -euo pipefail` -- strict mode (see caveats below)
+- `set -euo pipefail` + `shopt -s inherit_errexit` -- strict mode (see caveats below)
 - All logic in named functions; `main "$@"` guarded by `BASH_SOURCE` check
 - `die` and `log` helpers; errors always to stderr
 - `trap cleanup EXIT` for resource cleanup
@@ -161,10 +164,28 @@ local errors
 errors=$(grep "ERROR" logfile || true)
 ```
 
-**Bash 4.4+**: add `shopt -s inherit_errexit` after the set line to propagate
-errexit into command substitutions.
+`shopt -s inherit_errexit` (already in the template) propagates errexit into
+command substitutions. Without it, `var=$(failing_cmd)` silently succeeds inside
+a substitution even with `set -e` active.
 
 ## Error Handling
+
+### `set -E` (errtrace)
+
+Add `set -E` when using ERR traps. Without it, ERR traps are not inherited by
+functions, command substitutions, or subshells -- so errors inside them silently
+bypass the trap. With `set -E`, the ERR trap fires wherever an error occurs,
+making it useful for logging the exact failure point:
+
+```bash
+set -eEuo pipefail
+
+trap 'echo "Error at ${BASH_SOURCE}:${LINENO}" >&2' ERR
+```
+
+`set -E` is not in the default template because the template uses an EXIT trap,
+which already fires on all exits. Add `set -E` when you need an ERR trap for
+diagnostics or when functions must propagate ERR handling to their callers.
 
 ### Trap and Cleanup
 
@@ -237,7 +258,9 @@ fi
 Prefix project-specific constants to avoid collision with system env vars:
 `readonly MYAPP_TIMEOUT=30` not `readonly TIMEOUT=30`.
 
-Functions use POSIX syntax: `name() { }` not `function name() { }`.
+Functions use POSIX syntax: `name() { }` not `function name() { }`. The
+`function` keyword is a bashism that is not portable to POSIX shells (dash, sh),
+while the `()` syntax works in all Bourne-family shells.
 
 ## Quoting
 
@@ -354,8 +377,10 @@ fi
 ## Argument Parsing
 
 Use `getopts` for short options or a manual `while/case` loop for long options.
-See [references/patterns.md](references/patterns.md) for full examples of both
-patterns including `usage()`, `OPTARG` handling, and `shift` logic.
+When implementing argument parsing, load
+[references/patterns.md](references/patterns.md) and consult the "Argument
+Parsing" section for full examples of both patterns including `usage()`,
+`OPTARG` handling, and `shift` logic.
 
 ## Security
 
@@ -375,8 +400,9 @@ validate_name() {
 - Use `mktemp` for temp files (prevents predictable-name attacks)
 - Lock `PATH` in privileged scripts: `export PATH="/usr/local/bin:/usr/bin:/bin"`
 - Use `flock` for atomic lock files instead of test-then-create patterns
-- See [references/patterns.md](references/patterns.md) for eval alternatives and
-  examples
+- When dealing with dynamic variable names or command construction, load
+  [references/patterns.md](references/patterns.md) and consult the "Eval:
+  Dangerous, Safe, and Legitimate" section for safe alternatives
 
 ## ShellCheck
 
@@ -430,23 +456,16 @@ teardown() {
   assert_failure
   assert_output --partial "disallowed characters"
 }
-
-@test "deploy succeeds with valid arguments" {
-  run deploy staging v1.2.3
-  assert_success
-  assert_output --partial "Deploying"
-}
 ```
 
-Key patterns:
-- `run <command>` captures exit code in `$status` and output in `$output`/`${lines[@]}`
-- `assert_success` / `assert_failure` -- check exit code
-- `assert_output "exact"` or `assert_output --partial "substring"`
-- `assert_line --index 0 "first line"`
-- Mock external commands via PATH: put stubs in a `mocks/` directory and prepend
-  to PATH in `setup()`
-- See [references/patterns.md](references/patterns.md) for detailed BATS
-  patterns including mocking and file assertions
+Core assertions: `run` captures exit code in `$status` and output in
+`$output`/`${lines[@]}`. Use `assert_success`/`assert_failure` for exit codes
+and `assert_output --partial "substring"` for output checks.
+
+When writing BATS tests beyond this basic pattern -- lifecycle hooks
+(`setup_file`/`teardown_file`), test tags, mocking external commands, or the
+full assertions list -- load [references/patterns.md](references/patterns.md)
+and consult the "Advanced BATS Testing" section.
 
 ## When to Use a Different Language
 
@@ -487,5 +506,9 @@ namerefs (`declare -n`), `mapfile`/`readarray`, `inherit_errexit`, `wait -n`.
 
 ## Reference
 
-For detailed patterns on eval alternatives, advanced BATS testing, antipatterns
-catalog, and modern bash features, see [references/patterns.md](references/patterns.md).
+Load [references/patterns.md](references/patterns.md) when you need:
+- Eval alternatives and safe indirect variable access
+- Advanced BATS testing (mocking, lifecycle hooks, test tags, full assertion list)
+- Antipatterns catalog (parsing ls, pipeline variable loss, in-place clobber)
+- Modern bash features (associative arrays, mapfile, namerefs, parallel jobs)
+- Logging patterns, argument parsing templates, and common recipes

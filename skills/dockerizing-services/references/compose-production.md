@@ -66,7 +66,30 @@ The `--no-deps` flag prevents cascading container restarts.
 
 ## Remote Deployment
 
-Deploy to a remote Docker host via environment variables:
+### docker context (preferred)
+
+`docker context` is the modern way to manage remote Docker hosts. It stores connection details persistently and supports SSH transport without manual TLS certificate setup:
+
+```bash
+# Create a context for a remote host (SSH-based, no manual TLS needed)
+docker context create staging --docker "host=ssh://deploy@staging.example.com"
+
+# Switch to the remote context
+docker context use staging
+
+# All subsequent commands target the remote host
+docker compose -f compose.yaml -f compose.prod.yaml up -d
+
+# Switch back to local
+docker context use default
+
+# One-off command against a specific context without switching
+docker --context staging compose ps
+```
+
+### DOCKER_HOST environment variable (legacy)
+
+The environment variable approach still works but requires manual TLS certificate management:
 
 ```bash
 export DOCKER_HOST=tcp://remote-host:2376
@@ -74,6 +97,8 @@ export DOCKER_TLS_VERIFY=1
 export DOCKER_CERT_PATH=/path/to/certs
 docker compose -f compose.yaml -f compose.prod.yaml up -d
 ```
+
+Prefer `docker context` over `DOCKER_HOST` -- it is easier to manage, supports SSH natively, and avoids polluting the shell environment.
 
 For multi-node scaling, use Docker Swarm or Kubernetes.
 

@@ -1,22 +1,27 @@
 ---
 name: writing-commit-messages
 description: >-
-  Write clear, consistent git commit messages following established conventions.
-  Use when Claude needs to write a commit message, review commit messages, or
-  when the user asks for help crafting commit messages. Triggers on: git commit,
-  commit message, commit description, writing commits.
+  Claude must use this skill whenever it writes, reviews, edits, or suggests a
+  git commit message. This includes: composing a commit message during "commit
+  this" or "save my changes" requests, reviewing or rewriting existing commit
+  messages, preparing commits for a pull request, squashing or rewording commits
+  during interactive rebase, amending commit descriptions, and generating
+  changelogs or release notes from commit history. Triggers on: git commit,
+  commit message, commit description, writing commits, save my changes, commit
+  this, squash commits, amend commit, reword commit, changelog from commits,
+  prepare PR commits, review commit messages.
 ---
 
 # Writing Commit Messages
 
-Apply these rules every time a commit message is written.
+Apply these rules every time a commit message is written, reviewed, or amended.
 
 ## Subject Line Rules
 
-1. **Imperative mood** -- write as a command: "Add feature", "Fix bug", "Remove deprecated method". Test with: "If applied, this commit will [your subject line]."
-2. **50 characters or fewer** -- forces concise thinking. 72 is the hard limit. If the subject is too long, the commit may be doing too much.
-3. **Capitalize the first word**
-4. **No trailing period**
+- **Imperative mood** -- write as a command: "Add feature", "Fix bug", "Remove deprecated method". This matches git's own convention for auto-generated merge and revert commits ("Merge branch...", "Revert ..."). Test with: "If applied, this commit will [your subject line]."
+- **50 characters or fewer** -- this is the target because `git log --oneline` and GitHub's commit list truncate long subjects (GitHub cuts around 72 characters). If the subject exceeds 50 characters, the commit may be doing too much. 72 is the hard limit.
+- **Capitalize the first word**
+- **No trailing period**
 
 Good subjects:
 ```
@@ -35,13 +40,42 @@ Refactoring the user auth flow to be cleaner and better organized   # too long, 
 
 ## Body Rules
 
-5. **Separate subject from body with a blank line** -- required for `git log --oneline`, `format-patch`, and other tools to work correctly.
-6. **Wrap at 72 characters** -- keeps text readable in terminals and `git log` output.
-7. **Explain what and why, not how** -- the diff shows the how. The body provides context a future reader needs: why was this change necessary? What problem does it solve? What are the side effects or consequences?
+- **Separate subject from body with a blank line** -- required for `git log --oneline`, `format-patch`, and other tools to work correctly.
+- **Wrap at 72 characters** -- git does not auto-wrap commit message bodies. Unwrapped lines cause horizontal scrolling in terminals, `git log`, and code review tools that render fixed-width text. 72 characters keeps text readable everywhere.
+- **Explain what and why, not how** -- the diff shows the how. The body provides context a future reader needs: why was this change necessary? What problem does it solve? What are the side effects or consequences?
 
-## Body Template
+## When a Body Is Needed
 
-Use a body when the subject alone does not convey enough context:
+A subject-only commit is fine for trivial, self-evident changes (typo fixes, dependency bumps, renaming a variable). Add a body when:
+
+- The reasoning behind the change is not obvious from the diff
+- The commit introduces a breaking change
+- Migration steps or manual actions are required after applying the commit
+- There are non-trivial side effects, performance implications, or tradeoffs
+- The change reverts or supersedes a previous commit and the context matters
+
+When in doubt, add a body. A few sentences of context now saves minutes of archaeology later.
+
+## Conventional Commits
+
+If the project uses Conventional Commits, follow its existing convention. Common prefixes:
+
+- `feat:` -- a new feature
+- `fix:` -- a bug fix
+- `chore:` -- maintenance tasks (dependency updates, CI config, tooling)
+- `docs:` -- documentation-only changes
+
+When a Conventional Commits prefix is used, it replaces the first word of the subject: `feat: Add dark mode toggle` rather than `feat: add dark mode toggle` (capitalize after the prefix the same way you would without it). If the project does not already use Conventional Commits, do not introduce the convention unilaterally.
+
+## Trailers
+
+Place trailers at the end of the body, each on its own line with no blank lines between them.
+
+- **Issue references** -- `Closes #1234` or `Fixes #1234`. Use when the commit fully resolves an issue. Use `Refs #1234` when the commit is related but does not close the issue.
+- **Co-Authored-By** -- `Co-Authored-By: Name <email>`. Use when another person contributed meaningfully to the commit (pair programming, AI-assisted authoring).
+- **Signed-off-by** -- `Signed-off-by: Name <email>`. Required by projects that use the Developer Certificate of Origin (DCO). Only add when the project requires it.
+
+## Template
 
 ```
 <Imperative subject, 50 chars or fewer>
@@ -49,9 +83,9 @@ Use a body when the subject alone does not convey enough context:
 <Why this change is needed. What problem it solves.
 What side effects or consequences it has.
 Wrap at 72 characters.>
-```
 
-When no body is needed (trivial or self-evident changes), a subject-only commit is fine.
+<Trailers, if applicable>
+```
 
 ## Example
 

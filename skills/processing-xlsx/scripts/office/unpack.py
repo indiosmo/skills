@@ -14,6 +14,7 @@ Examples:
 """
 
 import argparse
+import os
 import sys
 import zipfile
 from pathlib import Path
@@ -51,6 +52,11 @@ def unpack(
         output_path.mkdir(parents=True, exist_ok=True)
 
         with zipfile.ZipFile(input_path, "r") as zf:
+            resolved_output = output_path.resolve()
+            for entry in zf.namelist():
+                target = (resolved_output / entry).resolve()
+                if not str(target).startswith(str(resolved_output) + os.sep) and target != resolved_output:
+                    return None, f"Error: zip entry {entry!r} would escape the target directory"
             zf.extractall(output_path)
 
         xml_files = list(output_path.rglob("*.xml")) + list(output_path.rglob("*.rels"))

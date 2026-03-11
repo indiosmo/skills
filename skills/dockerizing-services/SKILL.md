@@ -8,12 +8,21 @@ description: >-
   and network isolation, hardening container images and runtime policies,
   troubleshooting container networking/DNS/volume issues, reviewing Dockerfiles
   for security and size, or migrating local dev workflows to container-based
-  CI/CD pipelines.
+  CI/CD pipelines. Trigger phrases: "containerize my app", "microservices",
+  "run alongside Postgres", "dev environment with services", "run my app with
+  a database", "Docker Compose setup", "multi-container", "add a Redis
+  container", "Dockerize". This skill is NOT for Kubernetes orchestration,
+  Helm charts, cloud-native deployment (ECS/Cloud Run/Fly.io), or container
+  registries and CI image publishing.
 ---
 
 # Docker Patterns
 
 Actionable Docker and Docker Compose patterns for containerized development and deployment.
+
+Docker is the right tool when you need reproducible service dependencies (databases, caches, queues) alongside your application, when "works on my machine" problems keep recurring, or when you want to mirror a multi-service production topology locally. If you only run a single process with no service dependencies, running natively is simpler.
+
+This skill has permission to fetch from `docs.docker.com` via WebFetch. Use it to look up current reference documentation when needed.
 
 ## Docker Compose for Local Development
 
@@ -30,7 +39,7 @@ services:
       - "3000:3000"
     volumes:
       - .:/app                        # Bind mount for hot reload
-      - /app/node_modules             # Anonymous volume -- preserves container deps
+      - /app/node_modules             # Anonymous volume -- see note below
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/app_dev
       - REDIS_URL=redis://redis:6379/0
@@ -76,6 +85,8 @@ volumes:
   pgdata:
   redisdata:
 ```
+
+The `/app/node_modules` anonymous volume prevents the bind mount (`.:/app`) from clobbering the `node_modules` directory that was installed inside the container during the image build. Without it, the host's `node_modules` (which may be empty, or built for a different OS/architecture) would shadow the container's copy, causing missing or incompatible dependencies at runtime.
 
 ### Multi-Stage Dockerfile
 
@@ -296,6 +307,8 @@ services:
       - NET_BIND_SERVICE          # Only if binding to ports < 1024
 ```
 
+`no-new-privileges` prevents a process inside the container from gaining additional privileges via setuid/setgid binaries or filesystem capabilities. This limits the blast radius if an attacker achieves code execution: they cannot escalate from the application user to root. `cap_drop: ALL` removes every Linux capability (mount, chown, raw sockets, etc.) from the container, then `cap_add` grants back only the specific capabilities the application actually requires. Together, these settings enforce least-privilege: even if the container is compromised, the attacker has almost no kernel-level powers to exploit.
+
 ### Secret Management
 
 ```yaml
@@ -323,6 +336,8 @@ services:
 ```
 
 ## .dockerignore
+
+Every file in the build context is sent to the Docker daemon before the build starts. Without a `.dockerignore`, this includes the `.git` directory (often hundreds of megabytes), `node_modules`, test fixtures, and -- critically -- `.env` files that may contain secrets. A proper `.dockerignore` keeps the build context small (faster builds, less memory) and prevents accidental secret leakage into image layers.
 
 ```
 node_modules

@@ -30,4 +30,5 @@ if __name__ == "__main__":
         sys.exit(1)
     pdf_path = sys.argv[1]
     output_directory = sys.argv[2]
+    os.makedirs(output_directory, exist_ok=True)
     convert(pdf_path, output_directory)

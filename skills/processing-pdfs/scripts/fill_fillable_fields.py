@@ -71,7 +71,10 @@ def validation_error_for_field_value(field_info, field_value):
     return None
 
 
-def monkeypatch_pydpf_method():
+def monkeypatch_pypdf_method():
+    # pypdf returns choice field options as [export_value, display_text] pairs,
+    # but update_page_form_field_values expects plain export values. This patch
+    # unwraps the pairs so choice fields can be set correctly.
     from pypdf.generic import DictionaryObject
     from pypdf.constants import FieldDictionaryAttributes
 
@@ -91,7 +94,7 @@ if __name__ == "__main__":
     if len(sys.argv) != 4:
         print("Usage: fill_fillable_fields.py [input pdf] [field_values.json] [output pdf]")
         sys.exit(1)
-    monkeypatch_pydpf_method()
+    monkeypatch_pypdf_method()
     input_pdf = sys.argv[1]
     fields_json = sys.argv[2]
     output_pdf = sys.argv[3]

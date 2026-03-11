@@ -2,6 +2,26 @@
 
 This document contains advanced PDF processing features, detailed examples, and additional libraries not covered in the main skill instructions.
 
+## Table of Contents
+
+- [pypdfium2 Library (Apache/BSD License)](#pypdfium2-library-apachebsd-license)
+- [JavaScript Libraries](#javascript-libraries)
+  - [pdf-lib (MIT License)](#pdf-lib-mit-license)
+  - [pdfjs-dist (Apache License)](#pdfjs-dist-apache-license)
+- [Advanced Command-Line Operations](#advanced-command-line-operations)
+  - [poppler-utils Advanced Features](#poppler-utils-advanced-features)
+  - [qpdf Advanced Features](#qpdf-advanced-features)
+- [Advanced Python Techniques](#advanced-python-techniques)
+  - [pdfplumber Advanced Features](#pdfplumber-advanced-features)
+  - [reportlab Advanced Features](#reportlab-advanced-features)
+- [Complex Workflows](#complex-workflows)
+  - [Extract Figures/Images from PDF](#extract-figuresimages-from-pdf)
+  - [Batch PDF Processing with Error Handling](#batch-pdf-processing-with-error-handling)
+  - [Advanced PDF Cropping](#advanced-pdf-cropping)
+- [Performance Optimization Tips](#performance-optimization-tips)
+- [Troubleshooting Common Issues](#troubleshooting-common-issues)
+- [License Information](#license-information)
+
 ## pypdfium2 Library (Apache/BSD License)
 
 ### Overview

@@ -38,9 +38,10 @@ def render(puml_path: str, output_dir: str | None = None) -> int:
 
     if png.exists():
         print(f"OK: {path.name} -> {png}")
+        return 0
     else:
-        print(f"WARNING: Render completed but output not found at {png}")
-    return 0
+        print(f"ERROR: Render completed but output not found at {png}")
+        return 1
 
 
 def main() -> None:
