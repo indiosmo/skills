@@ -1,0 +1,3 @@
+- Avoid glyphs/icons in general, both in comments and in cli/log outputs. Just use regular text.
+- Avoid abbreviations like `pb_file`, `inv`, `env_resp`. Prefer explicit names `playbook_file`, `inventory`, `environment_response`.
+
