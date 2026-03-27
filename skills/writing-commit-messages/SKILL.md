@@ -42,7 +42,8 @@ Refactoring the user auth flow to be cleaner and better organized   # too long, 
 
 - **Separate subject from body with a blank line** -- required for `git log --oneline`, `format-patch`, and other tools to work correctly.
 - **Wrap at 72 characters** -- git does not auto-wrap commit message bodies. Unwrapped lines cause horizontal scrolling in terminals, `git log`, and code review tools that render fixed-width text. 72 characters keeps text readable everywhere.
-- **Explain what and why, not how** -- the diff shows the how. The body provides context a future reader needs: why was this change necessary? What problem does it solve? What are the side effects or consequences?
+- **Explain what and why, not how** -- the diff shows the how. The body provides context a future reader needs: why was this change necessary? What problem does it solve? What are the side effects or consequences? For bug fixes, state the faulty behavior, what you changed, and how the change corrects it. For behavioral changes, state what happened before and what happens now. A reader should understand the motivation without opening the diff.
+- **Be direct** -- lead each paragraph with an imperative verb ("Add ...", "Fix ...", "Remove ..."). Cut filler words and throat-clearing ("Also", "Additionally", "In order to"). Apply the **writing-clearly-and-concisely** skill to all commit prose.
 
 ## When a Body Is Needed
 
@@ -87,8 +88,9 @@ Wrap at 72 characters.>
 <Trailers, if applicable>
 ```
 
-## Example
+## Examples
 
+Single-concern commit with what/why:
 ```
 Redirect user to login page after session timeout
 
@@ -99,3 +101,32 @@ re-authenticating.
 
 Closes #1234
 ```
+
+Multi-concern commit -- each paragraph leads with an imperative
+verb and states what was done plus why:
+```
+Add gateway console certification helper
+
+Implement the BOE gateway console tool for manual certification
+of the inbound-error-disconnect scenario. The helper accepts a
+local BOE session and lets the operator inject unknown
+ExecutionReportNew messages to trigger the error threshold
+disconnect.
+
+Fix session lifecycle: remove unschedule from stop() as the
+fsm_async_close path already handles it. The duplicated call
+would throw with "is not scheduled" before calling into
+disconnect().
+
+Improve scheduler logging with session IDs.
+```
+
+Bad body style -- "Also" glues unrelated items and buries the
+motivation:
+```
+Also add auction-order and client-does-not-resend certification
+scenarios, and remove a stray break-after-return in ospec
+normalization.
+```
+Each of those deserves its own paragraph with an imperative lead
+and a brief reason.
