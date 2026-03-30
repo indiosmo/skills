@@ -1,14 +1,16 @@
 ---
-name: writing-docs
+name: documentation
 description: >-
   Guidelines for writing, updating, and reviewing project documentation -- READMEs, architecture
   overviews, runbooks, ADRs, guides, and inline code comments. Use this skill whenever asked to
   create, update, or review documentation of any kind, including when the user says "document this",
-  "write a README", "add a runbook", "explain how X works", or wants to improve existing docs.
-  Also use it when producing documentation as part of a larger task (adding a new module, finishing
-  a feature) even if the user does not explicitly mention documentation. Triggers on: document,
-  README, runbook, architecture doc, ADR, guide, explain, write docs, update docs, review docs,
-  how does this work, add documentation.
+  "write a README", "add a runbook", "explain how X works", "write an ADR", "document this
+  decision", or wants to improve existing docs. Also use when producing documentation as part of a
+  larger task (adding a new module, finishing a feature) even if the user does not explicitly mention
+  documentation. Use it when a significant technical choice is being made and should be captured as
+  an ADR, even if the user does not say "ADR" explicitly. Triggers on: document, README, runbook,
+  architecture doc, ADR, decision record, guide, explain, write docs, update docs, review docs,
+  how does this work, add documentation, record this decision, why did we choose X.
 ---
 
 # Writing Documentation
@@ -24,6 +26,30 @@ When documentation restates implementation details, it creates two sources of tr
 drift apart. The code always wins that race, leaving the docs as a misleading artifact. Instead,
 give the reader enough conceptual grounding that when they do look at the code, they already
 understand its purpose and context.
+
+## Which document type?
+
+Different situations call for different document types. Use this to decide:
+
+| If the reader needs to...                              | Write a...   | Reference                        |
+|--------------------------------------------------------|--------------|----------------------------------|
+| Understand what something is and get oriented          | README       | `references/readme.md`           |
+| Understand why a technical decision was made           | ADR          | `references/adr.md`              |
+| Follow steps to perform an operational task            | Runbook      | `references/runbooks.md`         |
+| Learn how something works or how to do a class of task | Guide        | See "Guides and references" below |
+
+Some signals to help route:
+
+- **"Why did we choose X?"** or a significant technical choice is being made --> ADR
+- **"How do I set up / deploy / rotate / migrate X?"** --> Runbook
+- **"What is this project / module / directory?"** --> README
+- **"How does X work?"** --> Could be a README section (if it's about orienting someone to a
+  component) or a guide (if it's about teaching a technique or pattern)
+
+When in doubt, start with a README. Most documentation needs are orientation needs.
+
+Read the corresponding reference file before writing that document type. Each reference file
+contains the structure, conventions, and examples specific to that type.
 
 ## Structure: general to specific
 
@@ -91,72 +117,7 @@ These heuristics help docs stay accurate as the codebase evolves:
 - **Generalize directory layouts.** Describe the structure and what each level contains, but do
   not list every individual file. The file listing is already available via the filesystem.
 
-## Document types
-
-### README
-
-A README answers: what is this, why does it exist, and how do I get oriented?
-
-Place a README in any directory that a newcomer might land in -- the project root, each major
-module or service, and any directory whose purpose is not obvious from its name. Keep each README
-focused on its own scope. The root README is the entry point; module READMEs explain their own
-area.
-
-**Structure for a root README:**
-1. Project name and one-line description
-2. Brief overview (what problem this solves, key concepts)
-3. Getting started (setup, prerequisites, first run)
-4. High-level architecture or repo layout (briefly, linking to deeper docs)
-5. Common workflows or commands
-
-**Structure for a module or directory README:**
-1. What this module or directory is and why it exists
-2. Key concepts and how the parts relate
-3. How to extend or modify it
-4. Links to deeper documentation if it exists
-
-### Architecture Decision Records (ADRs)
-
-ADRs capture the reasoning behind significant technical decisions. They are permanent records --
-not updated after the fact but superseded by new ADRs if a decision changes.
-
-**When to write one:** When a decision is non-obvious, has alternatives worth recording, or will
-be questioned by a future developer who was not in the room.
-
-**Format:**
-```
-# NNN. Title
-
-**Status:** Proposed | Accepted | Deprecated | Superseded by [NNN]
-
-## Context
-Neutral description of the forces and constraints at play.
-
-## Decision
-What was decided, stated in active voice.
-
-## Consequences
-All outcomes -- positive, negative, and neutral.
-```
-
-Keep ADRs short (one to two pages). They are a "conversation with a future developer" -- write
-in full sentences, include enough context that the decision makes sense without external knowledge.
-
-### Runbooks
-
-Runbooks are step-by-step operational procedures. They answer: how do I do this specific task?
-
-**When to write one:** When a procedure involves multiple steps, touches production or shared
-systems, or is performed infrequently enough that the steps will be forgotten between occurrences.
-
-**Principles:**
-- Lead with prerequisites (tools, access, environment)
-- Number every step
-- Include the exact commands to run, with placeholders for variable parts
-- State what success looks like after each non-trivial step (expected output, status to verify)
-- Keep the scope narrow -- one procedure per runbook
-
-### Guides and references
+## Guides and references
 
 Guides explain how something works or how to accomplish a class of tasks. References document
 schemas, configuration options, or API surfaces. These are less common than READMEs and runbooks

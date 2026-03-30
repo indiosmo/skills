@@ -1,18 +1,3 @@
----
-name: adr
-description: >-
-  Write, review, and manage Architectural Decision Records (ADRs) -- lightweight documents that
-  capture the reasoning behind significant technical decisions. Covers ADR structure and templates
-  (Nygard, MADR), naming conventions, directory organization, lifecycle statuses, superseding,
-  and when to write one. Use this skill whenever asked to create an ADR, document an architecture
-  decision, review existing ADRs, set up an ADR process for a project, or retrofit decisions that
-  were made but never recorded. Also use when the user says things like "why did we choose X",
-  "document this decision", "write a decision record", "set up ADRs", "should we write an ADR for
-  this", or when a significant technical choice is being made and should be captured. Even if the
-  user does not say "ADR" explicitly -- if they want to record the rationale behind a technical
-  decision, this skill applies.
----
-
 # Architectural Decision Records
 
 An ADR is a short document that captures one significant technical decision along with its context
@@ -368,16 +353,3 @@ A retroactive ADR with imperfect context is better than no record at all.
 
 No special tooling is needed. ADRs are just markdown files written by hand and managed through
 git and pull requests.
-
-## Relationship to other documentation
-
-ADRs capture the **why** behind a decision. They complement but do not replace:
-
-- **README** -- project overview, getting started, high-level architecture
-- **Design documents** -- detailed technical designs for complex features
-- **RFCs** -- proposals for changes that need broad input before a decision is made
-- **Runbooks** -- step-by-step operational procedures
-
-An RFC might precede an ADR (the RFC proposes, the ADR records the outcome). A design document
-might follow an ADR (the ADR records the decision, the design document details the
-implementation). Use the `writing-docs` skill for general documentation guidelines.
