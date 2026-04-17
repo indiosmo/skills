@@ -316,6 +316,38 @@ The first version names the user (`msi`), the host (`github.com`), and the port
 (`443`) -- three values that live in `tasks/main.yml` and a template. The second
 describes what the step accomplishes; readers who need the literals open the task.
 
+## Final review before finishing
+
+Before calling a document done, scan for these drift patterns. If any survives
+into the final draft, the doc will age badly.
+
+- **Concrete values in prose** -- hostnames, ports, paths, versions, package
+  names, usernames, specific image tags. The task or template owns these.
+  Describe what the step accomplishes, not which literal value it uses.
+- **Lists of instances** -- sources, routes, services, metrics, fields,
+  containers. Generalize to the pattern and give one example, or point at the
+  file that enumerates them.
+- **Variable, default, or required-input enumerations** -- including short
+  lists of "the ones you must set". The definition file (`defaults/main.yml`,
+  `values.yaml`, `.env.sample`) owns these.
+- **Dependency lists the tool already expresses** -- `meta/main.yml`,
+  `pyproject.toml`, `package.json`, `go.mod`, dbt `ref()`, Compose
+  `depends_on`, Terraform resource references. Document only coupling the
+  native mechanism can't capture (see "Dependency documentation" in
+  `references/readme.md`).
+- **Dependents** -- "roles X, Y, Z depend on this one". Drifts the moment a
+  new dependent appears.
+- **Rationale restated from an ADR, parent README, or sibling** -- link and
+  summarize in one sentence; don't repeat.
+- **Transcribed code behavior** -- "the function checks that X, Y, and Z".
+  Explain purpose; point at the source for mechanics.
+- **Content that belongs next to the definition** -- a field-level detail in
+  a README is worse than the same detail as a comment next to the field. The
+  comment travels with the code.
+
+For each match, ask: "If someone changes the underlying code tomorrow, will
+this line still be true?" If no, revise or delete.
+
 ## Working with project-specific skills
 
 This skill provides general documentation guidelines. Individual projects may have a companion
