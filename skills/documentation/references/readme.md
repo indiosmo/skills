@@ -57,42 +57,81 @@ These follow a simpler pattern:
    any patterns that repeat within this module
 3. **How to extend or modify it** -- the steps for adding a new instance of whatever this module
    manages (a new role, a new source, a new handler)
-4. **Dependencies** -- what this module depends on and what depends on it
-5. **Variables / configuration** -- if this module exposes configuration, document it here with
-   defaults. Use tables for structured variable documentation.
-6. **Links to deeper documentation** -- if there are child READMEs or reference docs, point to
+4. **Dependencies** -- what this module depends on; how those are wired (meta-level vs.
+   include-time, hard vs. conditional). Do not list dependents -- that information lives in the
+   dependents themselves and any list will drift.
+5. **Configuration pointer** -- one sentence pointing at the file that defines variables and
+   defaults (e.g., `defaults/main.yml`, `values.yaml`, `.env.sample`). Do not list variables or
+   names of required ones; see "Variable and configuration documentation" below.
+6. **Non-obvious operational notes** -- behaviors that surprise a reader (e.g., "disabling
+   `feature_x` does not remove an existing deployment"); cross-references to relevant ADRs
+7. **Links to deeper documentation** -- if there are child READMEs or reference docs, point to
    them
 
 ### Variable and configuration documentation
 
-When a module exposes configuration (environment variables, config knobs, build options, defaults),
-document them in a table at the component level where they are defined:
+The file that defines a variable owns its documentation. A README does not list variables,
+defaults, or required inputs -- not even a short list of "the ones you must set". The
+definition file already shows which variables are required (no default, a `CHANGE_ME`
+sentinel, or an `assert` at module entry); restating that in prose creates a second source of
+truth that drifts on every add, rename, removal, or default change.
+
+The README's job is to describe the *convention*: where variables live, how required ones are
+signalled, where secrets belong. The reader who needs the list reads the definition file --
+the only place the list stays correct.
+
+**Bad** (transcribed table -- drifts on every default change):
 
 ```markdown
 ## Configuration
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `LOG_LEVEL` | `info` | Minimum log level (`debug`, `info`, `warn`, `error`) |
-| `MAX_CONNECTIONS` | `64` | Maximum concurrent client connections |
+| Option            | Default | Description                       |
+|-------------------|---------|-----------------------------------|
+| `LOG_LEVEL`       | `info`  | Minimum log level                 |
+| `MAX_CONNECTIONS` | `64`    | Maximum concurrent connections    |
 ```
 
-Configuration that comes from a higher level (project-wide settings, parent module defaults) should
-be mentioned with a note about where it originates, not re-documented. "The `BUILD_TYPE` option is
-set in the root CMake configuration; see the top-level README for details."
+**Also bad** (still drifts the moment a new required input is added):
+
+```markdown
+## Required variables
+
+`DATABASE_URL` and `API_KEY` must be set. See `defaults/main.yml` for the full list.
+```
+
+**Good** (no variable names; the definition file carries the truth):
+
+```markdown
+## Configuration
+
+See `defaults/main.yml` for variables and defaults. Variables without a default
+(or set to `CHANGE_ME`) must be supplied by the caller; secrets belong in the host
+vault and are referenced via the `vault_` prefix convention.
+```
+
+The same rule applies to Helm `values.yaml`, `.env.sample`, schema files, type definitions --
+any file that defines configuration in one place. Let that file own its documentation, with
+inline comments next to each value. Configuration that originates higher up (project-wide
+settings, parent-module defaults) should be mentioned with a one-line pointer to where it is
+defined, not re-documented.
 
 ### Dependency documentation
 
-When modules depend on each other, state it explicitly. This creates implicit reading order and
-helps newcomers understand the build-up:
+State what this module depends on, and -- if it matters -- *how* the dependency is wired
+(meta-level role dependency vs. an `include_role` at task time, hard requirement vs. conditional).
+Wiring details rot if they drift from the actual file (e.g., `meta/main.yml`), so keep this
+short and check it against the file when you write or update the README.
 
 ```markdown
 ## Dependencies
 
-- **core/logging** -- this module uses the shared logging framework; initialize it first
-- **core/config** -- configuration parsing must run before this module loads
-  (config also initializes the thread pool that this module relies on)
+- **core/logging** -- shared logging framework; initialize before this module loads
+- **core/config** -- conditional; only required when `feature_x` is enabled (see
+  `defaults/main.yml`)
 ```
+
+Do not list **dependents** ("the X, Y, and Z roles depend on this one"). The dependent's own
+file is the source of truth; any list here will drift the moment a new dependent is added.
 
 ## Cross-referencing
 

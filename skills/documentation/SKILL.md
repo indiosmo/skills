@@ -79,12 +79,85 @@ later (if at all) and only in generalized form.
 **In code (as comments in source files, config headers, module docstrings):**
 - What specific fields, metrics, or tags a particular file produces
 - The exact schema or format of a specific output
+- **Variables, defaults, required inputs, and field schemas** -- these belong next to the
+  definition itself (a `defaults/main.yml`, `values.yaml`, `.env.sample`, schema file, type
+  definition, settings module). The file that defines a variable owns its documentation;
+  required-ness is itself a property of that file (no default, a `CHANGE_ME` sentinel, or an
+  assert at the entry point) and does not need to be restated in prose.
 - Implementation notes that only matter when reading that file
 - Anything that must change in lockstep with the code it describes
 
 When writing docs, if you find yourself listing every route, every field, or every config file by
 name, that is a signal to step back. Either generalize (describe the pattern with one example) or
 move those details into comments in the relevant source files.
+
+## Variables and configuration: the highest-velocity drift hazard
+
+Variable lists are the most common form of doc drift. Contributors add options, rename
+variables, change defaults, and add asserts -- and the README never keeps up, because the
+change author edits the definition file (where lint and runtime catch errors) and forgets the
+README. By the time anyone notices, the README misleads rather than helps.
+
+The rule: **the file that defines a variable owns its documentation, including which variables
+are required.** A README does not list variables, defaults, or required inputs -- not even a
+short list of "the ones you must set". The definition file already shows which variables are
+required (no default, a `CHANGE_ME` sentinel, or an `assert` at module entry); restating that
+in prose creates a second source of truth that drifts on every add, rename, removal, or
+default change.
+
+This applies to every kind of "single file that defines configuration":
+
+- Ansible role variables -- `defaults/main.yml` (use comments; required = no default or sentinel)
+- Helm chart values -- `values.yaml` (use comments; required = `# REQUIRED` or no default)
+- Application env vars -- `.env.sample` (use comments; required = listed without default value)
+- Build options, feature flags -- the schema file, settings module, or type definition
+- API request/response shapes -- the schema or generated API reference
+
+If you find yourself writing a Markdown table of variables -- or even a short bulleted list
+naming "required" ones -- in a README, stop. Delete it. Add the missing context as comments in
+the definition file instead.
+
+**Bad** (every variable transcribed -- drifts on every default change):
+
+```markdown
+## Variables
+
+| Variable          | Default     | Description                       |
+|-------------------|-------------|-----------------------------------|
+| `app_port`        | `8080`      | Port the service binds to         |
+| `app_log_level`   | `info`      | Log verbosity                     |
+| `app_db_url`      | _required_  | Postgres connection string        |
+| `app_db_pool_size`| `10`        | Maximum DB connections            |
+```
+
+**Also bad** (the "compromise" -- still drifts the moment a new required variable is added):
+
+```markdown
+## Required variables
+
+`app_db_url` and `app_api_key` must be set before invoking the module.
+See `defaults/main.yml` for the full list.
+```
+
+**Good** (no variable names; the definition file carries the truth):
+
+```markdown
+## Configuration
+
+See `defaults/main.yml` for variables and defaults. Variables without a default
+(or set to a `CHANGE_ME` sentinel) must be supplied by the caller; secrets belong
+in the host vault and are referenced via the `vault_` prefix convention.
+```
+
+The good version describes the *convention* (where variables live, how required ones are
+signalled, where secrets go). It does not name any variables. Adding, removing, or renaming a
+variable does not invalidate this documentation. The reader who needs the list reads the
+definition file -- which is the only place the list is guaranteed to be correct.
+
+The same logic extends to other transcription anti-patterns: listing every container in a
+compose stack, every metric a collector emits, every endpoint an API exposes, every dependent
+of a module. Each list goes stale; the source file (or `meta/main.yml`, or the schema, or the
+registry) is the live answer.
 
 ## Document hierarchy: avoid restating what a sibling or child doc already covers
 
@@ -170,7 +243,11 @@ describe in prose alone. Do not add diagrams for simple structures that a few se
 
 **DO NOT:**
 - Transcribe code into documentation -- the diff will always be fresher
-- List every file, field, route, or config value -- describe the pattern and give one example
+- **List variables, defaults, or required inputs in a README** -- not even a short list of
+  "the required ones". The definition file owns this; restating it guarantees drift. See the
+  "Variables and configuration" section above.
+- List every file, field, route, container, metric, or endpoint -- describe the pattern and
+  give one example, or point at the file that enumerates them
 - Front-load documents with directory trees, exhaustive tables, or boilerplate
 - Write documentation that requires updating every time a new instance of something is added
 - Use vague or generic language ("various components", "different things") -- be specific
