@@ -233,6 +233,41 @@ Use `import_tasks` by default. Switch to `include_tasks` only when you need loop
 
 Avoid `ignore_errors: true` -- it masks real failures. Use `failed_when: false` when you truly want to suppress all errors, as it is explicit about intent.
 
+## Role Composition
+
+Roles compose through three mechanisms: `meta/main.yml` dependencies, the play-level `roles:` keyword, and `include_role`/`import_role` in tasks.
+
+Reserve `meta/main.yml` dependencies for **hard, unconditional prerequisites** -- role B genuinely cannot function without role A. For everything else, sequence roles at the playbook level. Playbook sequencing is more visible (one place to read the apply order), supports `when:`, and sidesteps two subtle meta-dep gotchas:
+
+1. **Meta deps cannot be gated.** A `when:` at the meta level is ignored -- the dependency always runs. Use `include_role` in tasks if you need conditional composition.
+2. **Silent deduplication via lazy evaluation.** Ansible's role dedup happens *before* variable evaluation, so two role invocations with different variables can still collapse into one unexpected run.
+
+### One baseline play, many function plays
+
+When a host belongs to several functional groups and each group's playbook lists the same base role, the base role runs once per group per apply. Role deduplication only happens within a single play, not across plays in a playbook, so this redundancy is real.
+
+The idiomatic fix is to structure the top-level playbook as one `hosts: all` baseline play followed by function-specific plays that do not re-list the base:
+
+```yaml
+# site.yml
+- hosts: all
+  roles: [base]
+
+- hosts: webservers
+  roles: [web_app]    # no base here; it ran above
+
+- hosts: dbservers
+  roles: [db_app]
+```
+
+Tradeoff: running a single function playbook standalone no longer implicitly baselines. Handle it with documentation, a wrapper recipe, or by treating `site.yml` as the canonical entry point. Avoid workarounds like play-scoped `set_fact` guards, `run_once`, or tag gating -- they paper over a structural issue that the play-level refactor solves cleanly.
+
+### Circular dependencies
+
+If role A and role B depend on each other, do not resolve with mutual `meta` deps. Extract the shared concern into a third role C and have both depend on C. If the "cycle" is actually a sequencing requirement (A produces, B consumes, A uses B's output), split the work across ordered plays rather than forcing it into role metadata -- common with CAs, service discovery, and secrets managers where clients can't trust the server until it exists and the server can't run on clients until trust is set.
+
+See [references/role-composition.md](references/role-composition.md) for the full patterns, Ansible docs citations, and the anti-pattern breakdown.
+
 ## Idempotency and Best Practices
 
 Every task must be idempotent: running it N times produces the same result as running it once, with `changed=0` on subsequent runs.
