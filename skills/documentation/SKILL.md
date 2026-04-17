@@ -186,7 +186,16 @@ These heuristics help docs stay accurate as the codebase evolves:
 - **Use examples, not exhaustive lists.** A single concrete example illustrates the mechanism
   without committing to a complete enumeration that must be updated every time something is added.
 - **Refer to code, do not transcribe it.** "See the header comments in each config file for the
-  specific tags and fields" is better than copying those tags and fields into the README.
+  specific tags and fields" is better than copying those tags and fields into the README. The same
+  rule applies to anything the tool expresses itself: dependency manifests (`meta/main.yml`,
+  `pyproject.toml`, `package.json`, `go.mod`), pipeline graphs (dbt `ref()`, Dagster asset deps,
+  Compose `depends_on`, Terraform resource references), and CLI introspection (`dbt ls`,
+  `dagster asset list`, `terraform graph`). The native source is always fresher than prose.
+- **Don't bake concrete values into narrative prose.** Opening sentences and summaries quietly
+  smuggle in specific hostnames, ports, paths, versions, and package names that live somewhere
+  else in the code. When the task, template, or manifest changes, the prose silently drifts. Either
+  lift to a level that survives the change (describe *what* the step does, not *which literal
+  value* it uses) or drop the specifics and let the task file carry them.
 - **Generalize directory layouts.** Describe the structure and what each level contains, but do
   not list every individual file. The file listing is already available via the filesystem.
 
@@ -288,6 +297,24 @@ Good (explains the purpose):
 Orders are validated at the gateway boundary before entering the matching engine.
 See `validate()` in `order.py` for the specific checks.
 ```
+
+**Example -- concrete values in narrative prose:**
+
+Bad (drifts when the host or port changes):
+```markdown
+Configures SSH-based git access for the `msi` user. Deploys an SSH config block
+for github.com (over port 443) and pins the GitHub host key in known_hosts.
+```
+
+Good (survives host/port changes; the task file carries the specifics):
+```markdown
+Configures SSH-based git access for the deploy user. The SSH config tunnels
+GitHub SSH through the HTTPS port and pins the matching host key in known_hosts.
+```
+
+The first version names the user (`msi`), the host (`github.com`), and the port
+(`443`) -- three values that live in `tasks/main.yml` and a template. The second
+describes what the step accomplishes; readers who need the literals open the task.
 
 ## Working with project-specific skills
 

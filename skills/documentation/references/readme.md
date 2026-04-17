@@ -57,15 +57,15 @@ These follow a simpler pattern:
    any patterns that repeat within this module
 3. **How to extend or modify it** -- the steps for adding a new instance of whatever this module
    manages (a new role, a new source, a new handler)
-4. **Dependencies** -- what this module depends on; how those are wired (meta-level vs.
-   include-time, hard vs. conditional). Do not list dependents -- that information lives in the
-   dependents themselves and any list will drift.
-5. **Configuration pointer** -- one sentence pointing at the file that defines variables and
-   defaults (e.g., `defaults/main.yml`, `values.yaml`, `.env.sample`). Do not list variables or
-   names of required ones; see "Variable and configuration documentation" below.
-6. **Non-obvious operational notes** -- behaviors that surprise a reader (e.g., "disabling
+4. **Dependencies that the tool cannot express** -- only if there are any. If
+   `meta/main.yml`, `pyproject.toml`, `package.json`, dbt `ref()`, etc. already express the
+   relationship, say nothing -- readers know where to look. Document only coupling the native
+   mechanism can't capture (cross-tool ordering, implicit runtime prerequisites, non-code
+   prerequisites, conditional deps, or a deliberate *non*-use of the native mechanism). See
+   "Dependency documentation" below.
+5. **Non-obvious operational notes** -- behaviors that surprise a reader (e.g., "disabling
    `feature_x` does not remove an existing deployment"); cross-references to relevant ADRs
-7. **Links to deeper documentation** -- if there are child READMEs or reference docs, point to
+6. **Links to deeper documentation** -- if there are child READMEs or reference docs, point to
    them
 
 ### Variable and configuration documentation
@@ -117,21 +117,38 @@ defined, not re-documented.
 
 ### Dependency documentation
 
-State what this module depends on, and -- if it matters -- *how* the dependency is wired
-(meta-level role dependency vs. an `include_role` at task time, hard requirement vs. conditional).
-Wiring details rot if they drift from the actual file (e.g., `meta/main.yml`), so keep this
-short and check it against the file when you write or update the README.
+When the tool or framework can express a relationship natively, let that file own the truth and
+do not transcribe it into the README. Ansible `meta/main.yml`, `pyproject.toml`, `package.json`,
+`go.mod`, `Cargo.toml`, Compose `depends_on`, dbt `ref()`, Dagster asset deps, Terraform resource
+references -- all are machine-read, always current, and usually introspectable from a CLI
+(`dbt ls`, `dagster asset list`, `terraform graph`, `ansible-galaxy role list`). A README that
+copies this information drifts the moment a dependency is added, removed, or reshaped. Point the
+reader at the native source, or simply say nothing -- readers of an Ansible role know where
+`meta/main.yml` lives.
 
-```markdown
-## Dependencies
+Document a dependency in the README only when the relationship **cannot** be expressed in the
+tool's own config. Representative cases:
 
-- **core/logging** -- shared logging framework; initialize before this module loads
-- **core/config** -- conditional; only required when `feature_x` is enabled (see
-  `defaults/main.yml`)
-```
+- **Cross-tool ordering.** The coupling spans systems that can't see each other. "This role
+  renders configs that a separate Terraform workspace consumes, so that workspace must apply
+  after this role has run." Neither side's dependency graph captures the other.
+- **Implicit runtime prerequisites.** State that must already exist but that the tool neither
+  creates nor declares. "This role assumes the `msi` user already exists on the host (the
+  `server` role creates it earlier in the playbook); no meta edge enforces the order."
+- **Non-code prerequisites.** Things the system has no hook for at all: a manual SSH key
+  placement, a DNS record in an unrelated change-management system, firewall rules provisioned
+  outside this repo, a SaaS onboarding step.
+- **Configuration-conditional dependencies.** "When `feature_x` is enabled, this module also
+  requires the `vault_backend` service reachable on the network." Meta dependencies cannot be
+  conditional on a variable, so a short note is warranted.
+- **Deliberate non-use of a native mechanism.** When the *absence* of something a reader would
+  expect is intentional, one sentence explains the absence. "Telegraf is included from
+  `server/tasks/main.yml` rather than declared in `meta/main.yml` so it applies only when the
+  server baseline applies on a host."
 
-Do not list **dependents** ("the X, Y, and Z roles depend on this one"). The dependent's own
-file is the source of truth; any list here will drift the moment a new dependent is added.
+Keep these notes short and specific. Do not list **dependents** ("roles X, Y, Z depend on this
+one") -- the dependent's own file is the source of truth and any list will drift the moment a
+new dependent appears.
 
 ## Cross-referencing
 
