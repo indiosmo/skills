@@ -374,9 +374,12 @@ Tradeoff: running a single function playbook standalone no longer implicitly bas
 
 ### Role variable surface
 
-`defaults/main.yml` is the source of truth for a role's advertised interface. A reader should be able to open that one file and enumerate every variable the role can be tuned with -- including variables whose real values come from `group_vars` or from an upstream role's defaults. A role's `defaults/` and `vars/` are visible only while that role is executing in a single play; when a consumer role runs in a play that does not include the owner role, the owner's values are not in scope, and any variable listed only in the upstream location silently becomes undefined.
+A role consumes variables from two structurally different places, and each has its own home file:
 
-Prefix every variable with the role name to avoid collisions across roles invoked in the same play:
+- **Role-owned variables** (prefixed with the role name) live in `defaults/main.yml` with sensible defaults. This file is the single source of truth for what the role can be tuned with and what those defaults are.
+- **Upstream variables** (values that come from `group_vars`, `host_vars`, or another role's output) are declared in `meta/argument_specs.yml` with `required: true`, a `type`, and `choices` where applicable. They are NOT mirrored into `defaults/main.yml`.
+
+Prefix every role-owned variable with the role name to avoid collisions across roles invoked in the same play:
 
 ```yaml
 # BAD -- collides with other roles
@@ -386,39 +389,42 @@ port: 8080
 myapp_port: 8080
 ```
 
-For a cross-role variable -- one role owns it, another consumes it -- pick one pattern.
+#### External contract via `meta/argument_specs.yml`
 
-**Option A: mirror the default in the consumer, with a comment.**
-
-```yaml
-# roles/consumer/defaults/main.yml
-# Mirrored from roles/owner/defaults/main.yml -- keep in sync.
-consumer_upstream_port: 8080
-```
-
-Simple, but the drift is silent: if the owner's default changes and nobody updates the mirror, both sides look fine locally until something downstream breaks. Use when the value rarely changes and the coupling is loose.
-
-**Option B: leave the default empty and assert at the top of `tasks/main.yml`.**
+For upstream variables, declare them in `meta/argument_specs.yml`. Ansible validates the spec before `tasks/main.yml` runs, so a missing required variable or a wrong-typed value fails fast at the top of the role with a clear message, rather than surfacing later as an obscure Jinja traceback deep inside a template.
 
 ```yaml
-# roles/consumer/defaults/main.yml
-consumer_upstream_port:
-
-# roles/consumer/tasks/main.yml
-- name: Require consumer_upstream_port to be set
-  ansible.builtin.assert:
-    that:
-      - consumer_upstream_port is defined
-    fail_msg: >-
-      consumer_upstream_port must be set via group_vars, host_vars,
-      or by running the owner role in the same play.
+# roles/consumer/meta/argument_specs.yml
+---
+argument_specs:
+  main:
+    short_description: Consume an upstream service port owned by the networking layer.
+    options:
+      upstream_service_port:
+        description:
+          - TCP port the upstream service listens on. Owned by
+            group_vars/all/networking.yml; also consumed by the gateway role.
+        type: int
+        required: true
+      deploy_environment:
+        description: Deployment environment name.
+        type: str
+        required: true
+        choices:
+          - dev
+          - uat
+          - prod
 ```
 
-Explicit; fails fast when the upstream role has not run and no inventory override exists. Prefer this when correctness matters more than convenience.
+Tasks and templates then reference the upstream name directly: `{{ upstream_service_port }}`, `{{ deploy_environment }}`. Do not wrap upstream variables in a role-namespace alias (`consumer_upstream_service_port: "{{ upstream_service_port }}"`) inside `defaults/main.yml` just to document the dependency -- argument_specs is where that documentation belongs.
 
-Either pattern keeps `defaults/main.yml` authoritative without coupling role execution order through `meta/main.yml` dependencies, and keeps the variable interface self-contained.
+**Disjoint-keyset rule.** `defaults/main.yml` and `meta/argument_specs.yml` must have disjoint key sets. A variable is either role-owned (defaults) or upstream (argument_specs), never both. Ansible does not enforce this -- drift between the two files is avoided by the convention itself, not by tooling. Treat a variable appearing in both as a review-time bug.
 
-For stronger, typed enforcement, pair with `meta/argument_specs.yml` -- Ansible validates required arguments, types, and choices before the role runs, which replaces most hand-written asserts.
+**What argument_specs catches.** At role entry, Ansible checks that every `required: true` option is defined, that values match the declared `type`, and that they fall within declared `choices`. It does NOT catch a variable that is referenced in tasks/templates but declared in neither file, and it does not catch a variable listed only in `defaults/main.yml` that should have been in argument_specs (or vice versa).
+
+**Linting.** The ansible-lint `role-argument-spec` rule requires every role to ship an `meta/argument_specs.yml`. A role with no upstream dependencies still needs the file, even if `options:` is empty.
+
+**Vault indirection is unchanged.** argument_specs does not replace the vault pattern. Secrets still flow through a plaintext name in `group_vars/<group>/vars.yml` aliasing an encrypted value in `group_vars/<group>/vault.yml` (see Security Essentials below). If a secret is also an upstream variable the role depends on, declare the plaintext name in argument_specs -- the encrypted `vault_*` name stays internal to the inventory.
 
 ### Circular dependencies
 
