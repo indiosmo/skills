@@ -377,7 +377,7 @@ Tradeoff: running a single function playbook standalone no longer implicitly bas
 A role consumes variables from two structurally different places, and each has its own home file:
 
 - **Role-owned variables** (prefixed with the role name) live in `defaults/main.yml` with sensible defaults. This file is the single source of truth for what the role can be tuned with and what those defaults are.
-- **Upstream variables** (values that come from `group_vars`, `host_vars`, or another role's output) are declared in `meta/argument_specs.yml` with `required: true`, a `type`, and `choices` where applicable. They are NOT mirrored into `defaults/main.yml`.
+- **Upstream variables** (values that come from `group_vars`, `host_vars`, or another role's output) are declared in `meta/argument_specs.yml` with a `type`, `required: true` (or `required: false` plus `default:` when the role must stay safe with the variable unset), and `choices` where applicable. They are NOT mirrored into `defaults/main.yml`.
 
 Prefix every role-owned variable with the role name to avoid collisions across roles invoked in the same play:
 
@@ -398,12 +398,10 @@ For upstream variables, declare them in `meta/argument_specs.yml`. Ansible valid
 ---
 argument_specs:
   main:
-    short_description: Consume an upstream service port owned by the networking layer.
+    short_description: Consume an upstream service port and deploy environment.
     options:
       upstream_service_port:
-        description:
-          - TCP port the upstream service listens on. Owned by
-            group_vars/all/networking.yml; also consumed by the gateway role.
+        description: TCP port the upstream service listens on.
         type: int
         required: true
       deploy_environment:
@@ -417,6 +415,8 @@ argument_specs:
 ```
 
 Tasks and templates then reference the upstream name directly: `{{ upstream_service_port }}`, `{{ deploy_environment }}`. Do not wrap upstream variables in a role-namespace alias (`consumer_upstream_service_port: "{{ upstream_service_port }}"`) inside `defaults/main.yml` just to document the dependency -- argument_specs is where that documentation belongs.
+
+Keep descriptions short: state what the variable is for. Do not list which other roles consume the same variable (the argument_specs files themselves are the source of truth for that) and do not restate the convention in a file-header comment on every spec (it belongs in the skill, not in each role). `required: true` and `default:` are mutually exclusive at runtime -- if an upstream variable is optional, use `required: false` with a `default:`.
 
 **Disjoint-keyset rule.** `defaults/main.yml` and `meta/argument_specs.yml` must have disjoint key sets. A variable is either role-owned (defaults) or upstream (argument_specs), never both. Ansible does not enforce this -- drift between the two files is avoided by the convention itself, not by tooling. Treat a variable appearing in both as a review-time bug.
 
