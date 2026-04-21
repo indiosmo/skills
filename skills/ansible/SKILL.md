@@ -372,6 +372,54 @@ The idiomatic fix is to structure the top-level playbook as one `hosts: all` bas
 
 Tradeoff: running a single function playbook standalone no longer implicitly baselines. Handle it with documentation, a wrapper recipe, or by treating `site.yml` as the canonical entry point. Avoid workarounds like play-scoped `set_fact` guards, `run_once`, or tag gating -- they paper over a structural issue that the play-level refactor solves cleanly.
 
+### Role variable surface
+
+`defaults/main.yml` is the source of truth for a role's advertised interface. A reader should be able to open that one file and enumerate every variable the role can be tuned with -- including variables whose real values come from `group_vars` or from an upstream role's defaults. A role's `defaults/` and `vars/` are visible only while that role is executing in a single play; when a consumer role runs in a play that does not include the owner role, the owner's values are not in scope, and any variable listed only in the upstream location silently becomes undefined.
+
+Prefix every variable with the role name to avoid collisions across roles invoked in the same play:
+
+```yaml
+# BAD -- collides with other roles
+port: 8080
+
+# GOOD -- namespaced
+myapp_port: 8080
+```
+
+For a cross-role variable -- one role owns it, another consumes it -- pick one pattern.
+
+**Option A: mirror the default in the consumer, with a comment.**
+
+```yaml
+# roles/consumer/defaults/main.yml
+# Mirrored from roles/owner/defaults/main.yml -- keep in sync.
+consumer_upstream_port: 8080
+```
+
+Simple, but the drift is silent: if the owner's default changes and nobody updates the mirror, both sides look fine locally until something downstream breaks. Use when the value rarely changes and the coupling is loose.
+
+**Option B: leave the default empty and assert at the top of `tasks/main.yml`.**
+
+```yaml
+# roles/consumer/defaults/main.yml
+consumer_upstream_port:
+
+# roles/consumer/tasks/main.yml
+- name: Require consumer_upstream_port to be set
+  ansible.builtin.assert:
+    that:
+      - consumer_upstream_port is defined
+    fail_msg: >-
+      consumer_upstream_port must be set via group_vars, host_vars,
+      or by running the owner role in the same play.
+```
+
+Explicit; fails fast when the upstream role has not run and no inventory override exists. Prefer this when correctness matters more than convenience.
+
+Either pattern keeps `defaults/main.yml` authoritative without coupling role execution order through `meta/main.yml` dependencies, and keeps the variable interface self-contained.
+
+For stronger, typed enforcement, pair with `meta/argument_specs.yml` -- Ansible validates required arguments, types, and choices before the role runs, which replaces most hand-written asserts.
+
 ### Circular dependencies
 
 If role A and role B depend on each other, do not resolve with mutual `meta` deps. Extract the shared concern into a third role C and have both depend on C. If the "cycle" is actually a sequencing requirement (A produces, B consumes, A uses B's output), split the work across ordered plays rather than forcing it into role metadata -- common with CAs, service discovery, and secrets managers where clients can't trust the server until it exists and the server can't run on clients until trust is set.
@@ -433,16 +481,6 @@ When shell/command is unavoidable, always set `changed_when` and prefer `command
     src: app.conf.j2
     dest: /etc/app/app.conf
   notify: Restart app
-```
-
-### Prefix role variables
-
-```yaml
-# BAD -- collides with other roles
-port: 8080
-
-# GOOD -- namespaced to role
-myapp_port: 8080
 ```
 
 ### Set become per-task, not per-play
