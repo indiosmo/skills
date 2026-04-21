@@ -73,8 +73,6 @@ When a Conventional Commits prefix is used, it replaces the first word of the su
 Place trailers at the end of the body, each on its own line with no blank lines between them.
 
 - **Issue references** -- `Closes #1234` or `Fixes #1234`. Use when the commit fully resolves an issue. Use `Refs #1234` when the commit is related but does not close the issue.
-- **Co-Authored-By** -- `Co-Authored-By: Name <email>`. Use when another person contributed meaningfully to the commit (pair programming, AI-assisted authoring).
-- **Signed-off-by** -- `Signed-off-by: Name <email>`. Required by projects that use the Developer Certificate of Origin (DCO). Only add when the project requires it.
 
 ## Template
 
