@@ -22,6 +22,7 @@ Apply these rules every time a commit message is written, reviewed, or amended.
 - **50 characters or fewer** -- this is the target because `git log --oneline` and GitHub's commit list truncate long subjects (GitHub cuts around 72 characters). If the subject exceeds 50 characters, the commit may be doing too much. 72 is the hard limit.
 - **Capitalize the first word**
 - **No trailing period**
+- **Name the affected component** -- when the repository contains multiple independent components (modules, packages, skills, services), name the one this commit touches in the subject. See [Scope](#scope).
 
 Good subjects:
 ```
@@ -36,6 +37,24 @@ Bad subjects:
 fixed a bug                          # past tense, vague
 updates.                             # lowercase, period, vague
 Refactoring the user auth flow to be cleaner and better organized   # too long, not imperative
+```
+
+## Scope
+
+In a repository with multiple independent components (modules, packages, skills, services), **every commit subject must name the affected component**. A reader scanning `git log --oneline` should be able to tell whether a commit is relevant without opening the diff. Match the form the project's existing commits already use -- a `scope:` prefix (git, the Linux kernel, Conventional Commits) or prose ("... in the X skill", "... to the X module"). Name one component at a sensible level of granularity, not a file path.
+
+Scope follows the substantive change, not the file count. A commit whose real edit lives in one component must name that component even when auxiliary files (CLAUDE.md, README, top-level config) are touched as reinforcement. Commits that change these rules themselves are not exempt -- scope them to the skill, module, or package being edited. Omit the scope only when the change genuinely spans the whole repository.
+
+Good -- a reader knows which component changed:
+```
+Add convergence-path guidance to ansible skill
+writing-commit-messages: Require scope in subject
+```
+
+Bad -- reader must open the diff to find out which of many skills was touched:
+```
+Remove Co-Authored-By and Signed-off-by trailers
+Forbid variable lists in README files
 ```
 
 ## Body Rules

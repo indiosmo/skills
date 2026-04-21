@@ -41,6 +41,7 @@ uv run skills/creating-skills/scripts/package_skill.py <path/to/skill-folder>
 ## Key Conventions
 
 - **PEP 723**: Python scripts include inline metadata for `uv run` compatibility
+- **Commit messages**: name the affected skill in the subject as prose (e.g. "Add X to ansible skill", "Remove Y from writing-commit-messages skill"). Omit the scope only when the change spans the whole repository.
 
 ## Development Notes
 
