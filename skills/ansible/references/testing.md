@@ -1,5 +1,16 @@
 # Molecule Testing Reference
 
+## Table of Contents
+
+- [Ansible-Native Configuration (Molecule 6+)](#ansible-native-configuration-molecule-6)
+- [Multi-Platform Testing](#multi-platform-testing)
+- [Multiple Scenarios](#multiple-scenarios)
+- [Verify Playbook Patterns](#verify-playbook-patterns)
+- [Prepare Playbook](#prepare-playbook)
+- [Idempotence](#idempotence)
+- [CI/CD Integration](#cicd-integration)
+- [Development Commands](#development-commands)
+
 ## Ansible-Native Configuration (Molecule 6+)
 
 Molecule 6 replaced driver-based configuration with the ansible-native approach. Instead of configuring a `driver:` block, write standard Ansible playbooks for instance lifecycle.

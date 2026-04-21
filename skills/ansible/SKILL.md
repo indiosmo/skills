@@ -3,7 +3,7 @@ name: ansible
 description: "Write, review, and debug Ansible automation: playbooks, roles, inventories, and using collections with idiomatic patterns, security hardening, and testing. Use when creating or modifying Ansible playbooks and roles, reviewing Ansible code for best practices, setting up ansible-lint or Molecule testing, organizing Ansible repositories, managing secrets with Vault, hardening privilege escalation, or troubleshooting Ansible automation. Triggers on: Ansible playbooks, roles, inventories, YAML automation files, ansible-lint configs, Molecule test scenarios, Ansible Vault, group_vars, host_vars."
 ---
 
-# Authoring Ansible
+# Ansible Automation
 
 ## Project Layout
 
@@ -209,107 +209,11 @@ For any resource a role manages -- a compose project, a systemd unit, a managed 
 - **Option A (in-flow converge):** an unconditional task at the end of the role brings the resource to the desired state, relying on the module's own idempotency for no-op runs.
 - **Option B (handler-only converge):** templates/config tasks `notify:` a handler, and the handler is the only thing that brings the resource up.
 
-Running both paths for the same resource is the recurring bug. Best case, you do redundant work on every change. Worst case -- with modules that are only partially idempotent -- every apply reports `changed` for reasons that have nothing to do with real config drift.
+Running both paths for the same resource is the recurring bug. Best case, you do redundant work on every change. Worst case -- with partially-idempotent modules like `community.docker.docker_compose_v2` -- every apply reports `changed` with no real drift. Never cross-wire a handler `when:` to a task-scoped register, and never gate a fallback converge task on `not (x is changed)`; both patterns leak.
 
-The canonical offender is `community.docker.docker_compose_v2`. The module documents itself as only partially idempotent, and compose projects with `restart: no` init containers (kafka-init-topics, elasticsearch-ilm-init, and similar one-shots) trip it every time: the init container exits cleanly, the next `docker compose up` sees "not running", emits a `Starting` event, and the module reports `changed=true`. Pair that with a handler-driven restart and every apply fires the handler on a stack that did not actually drift.
+Choose option B when the compose file has `restart: "no"` init containers, when services use `depends_on: condition: service_healthy` (which `state: restarted` does not re-evaluate), or when the module documents any partial-idempotency caveat. Use a stop+start pair under a shared `listen:` so `depends_on` and healthchecks are re-evaluated. Otherwise option A is simpler.
 
-**Bad -- cross-wired register + handler `when:`**
-
-```yaml
-# tasks/main.yml
-- name: Template compose file
-  ansible.builtin.template:
-    src: docker-compose.yml.j2
-    dest: "{{ deploy_dir }}/docker-compose.yml"
-    mode: "0644"
-  notify: Restart stack
-
-- name: Start stack
-  community.docker.docker_compose_v2:
-    project_src: "{{ deploy_dir }}"
-    state: present
-  register: stack_start
-
-# handlers/main.yml
-- name: Restart stack
-  community.docker.docker_compose_v2:
-    project_src: "{{ deploy_dir }}"
-    state: restarted
-  when: not stack_start.changed   # cross-wire: handler reads task-scoped register
-```
-
-Two things are wrong here. First, the handler's `when:` references a task-scoped register from outside the handler -- a brittle coupling that's easy to invert, leaving either a handler that never runs or one that duplicates the in-flow task. Second, `state: restarted` maps to `docker compose restart`, which does not re-read the compose file; any template change is actually being applied by the unconditional `state: present` above. The handler is effectively dead code dressed up as a safety net.
-
-**Bad -- fallback task gated by "did anything change"**
-
-```yaml
-- name: Template compose file
-  ansible.builtin.template:
-    src: docker-compose.yml.j2
-    dest: "{{ deploy_dir }}/docker-compose.yml"
-    mode: "0644"
-  notify: Restart stack
-
-- name: Ensure stack is up
-  community.docker.docker_compose_v2:
-    project_src: "{{ deploy_dir }}"
-    state: present
-  when: not (repo is changed or config is changed)
-```
-
-The intent ("converge only when nothing triggered a handler") is reasonable but the implementation leaks: if the module reports spurious `changed` on an unrelated converged run, the fallback task shows up as `changed` in every apply with no real drift, and operators stop trusting `--diff` output.
-
-**Good (option A) -- always converge in flow**
-
-```yaml
-- name: Template compose file
-  ansible.builtin.template:
-    src: docker-compose.yml.j2
-    dest: "{{ deploy_dir }}/docker-compose.yml"
-    mode: "0644"
-
-- name: Converge stack
-  community.docker.docker_compose_v2:
-    project_src: "{{ deploy_dir }}"
-    state: present
-```
-
-Use when the module is reliably idempotent for this stack shape (no init containers, no restart-on-every-apply churn). Simplest to reason about; the template change is picked up by `state: present` on the next apply.
-
-**Good (option B) -- handler-only convergence**
-
-```yaml
-# tasks/main.yml
-- name: Template compose file
-  ansible.builtin.template:
-    src: docker-compose.yml.j2
-    dest: "{{ deploy_dir }}/docker-compose.yml"
-    mode: "0644"
-  notify: Restart stack
-
-# handlers/main.yml -- stop+start under one listen so depends_on re-evaluates
-- name: Stop stack
-  community.docker.docker_compose_v2:
-    project_src: "{{ deploy_dir }}"
-    state: stopped
-  listen: Restart stack
-
-- name: Start stack
-  community.docker.docker_compose_v2:
-    project_src: "{{ deploy_dir }}"
-    state: present
-  listen: Restart stack
-```
-
-Use when the in-flow path would be non-idempotent (partial-idempotency modules, init containers). The stop+start pair under a shared `listen:` forces `depends_on` and healthcheck conditions to be re-evaluated, which `state: restarted` alone does not do. Tradeoff: a first-ever install still needs at least one change notification to start the stack -- usually satisfied by the first template write.
-
-**Decision heuristic.** Inspect the compose file or service definition. Choose option B (handler-only) when any of these apply:
-
-- The compose file has `restart: "no"` init/setup containers or one-shot jobs that exit after running (kafka-init-topics, `*-ilm-init`, schema-seeders). `docker_compose_v2` flags them as "not running" on every apply and reports `changed=true`.
-- Startup ordering matters and services use `depends_on: condition: service_healthy`. `state: restarted` (docker compose restart) does not re-evaluate healthchecks; a stop+start handler pair does.
-- The managed resource has any documented partial-idempotency caveat in its module docs.
-
-Otherwise -- single-container stacks, straightforward systemd units, modules whose `state: present` is fully declarative -- option A is simpler and preferred.
+See [references/convergence.md](references/convergence.md) for the full BAD/GOOD examples, the `docker_compose_v2` init-container analysis, and the stop+start handler pattern.
 
 ### Error handling
 
@@ -347,16 +251,11 @@ Avoid `ignore_errors: true` -- it masks real failures. Use `failed_when: false` 
 
 Roles compose through three mechanisms: `meta/main.yml` dependencies, the play-level `roles:` keyword, and `include_role`/`import_role` in tasks.
 
-Reserve `meta/main.yml` dependencies for **hard, unconditional prerequisites** -- role B genuinely cannot function without role A. For everything else, sequence roles at the playbook level. Playbook sequencing is more visible (one place to read the apply order), supports `when:`, and sidesteps two subtle meta-dep gotchas:
-
-1. **Meta deps cannot be gated.** A `when:` at the meta level is ignored -- the dependency always runs. Use `include_role` in tasks if you need conditional composition.
-2. **Silent deduplication via lazy evaluation.** Ansible's role dedup happens *before* variable evaluation, so two role invocations with different variables can still collapse into one unexpected run.
+Reserve `meta/main.yml` dependencies for **hard, unconditional prerequisites** -- role B genuinely cannot function without role A. For everything else, sequence roles at the playbook level: meta deps cannot be gated with `when:`, and role deduplication happens before variable evaluation, so two invocations with different variables can silently collapse into one. Use `include_role` in tasks for conditional composition.
 
 ### One baseline play, many function plays
 
-When a host belongs to several functional groups and each group's playbook lists the same base role, the base role runs once per group per apply. Role deduplication only happens within a single play, not across plays in a playbook, so this redundancy is real.
-
-The idiomatic fix is to structure the top-level playbook as one `hosts: all` baseline play followed by function-specific plays that do not re-list the base:
+When a host belongs to several functional groups and each group's playbook lists the same base role, the base role runs once per group per apply -- role dedup only applies within a single play. Structure the top-level playbook as one `hosts: all` baseline play followed by function-specific plays that do not re-list the base:
 
 ```yaml
 # site.yml
@@ -370,67 +269,37 @@ The idiomatic fix is to structure the top-level playbook as one `hosts: all` bas
   roles: [db_app]
 ```
 
-Tradeoff: running a single function playbook standalone no longer implicitly baselines. Handle it with documentation, a wrapper recipe, or by treating `site.yml` as the canonical entry point. Avoid workarounds like play-scoped `set_fact` guards, `run_once`, or tag gating -- they paper over a structural issue that the play-level refactor solves cleanly.
+Tradeoff: running a single function playbook standalone no longer implicitly baselines. Handle it with documentation or a wrapper recipe. Avoid workarounds like play-scoped `set_fact` guards, `run_once`, or tag gating -- they paper over a structural issue.
 
 ### Role variable surface
 
-A role consumes variables from two structurally different places, and each has its own home file:
+A role consumes variables from two structurally different places:
 
-- **Role-owned variables** (prefixed with the role name) live in `defaults/main.yml` with sensible defaults. This file is the single source of truth for what the role can be tuned with and what those defaults are.
+- **Role-owned variables** (prefixed with the role name, e.g. `myapp_port`) live in `defaults/main.yml` with sensible defaults. This file is the source of truth for what the role can be tuned with.
 - **Upstream variables** (values that come from `group_vars`, `host_vars`, or another role's output) are declared in `meta/argument_specs.yml` with a `type`, `required: true` (or `required: false` plus `default:` when the role must stay safe with the variable unset), and `choices` where applicable. They are NOT mirrored into `defaults/main.yml`.
 
-Prefix every role-owned variable with the role name to avoid collisions across roles invoked in the same play:
-
-```yaml
-# BAD -- collides with other roles
-port: 8080
-
-# GOOD -- namespaced
-myapp_port: 8080
-```
-
-#### External contract via `meta/argument_specs.yml`
-
-For upstream variables, declare them in `meta/argument_specs.yml`. Ansible validates the spec before `tasks/main.yml` runs, so a missing required variable or a wrong-typed value fails fast at the top of the role with a clear message, rather than surfacing later as an obscure Jinja traceback deep inside a template.
+Ansible validates argument_specs before `tasks/main.yml` runs, so a missing required variable or a wrong-typed value fails fast at the top of the role rather than surfacing as an obscure Jinja traceback.
 
 ```yaml
 # roles/consumer/meta/argument_specs.yml
 ---
 argument_specs:
   main:
-    short_description: Consume an upstream service port and deploy environment.
+    short_description: Consume an upstream service port.
     options:
       upstream_service_port:
         description: TCP port the upstream service listens on.
         type: int
         required: true
-      deploy_environment:
-        description: Deployment environment name.
-        type: str
-        required: true
-        choices:
-          - dev
-          - uat
-          - prod
 ```
 
-Tasks and templates then reference the upstream name directly: `{{ upstream_service_port }}`, `{{ deploy_environment }}`. Do not wrap upstream variables in a role-namespace alias (`consumer_upstream_service_port: "{{ upstream_service_port }}"`) inside `defaults/main.yml` just to document the dependency -- argument_specs is where that documentation belongs.
-
-Keep descriptions short: state what the variable is for. Do not list which other roles consume the same variable (the argument_specs files themselves are the source of truth for that) and do not restate the convention in a file-header comment on every spec (it belongs in the skill, not in each role). `required: true` and `default:` are mutually exclusive at runtime -- if an upstream variable is optional, use `required: false` with a `default:`.
-
-**Disjoint-keyset rule.** `defaults/main.yml` and `meta/argument_specs.yml` must have disjoint key sets. A variable is either role-owned (defaults) or upstream (argument_specs), never both. Ansible does not enforce this -- drift between the two files is avoided by the convention itself, not by tooling. Treat a variable appearing in both as a review-time bug.
-
-**What argument_specs catches.** At role entry, Ansible checks that every `required: true` option is defined, that values match the declared `type`, and that they fall within declared `choices`. It does NOT catch a variable that is referenced in tasks/templates but declared in neither file, and it does not catch a variable listed only in `defaults/main.yml` that should have been in argument_specs (or vice versa).
-
-**Linting.** The ansible-lint `role-argument-spec` rule requires every role to ship an `meta/argument_specs.yml`. A role with no upstream dependencies still needs the file, even if `options:` is empty.
-
-**Vault indirection is unchanged.** argument_specs does not replace the vault pattern. Secrets still flow through a plaintext name in `group_vars/<group>/vars.yml` aliasing an encrypted value in `group_vars/<group>/vault.yml` (see Security Essentials below). If a secret is also an upstream variable the role depends on, declare the plaintext name in argument_specs -- the encrypted `vault_*` name stays internal to the inventory.
+**Disjoint-keyset rule.** `defaults/main.yml` and `meta/argument_specs.yml` must have disjoint key sets -- a variable is either role-owned or upstream, never both. Drift between the two is avoided by convention, not tooling. Treat a variable appearing in both as a review-time bug. The ansible-lint `role-argument-spec` rule requires every role to ship a `meta/argument_specs.yml`, even if `options:` is empty.
 
 ### Circular dependencies
 
-If role A and role B depend on each other, do not resolve with mutual `meta` deps. Extract the shared concern into a third role C and have both depend on C. If the "cycle" is actually a sequencing requirement (A produces, B consumes, A uses B's output), split the work across ordered plays rather than forcing it into role metadata -- common with CAs, service discovery, and secrets managers where clients can't trust the server until it exists and the server can't run on clients until trust is set.
+If role A and role B depend on each other, do not resolve with mutual `meta` deps. Extract the shared concern into a third role C and have both depend on C. If the "cycle" is actually a sequencing requirement (A produces, B consumes, A uses B's output), split the work across ordered plays rather than forcing it into role metadata -- common with CAs, service discovery, and secrets managers.
 
-See [references/role-composition.md](references/role-composition.md) for the full patterns, Ansible docs citations, and the anti-pattern breakdown.
+See [references/role-composition.md](references/role-composition.md) for the full patterns, Ansible docs citations, argument_specs depth (description style, what it catches, vault indirection), and the anti-pattern breakdown.
 
 ## Idempotency and Best Practices
 
