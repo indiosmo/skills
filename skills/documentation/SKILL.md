@@ -262,6 +262,20 @@ describe in prose alone. Do not add diagrams for simple structures that a few se
 - Use vague or generic language ("various components", "different things") -- be specific
 - Add documentation for things that are self-evident from well-named code and types
 - Create a new document when an existing one covers the same scope -- update it instead
+- **Announce the documentation convention inside the docs themselves** -- sentences like
+  "the `catalog.py` module docstring is the source of truth for the exact attribute names" or
+  "see `db.py` for the authoritative list" say "I am following the convention" rather than
+  telling the reader anything they could not infer. Readers find specifics in code as a matter
+  of course. Describe the pattern, give a single example, or drop a plain `see <file>` pointer
+  if one is needed -- and move on.
+- **Write negative documentation** -- statements about what a module, class, or function does
+  *not* do or does *not* depend on ("this module has no streamlit dependency", "knows nothing
+  about pandas", "does not import duckdb"). The space of absent properties is infinite, the
+  claims read as defensive, and they age badly the moment someone adds an import. Describe
+  what the thing does; the absent dependencies are visible in the imports. *Exception:* a
+  prescriptive rule for contributors ("chart modules must not import streamlit; the
+  orchestrator owns presentation") is a constraint on future changes, not a description of
+  absent behavior, and is fine.
 
 **Example -- describing a pattern vs. listing instances:**
 
@@ -316,6 +330,38 @@ The first version names the user (`msi`), the host (`github.com`), and the port
 (`443`) -- three values that live in `tasks/main.yml` and a template. The second
 describes what the step accomplishes; readers who need the literals open the task.
 
+**Example -- describing behavior vs. listing absent dependencies:**
+
+Bad (defensive; ages badly the moment someone adds an import):
+```markdown
+- Catalog discovery (catalog.py) walks the filesystem and returns a CatalogNode
+  tree. No streamlit dependency.
+```
+
+Good (describes what it does; the imports speak for themselves):
+```markdown
+- Catalog discovery (catalog.py) walks the filesystem and returns a CatalogNode tree.
+```
+
+A prescriptive contributor rule is a different shape and is fine: "chart modules
+must not import streamlit; the orchestrator owns presentation" constrains future
+changes rather than describing absent behavior.
+
+**Example -- pattern vs. announcing the convention:**
+
+Bad (restates that the docs follow the convention, which the reader would infer):
+```markdown
+Each chart module exposes a `render(df)` callable and a `METADATA` dict. The
+`catalog.py` module docstring is the single source of truth for the exact
+callable and metadata constants discovery reads.
+```
+
+Good (describes the pattern once; the code carries the specifics):
+```markdown
+Each chart module exposes a `render(df)` callable and a `METADATA` dict. See
+`catalog.py` for discovery.
+```
+
 ## Final review before finishing
 
 Before calling a document done, scan for these drift patterns. If any survives
@@ -344,6 +390,15 @@ into the final draft, the doc will age badly.
 - **Content that belongs next to the definition** -- a field-level detail in
   a README is worse than the same detail as a comment next to the field. The
   comment travels with the code.
+- **Announcements of the documentation convention** -- phrases like "X is the
+  source of truth for the exact Y" or "see Z for the authoritative list". The
+  reader infers this from the pattern; the sentence adds no information.
+  Delete, or collapse to a bare `see <file>` pointer.
+- **Negative statements about dependencies or behavior** -- "has no streamlit
+  dependency", "knows nothing about pandas", "does not import duckdb".
+  Describe what the thing does; absent dependencies are visible in the
+  imports. Keep prescriptive rules for contributors ("chart modules must not
+  import streamlit") -- those are constraints, not descriptions.
 
 For each match, ask: "If someone changes the underlying code tomorrow, will
 this line still be true?" If no, revise or delete.
