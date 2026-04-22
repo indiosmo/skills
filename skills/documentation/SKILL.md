@@ -2,7 +2,7 @@
 name: documentation
 description: >-
   Guidelines for writing, updating, and reviewing project documentation -- READMEs, architecture
-  overviews, runbooks, ADRs, guides, and inline code comments. Use this skill whenever asked to
+  overviews, runbooks, ADRs, and guides. Use this skill whenever asked to
   create, update, or review documentation of any kind, including when the user says "document this",
   "write a README", "add a runbook", "explain how X works", "write an ADR", "document this
   decision", or wants to improve existing docs. Also use when producing documentation as part of a
@@ -31,12 +31,16 @@ understand its purpose and context.
 
 Different situations call for different document types. Use this to decide:
 
-| If the reader needs to...                              | Write a...   | Reference                        |
-|--------------------------------------------------------|--------------|----------------------------------|
-| Understand what something is and get oriented          | README       | `references/readme.md`           |
-| Understand why a technical decision was made           | ADR          | `references/adr.md`              |
-| Follow steps to perform an operational task            | Runbook      | `references/runbooks.md`         |
-| Learn how something works or how to do a class of task | Guide        | See "Guides and references" below |
+| If the reader needs to...                     | Write a... | Reference                |
+|------------------------------------------------|------------|--------------------------|
+| Understand what something is and get oriented  | README     | `references/readme.md`   |
+| Understand why a technical decision was made   | ADR        | `references/adr.md`      |
+| Follow steps to perform an operational task    | Runbook    | `references/runbooks.md` |
+
+Guides -- documents that teach a technique or walk through a class of tasks -- are a lighter
+variant. When a topic outgrows a README section but is not a step-by-step procedure, write a
+guide using the general principles below; see "Guides" near the end of this file for naming
+and organization notes.
 
 Some signals to help route:
 
@@ -93,71 +97,19 @@ move those details into comments in the relevant source files.
 
 ## Variables and configuration: the highest-velocity drift hazard
 
-Variable lists are the most common form of doc drift. Contributors add options, rename
-variables, change defaults, and add asserts -- and the README never keeps up, because the
-change author edits the definition file (where lint and runtime catch errors) and forgets the
-README. By the time anyone notices, the README misleads rather than helps.
-
+Variable lists, defaults, and required inputs are the most common source of documentation drift.
 The rule: **the file that defines a variable owns its documentation, including which variables
-are required.** A README does not list variables, defaults, or required inputs -- not even a
-short list of "the ones you must set". The definition file already shows which variables are
-required (no default, a `CHANGE_ME` sentinel, or an `assert` at module entry); restating that
-in prose creates a second source of truth that drifts on every add, rename, removal, or
-default change.
+are required.** A README does not list variables -- not even a short list of "the ones you must
+set". Describe the convention (where variables live, how required ones are signalled, where
+secrets go) and let the definition file carry the names.
 
-This applies to every kind of "single file that defines configuration":
+The same logic extends to other transcription anti-patterns: every container in a compose stack,
+every metric a collector emits, every endpoint an API exposes, every dependent of a module. The
+source file (or `meta/main.yml`, or the schema, or the registry) is the live answer.
 
-- Ansible role variables -- `defaults/main.yml` (use comments; required = no default or sentinel)
-- Helm chart values -- `values.yaml` (use comments; required = `# REQUIRED` or no default)
-- Application env vars -- `.env.sample` (use comments; required = listed without default value)
-- Build options, feature flags -- the schema file, settings module, or type definition
-- API request/response shapes -- the schema or generated API reference
-
-If you find yourself writing a Markdown table of variables -- or even a short bulleted list
-naming "required" ones -- in a README, stop. Delete it. Add the missing context as comments in
-the definition file instead.
-
-**Bad** (every variable transcribed -- drifts on every default change):
-
-```markdown
-## Variables
-
-| Variable          | Default     | Description                       |
-|-------------------|-------------|-----------------------------------|
-| `app_port`        | `8080`      | Port the service binds to         |
-| `app_log_level`   | `info`      | Log verbosity                     |
-| `app_db_url`      | _required_  | Postgres connection string        |
-| `app_db_pool_size`| `10`        | Maximum DB connections            |
-```
-
-**Also bad** (the "compromise" -- still drifts the moment a new required variable is added):
-
-```markdown
-## Required variables
-
-`app_db_url` and `app_api_key` must be set before invoking the module.
-See `defaults/main.yml` for the full list.
-```
-
-**Good** (no variable names; the definition file carries the truth):
-
-```markdown
-## Configuration
-
-See `defaults/main.yml` for variables and defaults. Variables without a default
-(or set to a `CHANGE_ME` sentinel) must be supplied by the caller; secrets belong
-in the host vault and are referenced via the `vault_` prefix convention.
-```
-
-The good version describes the *convention* (where variables live, how required ones are
-signalled, where secrets go). It does not name any variables. Adding, removing, or renaming a
-variable does not invalidate this documentation. The reader who needs the list reads the
-definition file -- which is the only place the list is guaranteed to be correct.
-
-The same logic extends to other transcription anti-patterns: listing every container in a
-compose stack, every metric a collector emits, every endpoint an API exposes, every dependent
-of a module. Each list goes stale; the source file (or `meta/main.yml`, or the schema, or the
-registry) is the live answer.
+See `references/readme.md` ("Variable and configuration documentation") for the full treatment
+with bad/also-bad/good examples covering Ansible roles, Helm charts, env vars, schemas, and API
+surfaces.
 
 ## Document hierarchy: avoid restating what a sibling or child doc already covers
 
@@ -199,14 +151,13 @@ These heuristics help docs stay accurate as the codebase evolves:
 - **Generalize directory layouts.** Describe the structure and what each level contains, but do
   not list every individual file. The file listing is already available via the filesystem.
 
-## Guides and references
+## Guides
 
-Guides explain how something works or how to accomplish a class of tasks. References document
-schemas, configuration options, or API surfaces. These are less common than READMEs and runbooks
-but valuable when a topic is too large for a README section yet not a step-by-step procedure.
-
-Organize guides by topic (for example, `error_handling.md`, `testing.md`). Include code examples
-that show both the correct pattern and the pattern to avoid, with a brief explanation of why.
+Guides explain how something works or how to accomplish a class of tasks. They sit between a
+README section and a runbook: broader than a single procedure, narrower than the orienting scope
+of a README. Organize guides by topic (for example, `error_handling.md`, `testing.md`). Include
+code examples that show both the correct pattern and the pattern to avoid, with a brief
+explanation of why.
 
 ## Tone and style
 
@@ -242,13 +193,12 @@ describe in prose alone. Do not add diagrams for simple structures that a few se
 ## DO and DO NOT
 
 **DO:**
-- Explain the why behind decisions, architecture, and non-obvious patterns
-- Start every document with a summary that gives the reader the gist in seconds
-- Use one concrete example to illustrate a pattern instead of listing every instance
-- Link to child or sibling documents rather than restating their content
-- Put implementation details in code comments where they stay in sync with the code
 - Check existing docs before writing -- extend or update, do not duplicate
 - Match the project's existing documentation conventions (heading style, file placement, naming)
+
+The rest of the principles covered in the narrative sections above -- explain the why,
+open with a summary, generalize over enumerations, link rather than restate, push implementation
+details into code comments -- carry forward here without repeating.
 
 **DO NOT:**
 - Transcribe code into documentation -- the diff will always be fresher

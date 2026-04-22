@@ -68,35 +68,52 @@ These follow a simpler pattern:
 6. **Links to deeper documentation** -- if there are child READMEs or reference docs, point to
    them
 
-### Variable and configuration documentation
+### Variable and configuration documentation: the highest-velocity drift hazard
 
-The file that defines a variable owns its documentation. A README does not list variables,
-defaults, or required inputs -- not even a short list of "the ones you must set". The
-definition file already shows which variables are required (no default, a `CHANGE_ME`
-sentinel, or an `assert` at module entry); restating that in prose creates a second source of
-truth that drifts on every add, rename, removal, or default change.
+Variable lists are the most common form of doc drift. Contributors add options, rename
+variables, change defaults, and add asserts -- and the README never keeps up, because the
+change author edits the definition file (where lint and runtime catch errors) and forgets the
+README. By the time anyone notices, the README misleads rather than helps.
 
-The README's job is to describe the *convention*: where variables live, how required ones are
-signalled, where secrets belong. The reader who needs the list reads the definition file --
-the only place the list stays correct.
+The rule: **the file that defines a variable owns its documentation, including which variables
+are required.** A README does not list variables, defaults, or required inputs -- not even a
+short list of "the ones you must set". The definition file already shows which variables are
+required (no default, a `CHANGE_ME` sentinel, or an `assert` at module entry); restating that
+in prose creates a second source of truth that drifts on every add, rename, removal, or default
+change.
 
-**Bad** (transcribed table -- drifts on every default change):
+This applies to every kind of "single file that defines configuration":
+
+- Ansible role variables -- `defaults/main.yml` (use comments; required = no default or sentinel)
+- Helm chart values -- `values.yaml` (use comments; required = `# REQUIRED` or no default)
+- Application env vars -- `.env.sample` (use comments; required = listed without default value)
+- Build options, feature flags -- the schema file, settings module, or type definition
+- API request/response shapes -- the schema or generated API reference
+
+If you find yourself writing a Markdown table of variables -- or even a short bulleted list
+naming "required" ones -- in a README, stop. Delete it. Add the missing context as comments in
+the definition file instead.
+
+**Bad** (every variable transcribed -- drifts on every default change):
 
 ```markdown
-## Configuration
+## Variables
 
-| Option            | Default | Description                       |
-|-------------------|---------|-----------------------------------|
-| `LOG_LEVEL`       | `info`  | Minimum log level                 |
-| `MAX_CONNECTIONS` | `64`    | Maximum concurrent connections    |
+| Variable          | Default     | Description                       |
+|-------------------|-------------|-----------------------------------|
+| `app_port`        | `8080`      | Port the service binds to         |
+| `app_log_level`   | `info`      | Log verbosity                     |
+| `app_db_url`      | _required_  | Postgres connection string        |
+| `app_db_pool_size`| `10`        | Maximum DB connections            |
 ```
 
-**Also bad** (still drifts the moment a new required input is added):
+**Also bad** (the "compromise" -- still drifts the moment a new required variable is added):
 
 ```markdown
 ## Required variables
 
-`DATABASE_URL` and `API_KEY` must be set. See `defaults/main.yml` for the full list.
+`app_db_url` and `app_api_key` must be set before invoking the module.
+See `defaults/main.yml` for the full list.
 ```
 
 **Good** (no variable names; the definition file carries the truth):
@@ -105,15 +122,22 @@ the only place the list stays correct.
 ## Configuration
 
 See `defaults/main.yml` for variables and defaults. Variables without a default
-(or set to `CHANGE_ME`) must be supplied by the caller; secrets belong in the host
-vault and are referenced via the `vault_` prefix convention.
+(or set to a `CHANGE_ME` sentinel) must be supplied by the caller; secrets belong
+in the host vault and are referenced via the `vault_` prefix convention.
 ```
 
-The same rule applies to Helm `values.yaml`, `.env.sample`, schema files, type definitions --
-any file that defines configuration in one place. Let that file own its documentation, with
-inline comments next to each value. Configuration that originates higher up (project-wide
-settings, parent-module defaults) should be mentioned with a one-line pointer to where it is
-defined, not re-documented.
+The good version describes the *convention* (where variables live, how required ones are
+signalled, where secrets go). It does not name any variables. Adding, removing, or renaming a
+variable does not invalidate this documentation. The reader who needs the list reads the
+definition file -- which is the only place the list is guaranteed to be correct.
+
+Configuration that originates higher up (project-wide settings, parent-module defaults) should
+be mentioned with a one-line pointer to where it is defined, not re-documented.
+
+The same logic extends to other transcription anti-patterns: listing every container in a
+compose stack, every metric a collector emits, every endpoint an API exposes, every dependent
+of a module. Each list goes stale; the source file (or `meta/main.yml`, or the schema, or the
+registry) is the live answer.
 
 ### Dependency documentation
 

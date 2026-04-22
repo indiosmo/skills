@@ -10,6 +10,18 @@ ADRs are immutable once accepted. If circumstances change, write a new ADR that 
 one. The old record remains as a historical artifact -- it explains what the team knew and believed
 at the time.
 
+## Contents
+
+- [When to write an ADR](#when-to-write-an-adr)
+- [Template](#template) -- Nygard default and [MADR extended](#extended-template-madr-style)
+- [Naming convention](#naming-convention) -- filename pattern, [bootstrap ADR](#the-bootstrap-adr)
+- [Directory organization](#directory-organization) -- [large projects and monorepos](#large-projects-and-monorepos)
+- [Lifecycle and statuses](#lifecycle-and-statuses) -- [immutability](#immutability), [linking between ADRs](#linking-between-adrs)
+- [Writing style](#writing-style)
+- [Example: a well-written ADR](#example-a-well-written-adr)
+- [Retrofitting decisions](#retrofitting-decisions)
+- [Setting up ADRs in a new project](#setting-up-adrs-in-a-new-project)
+
 ## When to write an ADR
 
 Write an ADR when a decision:
