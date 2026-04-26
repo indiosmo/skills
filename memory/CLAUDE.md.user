@@ -1,3 +1,3 @@
 - Avoid glyphs/icons in general, both in comments and in cli/log outputs. Just use regular text.
 - Avoid abbreviations like `pb_file`, `inv`, `env_resp`. Prefer explicit names `playbook_file`, `inventory`, `environment_response`.
-
+- When refactoring, do not leave a trail of past decisions in comments or docs -- things like "we no longer do a join here", "this used to handle the old-suffix case", "dedup is now handled upstream". A reader seeing the refactored code for the first time has no context for what was removed, and the comment describes absent behavior rather than present behavior. The code itself shows what it does; the git history shows what it used to do. Describe what the current code does and why, or delete the comment. This is the "negative documentation" anti-pattern from the documentation skill, applied to inline code comments during refactors.

@@ -297,6 +297,39 @@ supersedes another, both records should cross-reference each other:
 - **Use full sentences.** ADRs are prose, not bullet-point dumps. Write in a way that a future
   team member can read and understand without additional context.
 
+### Do not reference ephemeral artifacts
+
+An ADR is a durable record. It must not depend for its meaning on the existence of documents
+that are expected to be deleted -- implementation plans, work-in-progress notes, scratch files,
+ticket descriptions that get closed out. When the plan is executed and removed, any ADR that
+named it is left with dangling references and a reader who cannot reconstruct what was meant.
+
+Concretely, in an ADR do not:
+
+- Link a specific plan file (`work-in-progress/plans/migrate-storage.md`,
+  `docs/plans/2025-q1-rollout.md`).
+- List filenames as "where to find the implementation plan" or "see scratch.md for details".
+- Treat a plan document as the canonical statement of acceptance criteria, sequencing, or
+  rollout steps.
+
+This applies most often to two sections:
+
+- **Confirmation / acceptance criteria** describe observable conditions that show the decision
+  is in effect -- "new books land in deterministic paths under `library/`", "the auth-failure
+  alert fires below 1%", "no service writes directly to the legacy bucket". Do not point at the
+  plan that will produce those conditions; describe the conditions themselves.
+- **More Information** links durable references: related ADRs, RFCs, papers, vendor
+  documentation, long-lived design docs. It does not link the next sprint's task list.
+
+It is fine to acknowledge *that* the change is staged or that a migration is underway -- "the
+rollout will proceed in phases, starting with read-only mirrors" is a description of the
+decision's shape and survives the plan being deleted. What is not fine is naming the artifact
+that captures the staging.
+
+The general rule applies to every durable doc (READMEs, architecture overviews, runbooks
+intended to live for years), not only ADRs: if you find yourself writing "see X" where X is
+expected to be deleted, either inline the relevant content or drop the reference.
+
 ## Example: a well-written ADR
 
 ```markdown

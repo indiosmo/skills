@@ -349,6 +349,12 @@ into the final draft, the doc will age badly.
   Describe what the thing does; absent dependencies are visible in the
   imports. Keep prescriptive rules for contributors ("chart modules must not
   import streamlit") -- those are constraints, not descriptions.
+- **References to ephemeral artifacts in durable docs** -- ADRs, READMEs,
+  and architecture overviews must not link or name implementation plans,
+  work-in-progress notes, or scratch files that are expected to be deleted
+  (`work-in-progress/plans/foo.md`, "see scratch.md for details"). Describe
+  observable conditions or inline the relevant content. See "Do not reference
+  ephemeral artifacts" in `references/adr.md`.
 
 For each match, ask: "If someone changes the underlying code tomorrow, will
 this line still be true?" If no, revise or delete.
