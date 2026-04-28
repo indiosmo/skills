@@ -1,3 +1,22 @@
 - Avoid glyphs/icons in general, both in comments and in cli/log outputs. Just use regular text.
 - Avoid abbreviations like `pb_file`, `inv`, `env_resp`. Prefer explicit names `playbook_file`, `inventory`, `environment_response`.
-- When refactoring, do not leave a trail of past decisions in comments or docs -- things like "we no longer do a join here", "this used to handle the old-suffix case", "dedup is now handled upstream". A reader seeing the refactored code for the first time has no context for what was removed, and the comment describes absent behavior rather than present behavior. The code itself shows what it does; the git history shows what it used to do. Describe what the current code does and why, or delete the comment. This is the "negative documentation" anti-pattern from the documentation skill, applied to inline code comments during refactors.
+- Comments and docs describe what the code in front of the reader does, and why if the why is non-obvious. They do not describe what the code used to do, what it no longer does, what lives elsewhere, or what the caller is expected to handle. A reader seeing the code for the first time has no context for absent behavior, and enumerating non-responsibilities only makes sense as a contrast with a previous version they cannot see. The code shows what it does; git history shows what it used to do. If you cannot phrase a comment as a positive statement about the present code, delete it. This is the "negative documentation" anti-pattern from the documentation skill, and it shows up most often during refactors.
+
+  Watch for these tells -- any of them means the comment is describing absent behavior:
+    - past-tense framing: "we used to ...", "previously ...", "this no longer ..."
+    - delta framing: "now handled upstream", "dedup moved to ...", "X is no longer joined here"
+    - non-responsibility framing: "X is the caller's responsibility", "Y is handled elsewhere", "this does not validate Z", "integration of the result is up to the caller"
+
+  Examples:
+
+    BAD (past-tense): `// we used to dedupe here, but the upstream stage now guarantees uniqueness`
+    GOOD: delete the comment. The function dedupes or it doesn't; the code shows which.
+
+    BAD (delta): `// status resolution moved to the runtime layer`
+    GOOD: delete the comment. If the runtime layer's role needs explaining, document it where that layer lives.
+
+    BAD (non-responsibility): `/* Stateless converters ... integration of the resulting events (e.g. routing, status resolution) is the caller's responsibility. */`
+    GOOD: `/* Stateless converters from OnixS B3 UMDF messages to macuco market data domain types. */` -- describe what the functions do; do not enumerate what they don't do.
+
+    BAD (non-responsibility, inline): `// caller must hold the session mutex`
+    GOOD: if the locking contract is non-obvious and load-bearing, that is a legitimate "why" -- keep it, but phrase it as a precondition the function relies on, not a chore the caller has been assigned: `// precondition: session mutex is held; we read session_.next_seq without locking`
