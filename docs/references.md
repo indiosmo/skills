@@ -7,6 +7,10 @@ Third-party tools and resources worth exploring but not part of this repo.
 * https://skills.sh/
 * https://github.com/lackeyjb/playwright-skill
 
+## Qt Skills
+
+https://github.com/TheQtCompanyRnD/agent-skills
+
 ## Browser automation
 
 ### browser-use
