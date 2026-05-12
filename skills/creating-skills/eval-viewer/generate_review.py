@@ -276,7 +276,10 @@ def generate_html(
     if benchmark:
         embedded["benchmark"] = benchmark
 
-    data_json = json.dumps(embedded)
+    # Escape '</' inside the embedded JSON so a stray '</script>' in any
+    # artifact HTML cannot terminate the surrounding <script> block. '<\/' is
+    # equivalent under JSON's \/ escape, so the parsed data is unchanged.
+    data_json = json.dumps(embedded).replace("</", "<\\/")
 
     return template.replace("/*__EMBEDDED_DATA__*/", f"const EMBEDDED_DATA = {data_json};")
 

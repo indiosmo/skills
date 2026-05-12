@@ -1,0 +1,27 @@
+{
+  "kind": "understanding",
+  "title": "How a task toggle flows through the app",
+  "intro_md": "A click on a task row travels through three layers: the React component, the mutation hook, and the API client. This artifact walks each step.",
+  "diagrams": [
+    {
+      "caption": "Request path on success",
+      "body": "flowchart LR\n  Click[TaskRow click] --> Hook[useOptimisticTasks]\n  Hook --> Cache[(React Query cache)]\n  Hook --> API[updateTask]\n  API --> Server[(REST endpoint)]\n  Server --> Hook"
+    }
+  ],
+  "walkthrough_md": "1. Component fires -- `TaskRow` calls `toggle(id)`.\n2. Hook writes -- `useOptimisticTasks.onMutate` snapshots the cache and applies the optimistic patch.\n3. API call -- `updateTask` sends a PATCH with the new state.\n4. Settle -- on success, the server response replaces the optimistic value; on error, the snapshot is restored.",
+  "key_files": [
+    {
+      "path": "src/hooks/useOptimisticTasks.ts",
+      "role": "mutation hook"
+    },
+    {
+      "path": "src/api/tasks.ts",
+      "role": "REST client"
+    },
+    {
+      "path": "src/components/TaskList.tsx",
+      "role": "consumer"
+    }
+  ],
+  "gotchas_md": "- The cache key is `['tasks', boardId]` -- changing it anywhere requires changing it everywhere.\n- `onMutate` must call `cancelQueries` first or a background refetch will clobber the optimistic write."
+}

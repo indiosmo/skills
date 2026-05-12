@@ -1,0 +1,69 @@
+{
+  "kind": "review",
+  "title": "Add optimistic updates to task list mutations",
+  "repo_line": "birchline/web \u00b7 Pull Request #247",
+  "head": {
+    "ref": "mo/optimistic-tasks",
+    "sha": "a1b2c3d4"
+  },
+  "base": {
+    "ref": "main",
+    "sha": "e5f6a7b8"
+  },
+  "stats": {
+    "files": 6,
+    "insertions": 142,
+    "deletions": 38
+  },
+  "commits": [
+    {
+      "sha": "a1b2c3d",
+      "author": "Mira Okafor",
+      "date": "2026-05-10",
+      "subject": "Add optimistic updates to task list"
+    }
+  ],
+  "summary_md": "- Replaces the await-then-refetch pattern in `TaskList` with optimistic cache writes, so toggling or reordering a task feels instant instead of waiting ~300ms for the round-trip.\n- Introduces a small `useOptimisticTasks` hook that wraps the mutation, snapshots the previous list, and rolls back on error.\n- Extends the API client to accept an idempotency key per mutation and adds a toast when a rollback fires.",
+  "files": [
+    {
+      "path": "src/hooks/useOptimisticTasks.ts",
+      "risk": "needs-attention",
+      "added": 58,
+      "removed": 0,
+      "diff": "@@ -0,0 +1,20 @@\n+import { useMutation, useQueryClient } from '@tanstack/react-query';\n+import { updateTask, TaskPatch } from '../api/tasks';\n+import type { Task } from '../types/task';\n+\n+export function useOptimisticTasks(boardId: string) {\n+  const qc = useQueryClient();\n+  const key = ['tasks', boardId];\n+\n+  return useMutation({\n+    mutationFn: (patch: TaskPatch) => updateTask(patch),\n+    onMutate: async (patch) => {\n+      const prev = qc.getQueryData<Task[]>(key);\n+      qc.setQueryData<Task[]>(key, (old = []) =>\n+        old.map(t => t.id === patch.id ? { ...t, ...patch } : t)\n+      );\n+      return { prev };\n+    },\n+    onError: (_e, _p, ctx) => qc.setQueryData(key, ctx?.prev),\n+  });\n+}\n",
+      "annotations": [
+        {
+          "line": 11,
+          "severity": "blocking",
+          "body_md": "`onMutate` doesn't call `qc.cancelQueries(key)` first. If a background refetch lands between the optimistic write and the server response, it will clobber the optimistic state and the UI will flicker back to the old value."
+        },
+        {
+          "line": 18,
+          "severity": "nit",
+          "body_md": "Rollback restores the list but never surfaces the error. Consider wiring the existing `pushToast` here so users know the toggle didn't stick."
+        }
+      ]
+    },
+    {
+      "path": "src/components/Toast.tsx",
+      "risk": "safe",
+      "added": 14,
+      "removed": 2,
+      "diff": "",
+      "note_md": "Adds a `variant=\"warning\"` style and exports `pushToast`. Purely additive, no behaviour change for existing call sites."
+    },
+    {
+      "path": "src/types/task.ts",
+      "risk": "safe",
+      "added": 6,
+      "removed": 2,
+      "diff": "",
+      "note_md": "Widens `Task.status` to include `\"archived\"` and adds an optional `updatedAt` timestamp. Type-only change."
+    }
+  ],
+  "suggestions": [
+    "Add `await qc.cancelQueries(key)` at the top of `onMutate` in `useOptimisticTasks.ts`.",
+    "Move idempotency-key generation into the mutation context so retries reuse the same key.",
+    "Either consume `isPending` in `TaskRow` or remove it from the destructure to keep lint clean."
+  ]
+}

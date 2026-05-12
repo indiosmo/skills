@@ -1,0 +1,29 @@
+{
+  "kind": "writeup",
+  "title": "Writeup: feat/optimistic-tasks",
+  "head": {
+    "ref": "feat/optimistic-tasks",
+    "sha": "a1b2c3d4"
+  },
+  "base": {
+    "ref": "main",
+    "sha": "e5f6a7b8"
+  },
+  "stats": {
+    "files": 5,
+    "insertions": 91,
+    "deletions": 12
+  },
+  "tldr_md": "Task toggles now feel instant. The list updates before the server confirms; if the request fails we roll back.",
+  "why_md": "Users on slow networks were tapping a task and watching it sit in 'pending' for a second or more. Optimistic updates remove that latency.",
+  "files": [
+    {
+      "path": "src/hooks/useOptimisticTasks.ts",
+      "note_md": "New mutation hook. Wraps `updateTask` with optimistic cache writes and automatic rollback on error.",
+      "open": true
+    }
+  ],
+  "focus_areas_md": "- The cache-key contract -- if you rename the query key, both the mutation and the components reading the list must agree.\n- Error path: failing the request rolls back but doesn't toast.",
+  "test_plan_md": "- Toggle a task offline -- it should snap back when the request errors.\n- Toggle rapidly twice -- both should settle to the latest server value.",
+  "rollout_md": "Ship behind the `optimistic_tasks` flag, on for staff for one day, then 10% rollout."
+}
