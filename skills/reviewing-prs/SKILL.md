@@ -1,6 +1,6 @@
 ---
 name: reviewing-prs
-description: Produce single-file HTML artifacts that help a reviewer evaluate a branch of changes against a base (defaults to `main`) -- always a severity-tagged review of the diff and an author-voice writeup, plus one or more code-understanding artifacts when the surface is large or the change crosses module / integration / refactor boundaries. Works on any local git repository; no GitHub authentication required. Use whenever the user wants to review their branch, review someone else's branch, draft a writeup for changes they're about to ship, explain a callstack or subsystem, summarize the changes on a branch, or generally make code more navigable than a markdown wall of text. Also use for phrases like "review this PR", "review my branch", "annotate the diff", "write up my changes", "explain how X works", "document this module", "walk me through the changes", or when the user wants a shareable HTML deliverable instead of a markdown report. Diffs, call graphs and module structures are spatial information that markdown flattens; this skill renders that spatial information using HTML, embedded Mermaid diagrams, inline severity tags, and tool-produced diffs.
+description: Produce single-file HTML artifacts for reviewing a branch against a base (defaults to `main`): severity-tagged diff review, author-voice writeup, and code-understanding artifacts. Works on any local git repo; no GitHub auth required.
 ---
 
 # Reviewing PRs
