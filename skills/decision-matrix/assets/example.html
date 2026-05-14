@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>cpp-guides: copy vs symlink decision matrix</title>
+<style>
+  :root {
+    --bg: #fafaf7;
+    --fg: #1a1a1a;
+    --muted: #6b6b6b;
+    --rule: #d8d6cf;
+    --accent: #6b5b3a;
+    --highlight: #fff6d6;
+
+    --good-bg: #d8ebd2;
+    --good-fg: #1f4a26;
+    --ok-bg:   #f4ecc6;
+    --ok-fg:   #5a4a10;
+    --bad-bg:  #f0c8bc;
+    --bad-fg:  #6a1d12;
+    --na-bg:   #ececec;
+    --na-fg:   #555;
+  }
+  html, body { background: var(--bg); color: var(--fg); }
+  body {
+    font: 15px/1.55 -apple-system, "Segoe UI", system-ui, sans-serif;
+    margin: 0;
+    padding: 32px 40px 80px;
+    max-width: 1280px;
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h1 .sub { font-weight: 400; color: var(--muted); font-size: 15px; margin-left: 8px; }
+  h2 {
+    font-size: 16px;
+    margin: 28px 0 10px;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+  p.lede { color: var(--muted); margin: 0 0 24px; max-width: 78ch; }
+
+  .approaches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+  .approach { padding: 12px 14px; border: 1px solid var(--rule); border-radius: 6px; background: white; }
+  .approach h3 { margin: 0 0 4px; font-size: 14px; letter-spacing: 0.02em; text-transform: uppercase; color: var(--accent); }
+  .approach p { margin: 0; font-size: 13px; color: var(--muted); }
+
+  table { width: 100%; border-collapse: collapse; background: white; font-size: 13.5px; margin-bottom: 8px; }
+  th, td {
+    border: 1px solid var(--rule);
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: #f3f1ea; font-weight: 600; }
+
+  td.criterion { width: 14%; font-weight: 600; background: #faf8f1; }
+  td.weight    { width: 5%;  text-align: center; font-variant-numeric: tabular-nums; color: var(--muted); background: #faf8f1; }
+  td.notes     { width: 14%; color: var(--muted); font-size: 12.5px; background: #faf8f1; }
+
+  td.good { background: var(--good-bg); color: var(--good-fg); }
+  td.ok   { background: var(--ok-bg);   color: var(--ok-fg); }
+  td.bad  { background: var(--bad-bg);  color: var(--bad-fg); }
+  td.na   { background: var(--na-bg);   color: var(--na-fg); font-style: italic; }
+
+  .score-badge {
+    display: inline-block;
+    min-width: 18px;
+    padding: 1px 6px;
+    margin-right: 8px;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.07);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    font-size: 12.5px;
+    text-align: center;
+    vertical-align: 1px;
+  }
+  td.good .score-badge { background: rgba(31, 74, 38, 0.18); }
+  td.ok   .score-badge { background: rgba(90, 74, 16, 0.18); }
+  td.bad  .score-badge { background: rgba(106, 29, 18, 0.18); }
+
+  tfoot td { background: #f3f1ea; font-weight: 600; }
+  tfoot td.total { text-align: center; font-size: 16px; font-variant-numeric: tabular-nums; }
+
+  code { background: #f3f1ea; padding: 1px 5px; border-radius: 3px; font-size: 12.5px; }
+
+  .recommendation {
+    margin-top: 32px;
+    padding: 16px 20px;
+    background: var(--highlight);
+    border: 1px solid #d8c47a;
+    border-radius: 6px;
+  }
+  .recommendation h2 { margin-top: 0; color: #6a5210; text-transform: none; letter-spacing: 0; font-size: 18px; }
+
+  .open-questions { margin-top: 28px; padding: 16px 20px; background: white; border: 1px solid var(--rule); border-radius: 6px; }
+  .open-questions h2 { margin-top: 0; }
+  .open-questions ul { margin: 0; padding-left: 20px; }
+  .open-questions li { margin: 4px 0; }
+  .open-questions li b { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<h1>cpp-guides: copy vs symlink <span class="sub">decision matrix</span></h1>
+<p class="lede">
+  <code>docs/cpp-guides/</code> is currently a copy of the source-of-truth at
+  <code>/home/msi/llm_workspace/skills/docs/cpp-guides/</code>. The question is whether to keep
+  copying, switch to a symlink, or use a git-native sharing mechanism. Two adjacent options
+  are included for honest comparison.
+</p>
+
+<div class="approaches">
+  <div class="approach">
+    <h3>A. Copy (current)</h3>
+    <p>Plain files committed in <code>docs/cpp-guides/</code>. Periodic manual resync from origin.</p>
+  </div>
+  <div class="approach">
+    <h3>B. Symlink</h3>
+    <p><code>docs/cpp-guides</code> &rarr; <code>/home/msi/llm_workspace/skills/docs/cpp-guides</code>. Symlink itself is git-tracked.</p>
+  </div>
+  <div class="approach">
+    <h3>C. Git submodule</h3>
+    <p>Origin is its own repo; this project pins a commit SHA. <code>git submodule update</code> to refresh.</p>
+  </div>
+  <div class="approach">
+    <h3>D. Git subtree</h3>
+    <p>Origin's history merged in; files live here as normal commits. Pull updates with <code>git subtree pull</code>.</p>
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Criterion</th>
+      <th>Wt</th>
+      <th>A. Copy</th>
+      <th>B. Symlink</th>
+      <th>C. Submodule</th>
+      <th>D. Subtree</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="criterion">Git tracking</td>
+      <td class="weight">5</td>
+      <td class="good"><span class="score-badge">5</span>Plain blobs, ordinary diffs, ordinary history. Reviewer sees what changed.</td>
+      <td class="bad"><span class="score-badge">1</span>Git stores the link, not the contents. From the repo's perspective the docs are absent; diffs appear in another repo or nowhere.</td>
+      <td><span class="score-badge">3</span>Pins a SHA; reviewers must follow the link to read changes. Submodule UX is famously rough.</td>
+      <td class="good"><span class="score-badge">5</span>Looks like ordinary files in history; updates show up as real diffs.</td>
+      <td>What the reviewer sees on <code>git diff</code> is the only honest measure.</td>
+    </tr>
+
+    <tr>
+      <td class="criterion">Path / machine portability</td>
+      <td class="weight">5</td>
+      <td class="good"><span class="score-badge">5</span>Works on any machine, in CI, in containers, on a fresh clone.</td>
+      <td class="bad"><span class="score-badge">1</span>Breaks on any host without the exact origin path. CI, sandboxes, other contributors, future-you on a new laptop -- all see a dangling link.</td>
+      <td><span class="score-badge">3</span>Self-contained after <code>git submodule update --init</code>. Easy to forget on fresh clone.</td>
+      <td class="good"><span class="score-badge">5</span>No extra step on clone.</td>
+      <td>Failure mode stays invisible until someone clones somewhere new.</td>
+    </tr>
+
+    <tr>
+      <td class="criterion">Drift from origin</td>
+      <td class="weight">5</td>
+      <td class="bad"><span class="score-badge">2</span>Drifts silently unless someone resyncs. No mechanism flags it.</td>
+      <td class="good"><span class="score-badge">5</span>There is only one copy. Always current by construction.</td>
+      <td><span class="score-badge">3</span>Pinned SHA; bumping is a deliberate commit, drift is visible.</td>
+      <td><span class="score-badge">3</span><code>git subtree pull</code> brings updates in; drift visible as merge commits.</td>
+      <td>Invisible until someone hits the stale version.</td>
+    </tr>
+
+    <tr>
+      <td class="criterion">Reproducibility / pinning</td>
+      <td class="weight">3</td>
+      <td><span class="score-badge">4</span>This repo's history is the version. Bisect works.</td>
+      <td class="bad"><span class="score-badge">2</span>What an old commit "meant" depends on what the origin contained at that moment. Bisect can lie.</td>
+      <td><span class="score-badge">5</span>Strongest version pinning of the four.</td>
+      <td><span class="score-badge">4</span>Same as copy; files land in history.</td>
+      <td></td>
+    </tr>
+
+    <tr>
+      <td class="criterion">Edit workflow</td>
+      <td class="weight">3</td>
+      <td><span class="score-badge">3</span>Edit locally, then port back to origin manually. Easy to forget the second step.</td>
+      <td><span class="score-badge">3</span>One file -- but edits made here instantly leak into every other project sharing the symlink.</td>
+      <td class="bad"><span class="score-badge">2</span>Commit in submodule, then bump pointer in parent. Footgun-prone.</td>
+      <td><span class="score-badge">3</span><code>git subtree push</code> to send changes upstream. Workable but obscure command.</td>
+      <td>The "forgot to propagate" failure mode is the dominant cost across all four.</td>
+    </tr>
+
+    <tr>
+      <td class="criterion">Blast radius of an edit</td>
+      <td class="weight">3</td>
+      <td><span class="score-badge">4</span>An edit here affects only this project until you choose to propagate.</td>
+      <td class="bad"><span class="score-badge">1</span>Every project sharing the symlink sees the edit immediately. No "try it in one project first".</td>
+      <td><span class="score-badge">4</span>Edit lives in submodule branch; other consumers don't pick it up until they bump.</td>
+      <td><span class="score-badge">4</span>Same as copy.</td>
+      <td>Cost is proportional to the number of downstream consumers.</td>
+    </tr>
+
+    <tr>
+      <td class="criterion">Clone / CI experience</td>
+      <td class="weight">3</td>
+      <td><span class="score-badge">5</span>One <code>git clone</code> and everything is there.</td>
+      <td class="bad"><span class="score-badge">1</span>Clone on any other machine and the link dangles. Agents/tools then see "missing docs" or follow the link to nothing.</td>
+      <td><span class="score-badge">3</span><code>--recurse-submodules</code> or a follow-up <code>submodule update</code>.</td>
+      <td><span class="score-badge">5</span>Same as copy.</td>
+      <td></td>
+    </tr>
+
+    <tr>
+      <td class="criterion">Discoverability for agents (grep, LSP, Read tool)</td>
+      <td class="weight">3</td>
+      <td><span class="score-badge">5</span>Files are files. <code>ag</code>, <code>grep</code>, glob, Read -- all just work.</td>
+      <td class="ok"><span class="score-badge">3</span>Symlinks resolve for most tools, but some respect <code>--follow-symlinks</code> inconsistently; <code>.gitignore</code> rules surprise people.</td>
+      <td><span class="score-badge">4</span>Once initialized, files are files.</td>
+      <td><span class="score-badge">5</span>Same as copy.</td>
+      <td></td>
+    </tr>
+
+    <tr>
+      <td class="criterion">Repo size</td>
+      <td class="weight">1</td>
+      <td><span class="score-badge">3</span>Files live in the parent object DB.</td>
+      <td><span class="score-badge">4</span>One symlink.</td>
+      <td><span class="score-badge">4</span>Submodule lives outside parent's object DB.</td>
+      <td><span class="score-badge">3</span>Files live in the parent object DB.</td>
+      <td>Negligible for a docs tree this small; rarely a deciding factor.</td>
+    </tr>
+
+    <tr>
+      <td class="criterion">Setup cost</td>
+      <td class="weight">1</td>
+      <td class="good"><span class="score-badge">5</span>Already done.</td>
+      <td class="good"><span class="score-badge">5</span>One <code>ln -s</code> and a commit.</td>
+      <td class="bad"><span class="score-badge">1</span>Requires turning origin into a real repo with a remote, then wiring submodule. Reversing later is painful.</td>
+      <td><span class="score-badge">3</span>Origin must be a fetchable repo. <code>git subtree add</code> is a one-liner after that.</td>
+      <td></td>
+    </tr>
+
+    <tr>
+      <td class="criterion">Single source of truth semantics</td>
+      <td class="weight">1</td>
+      <td class="bad"><span class="score-badge">2</span>Origin and copy can disagree. Whichever was edited last "wins" the next sync.</td>
+      <td class="good"><span class="score-badge">5</span>There is literally one file.</td>
+      <td><span class="score-badge">5</span>Origin repo is canonical; consumers pin versions of it.</td>
+      <td><span class="score-badge">3</span>Origin canonical, but local commits can land here first and need pushing back.</td>
+      <td></td>
+    </tr>
+
+  </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="2">Weighted score (sum of score &times; weight; tune weights to taste)</td>
+      <td class="total">133</td>
+      <td class="total">79</td>
+      <td class="total">109</td>
+      <td class="total">137</td>
+      <td></td>
+    </tr>
+  </tfoot>
+</table>
+
+<div class="recommendation">
+  <h2>Interpretation</h2>
+  <p>
+    <b>Symlink is the weakest option</b> despite winning on drift and single-source. The
+    two killers are machine portability (any CI, any other contributor, any container
+    sees a dangling link) and blast radius (every edit silently leaks into every project
+    sharing the link, eliminating the ability to try changes locally). The weighted score
+    confirms what the cell pattern already shows.
+  </p>
+  <p>
+    <b>Copy and subtree are the strong options</b>, with subtree slightly ahead on the
+    scoreboard. Copy is what's there; it's fine if "resync from origin" stays a manual
+    chore -- the guides are short enough that drift is visible during normal review.
+    Subtree is the upgrade path if drift becomes painful: same local-files ergonomics as
+    copy, plus a real command (<code>git subtree pull --prefix=docs/cpp-guides ...</code>)
+    instead of <code>cp -r</code>, and an explicit history of when origin was last
+    pulled in.
+  </p>
+  <p>
+    <b>Submodule is overkill</b> unless the guides start versioning independently and
+    other consumers need to pin specific versions. The two-step commit dance and the
+    clone-time footgun outweigh the version-pinning benefit for a docs tree this small.
+  </p>
+  <p style="margin-bottom: 0;">
+    <b>Leaning toward:</b> stay on <i>copy</i> for now; revisit <i>subtree</i> the first
+    time drift bites (e.g. running <code>cp -r</code> more than once a month, or shipping
+    a doc fix here and forgetting to port it back). If origin isn't yet its own git repo,
+    that's the prerequisite for moving to subtree.
+  </p>
+</div>
+
+<div class="open-questions">
+  <h2>Open Questions</h2>
+  <ul>
+    <li><b>Is the origin already its own git repo?</b> If
+        <code>/home/msi/llm_workspace/skills/</code> is one big repo, subtree needs a
+        specific path or a split-out first.</li>
+    <li><b>How many other projects consume cpp-guides?</b> Symlink's blast-radius cost is
+        proportional to that number. If this is the only consumer today, symlink's
+        downside is theoretical -- but path portability still kills it.</li>
+    <li><b>How often does cpp-guides actually change?</b> If it's "once a quarter", copy
+        is genuinely fine and the whole conversation is premature. If it's weekly, drift
+        will hurt.</li>
+    <li><b>Is there ever a project-specific edit to a guide</b> (e.g. an abacus-specific
+        example) that should not pollute the generic doc? Copy and subtree allow it;
+        symlink forbids it; submodule requires a branch.</li>
+  </ul>
+</div>
+
+</body>
+</html>

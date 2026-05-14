@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>fwll: contract size on aggregates -- decision matrix</title>
+<style>
+  :root {
+    --bg: #fafaf7;
+    --fg: #1a1a1a;
+    --muted: #6b6b6b;
+    --rule: #d8d6cf;
+    --accent: #6b5b3a;
+    --highlight: #fff6d6;
+
+    --good-bg: #d8ebd2;
+    --good-fg: #1f4a26;
+    --ok-bg:   #f4ecc6;
+    --ok-fg:   #5a4a10;
+    --bad-bg:  #f0c8bc;
+    --bad-fg:  #6a1d12;
+    --na-bg:   #ececec;
+    --na-fg:   #555;
+  }
+  html, body { background: var(--bg); color: var(--fg); }
+  body {
+    font: 15px/1.55 -apple-system, "Segoe UI", system-ui, sans-serif;
+    margin: 0;
+    padding: 32px 40px 80px;
+    max-width: 1280px;
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h1 .sub { font-weight: 400; color: var(--muted); font-size: 15px; margin-left: 8px; }
+  h2 {
+    font-size: 16px;
+    margin: 36px 0 10px;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+  h2.subdecision {
+    font-size: 18px;
+    margin-top: 44px;
+    color: var(--fg);
+    text-transform: none;
+    letter-spacing: 0;
+    border-top: 2px solid var(--rule);
+    padding-top: 20px;
+  }
+  p.lede { color: var(--muted); margin: 0 0 24px; max-width: 78ch; }
+
+  table { width: 100%; border-collapse: collapse; background: white; font-size: 13.5px; margin-bottom: 8px; }
+  th, td {
+    border: 1px solid var(--rule);
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: #f3f1ea; font-weight: 600; }
+  th .opt-sub {
+    display: block;
+    font-weight: 400;
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 3px;
+    line-height: 1.4;
+  }
+
+  td.criterion { width: 14%; font-weight: 600; background: #faf8f1; }
+
+  td.good { background: var(--good-bg); color: var(--good-fg); }
+  td.ok   { background: var(--ok-bg);   color: var(--ok-fg); }
+  td.bad  { background: var(--bad-bg);  color: var(--bad-fg); }
+  td.na   { background: var(--na-bg);   color: var(--na-fg); font-style: italic; }
+
+  .open-questions { margin-top: 28px; padding: 16px 20px; background: white; border: 1px solid var(--rule); border-radius: 6px; }
+  .open-questions h2 { margin-top: 0; }
+  .open-questions ul { margin: 0; padding-left: 20px; }
+  .open-questions li { margin: 4px 0; }
+  .open-questions li b { color: var(--accent); }
+
+  code { background: #f3f1ea; padding: 1px 5px; border-radius: 3px; font-size: 12.5px; }
+
+  .recommendation {
+    margin-top: 32px;
+    padding: 16px 20px;
+    background: var(--highlight);
+    border: 1px solid #d8c47a;
+    border-radius: 6px;
+  }
+  .recommendation h2 { margin-top: 0; color: #6a5210; text-transform: none; letter-spacing: 0; font-size: 18px; }
+</style>
+</head>
+<body>
+
+<h1>fwll: contract size on aggregates <span class="sub">decision matrix</span></h1>
+<p class="lede">
+  Group orders by an aggregating key (e.g. trader, strategy) and report a total quantity.
+  When the underlying instruments have venue-specific contract sizes (one BTC future
+  represents 0.01 BTC at venue A and 0.001 BTC at venue B), the aggregate is meaningless
+  unless we normalise. Two coupled sub-decisions: how to model the size, and where in the
+  pipeline to apply the multiplier.
+</p>
+
+<h2 class="subdecision">1. How to model the size</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Criterion</th>
+      <th>Add ratio column to group members <span class="opt-sub">Each member row carries its own multiplier; aggregate sums <code>qty * ratio</code>.</span></th>
+      <th>Use contract multiplier <span class="opt-sub">Lookup table keyed by instrument; aggregate fetches the multiplier per row at compute time.</span></th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="criterion">Performance</td>
+      <td>Additional lookup for every target group member when computing the aggregate.</td>
+      <td>Multiplier is part of the request payload; no extra lookup.</td>
+      <td>Both are O(n) over members; the ratio-column variant adds a constant per-row read. Not material at current volumes.</td>
+    </tr>
+    <tr>
+      <td class="criterion">Instrument size changes by venue</td>
+      <td class="bad">Every user must update all groups that include the affected instrument. Manual fan-out.</td>
+      <td class="good">Automatic: the venue ships the new multiplier, all groups pick it up.</td>
+      <td>Venues change contract sizes more often than you would expect (quarterly splits, listing rule changes).</td>
+    </tr>
+    <tr>
+      <td class="criterion">Flexibility (different weights on different venues)</td>
+      <td class="good">Users can configure whatever weights they want, per group.</td>
+      <td class="bad">Fixed multiplier, as determined by the venue. Not supported.</td>
+      <td>Would require an additional "venue" key on all lookups in the contract-multiplier path -- large added complexity.</td>
+    </tr>
+    <tr>
+      <td class="criterion">Backward compat with existing aggregates</td>
+      <td class="bad">Every existing aggregate needs a one-off backfill to gain the new ratio column.</td>
+      <td>? Not investigated. Likely fine if the multiplier table is keyed by instrument alone, but no test covers the case where an existing aggregate predates the multiplier service.</td>
+      <td>The "?" goes into Open Questions below.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 class="subdecision">2. Where to apply the multiplier</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Criterion</th>
+      <th>Pass the adjusted quantity in the request <span class="opt-sub">Caller multiplies before sending; gateway sees a single pre-adjusted quantity.</span></th>
+      <th>Apply inside the gateway <span class="opt-sub">Caller sends raw quantity; gateway looks up the multiplier and applies it on the way through.</span></th>
+      <th>Pass the multiplier in the request <span class="opt-sub">Caller sends raw quantity and the multiplier; the consumer applies it.</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="criterion">Clarity at the call site</td>
+      <td class="bad">Hard to name in a way that conveys the purpose. Reads as a magic-number quantity.</td>
+      <td>Caller code is clean, but the multiplication is hidden inside the gateway and easy to forget when debugging.</td>
+      <td class="good">Clear at the call site: <code>quantity * contract_size</code> is visible and named.</td>
+    </tr>
+    <tr>
+      <td class="criterion">PnL reconstruction downstream</td>
+      <td class="ok">Possible, but the multiplier has to be reversed from the adjusted quantity. Fragile if the multiplier changes mid-day.</td>
+      <td>Yes -- gateway logs both raw and adjusted quantity; PnL picks whichever it needs.</td>
+      <td>Yes -- both fields travel with the request.</td>
+    </tr>
+    <tr>
+      <td class="criterion">Risk of silent PnL drift</td>
+      <td class="bad">Every caller must remember to apply the multiplier. One forgotten call site means silent drift.</td>
+      <td class="good">Centralised in the gateway; one place to test and audit.</td>
+      <td>Caller can pass an inconsistent pair (raw + wrong multiplier). Loud if validated, silent if not.</td>
+    </tr>
+    <tr>
+      <td class="criterion">Development effort</td>
+      <td>Touches every caller.</td>
+      <td class="good">One change in the gateway; callers untouched.</td>
+      <td class="bad">Touches every caller and the consumer; also requires a schema bump.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="recommendation">
+  <h2>Interpretation</h2>
+  <p>
+    <b>Sub-decision 1: contract multiplier looks like the right default.</b> The
+    ratio-column approach wins on flexibility, but flexibility we have not actually needed
+    in practice -- and the cost is paying manual fan-out every time a venue changes its
+    contract size. The multiplier is the simpler default; a per-venue override can be
+    added on top later if a real use case emerges. The backward-compat gap is the only
+    real blocker on this path -- worth resolving before committing.
+  </p>
+  <p>
+    <b>Sub-decision 2: apply the multiplier inside the gateway.</b> Centralising the
+    multiplication is the only option that prevents silent PnL drift across forgotten call
+    sites. "Pass the multiplier in the request" is the clearest at the call site, but the
+    schema bump and the per-caller consistency burden aren't worth it for a transformation
+    that is fundamentally a property of the venue, not the order.
+  </p>
+  <p style="margin-bottom: 0;">
+    <b>Order of work:</b> resolve the backward-compat question first (sub-decision 1's
+    "?"). Once the multiplier table can serve existing aggregates safely, commit to
+    sub-decision 1 -- the multiplier table is a prerequisite for sub-decision 2. After a
+    week of clean data, wire the gateway to apply it.
+  </p>
+</div>
+
+<div class="open-questions">
+  <h2>Open Questions</h2>
+  <ul>
+    <li><b>Does the contract-multiplier path work for aggregates created before the
+        multiplier service existed?</b> (The "?" cell in sub-decision 1.) Need a test that
+        loads a pre-existing aggregate and verifies the multiplier resolves correctly.</li>
+    <li><b>Does any current group actually use venue-specific weights?</b> If yes, the
+        flexibility argument for the ratio column is concrete, not theoretical.</li>
+    <li><b>How often does the venue change contract sizes?</b> If less than once a year,
+        the manual fan-out cost is negligible and the ratio column becomes more
+        attractive.</li>
+    <li><b>Is there an audit-trail requirement on raw vs adjusted quantity?</b> If
+        compliance needs to reconstruct the un-adjusted order, the gateway must log both
+        -- that nudges further toward applying the multiplier inside the gateway.</li>
+    <li><b>Will a venue ever price in non-integer multiples?</b> The current multiplier
+        table assumes integer multiples; revisit if a venue ships fractional contract
+        sizes.</li>
+  </ul>
+</div>
+
+</body>
+</html>

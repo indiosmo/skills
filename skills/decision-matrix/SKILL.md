@@ -1,0 +1,407 @@
+---
+name: decision-matrix
+description: >-
+  Compare two or more viable options across explicit criteria and produce a single-file HTML
+  decision-matrix artifact that the user can read, discuss, and keep. Use this skill during the
+  research or design phase of any task where multiple approaches plausibly work and the right
+  choice is not obvious. Trigger on phrases like "compare options", "trade-offs between X and Y",
+  "should I use X or Y", "evaluate alternatives", "options analysis", "decision matrix",
+  "compare approaches", "weigh the trade-offs", "pros and cons of X vs Y", "which one should I
+  pick", "design choices for X". Also use proactively whenever the user is choosing between
+  libraries, architectures, storage strategies, sync mechanisms, deployment targets, schemas, or
+  any other design point with more than one credible answer -- even if the user does not say
+  "matrix". Inspired by Rich Hickey's "Design in Practice": surface the alternatives, name the
+  criteria, and let the structure expose where the real disagreement lives.
+---
+
+# Decision Matrix
+
+A decision matrix is a small table -- options across the top, criteria down the side, a short
+verdict in each cell -- whose purpose is **not** to compute the right answer. Its purpose is to
+make a design conversation possible. Once the alternatives are named and the criteria are
+named, disagreement has somewhere to land: on a specific cell, on a missing option, on a
+weight, on a criterion the matrix forgot. Without the matrix, "I think we should use X" and "I
+think we should use Y" pass each other in the dark.
+
+This skill covers two things: the **concepts** -- what goes where and why -- and the
+**artifact** -- a single self-contained HTML page that renders the matrix and the
+recommendation in a form you can share and revisit.
+
+## When to reach for this
+
+Use a decision matrix when:
+
+- Two or more options plausibly work and the right one is not obvious.
+- The choice is reversible only at meaningful cost -- worth thinking about before committing.
+- You are in the research, design, or planning phase, before any code is written.
+- The user is weighing libraries, storage strategies, schemas, sync mechanisms, architectures,
+  deployment targets, protocols, repo layouts, or anything where "it depends" is the honest
+  first answer.
+
+Skip the matrix when:
+
+- One option clearly dominates after a minute of thought. Say so and move on.
+- The decision is binary and uncontroversial (yes/no toggles, single-bit flags).
+- The decision is so cheap to reverse that prototyping beats analyzing.
+
+When in doubt, draft the matrix anyway. If a dominant option emerges three rows in, stop and
+say so -- the time spent is small and the audit trail is worth keeping.
+
+## The Hickey framing
+
+Rich Hickey's argument in "Design in Practice" is that programmers reach for implementation too
+early and treat the choice of approach as a tactical detail rather than the design itself. The
+matrix is a forcing function against that habit. It compels you to:
+
+- **Name more than one option.** A single-option "design" is a decision dressed as a fact.
+- **Name the criteria you care about.** Vague preferences ("simpler", "better") get reduced to
+  specific properties the cell can speak to.
+- **Score each option against each criterion explicitly.** No option gets a free pass on its
+  weakness; no option gets dismissed without a stated reason.
+- **Record the rationale.** Six months later, "we picked X because of Y" survives staff
+  turnover, your own forgetting, and the temptation to re-litigate the call from scratch.
+
+The matrix is a thinking tool, then an artifact. The artifact only earns its keep if the
+thinking was honest.
+
+## Anatomy
+
+Every matrix has the same parts. Get each one right and the artifact mostly writes itself.
+
+### Options (columns)
+
+Three or four options is the sweet spot. Two is too binary -- it collapses into a
+pros-and-cons list and loses the comparative power. Six or more dilutes attention and the
+later columns get sloppy.
+
+**Include the status quo.** If the user is currently doing X, "keep doing X" is an option.
+Skipping it hides the cost of change. In the bundled example, `assets/example.html`, "A. Copy
+(current)" is the first column for exactly this reason.
+
+**Include at least one option you suspect will lose.** A matrix where every option is a
+contender is suspicious -- you have likely pre-filtered. An option that fails badly in the
+matrix is still useful: it documents *why* the obvious-sounding alternative does not work.
+
+Name options short and specific (`Postgres`, `Git submodule`, `WebSocket`), not vague
+(`a database`, `version control`, `a messaging layer`).
+
+### Criteria (rows)
+
+Criteria are the properties of an option that matter for this decision. Pick them by asking
+"what would make me regret a choice?" -- regret modes are criteria.
+
+Good criteria are:
+
+- **Project-specific.** Generic criteria like "simplicity" or "quality" do not differentiate.
+  Replace with the actual concern: "clone / CI experience", "blast radius of an edit",
+  "reproducibility on a fresh laptop".
+- **Discriminating.** A criterion every option scores equally on is wasted real estate. Cut it
+  or replace it with a sharper version.
+- **Phrased as a property of the option.** "Path portability" works; "Is it portable?" works
+  less well -- cells read more cleanly when the criterion names an attribute.
+- **A mix of axes.** Correctness, ergonomics, performance, reversibility, blast radius,
+  maintenance cost, coupling, testability, security, repo size, setup cost. Lean toward axes
+  the team has been burned on before.
+
+Five to ten criteria is typical. Fewer than four and the matrix looks unconvincing; more than
+twelve and the reader stops reading.
+
+### Approach presentation (three levels)
+
+Each option needs enough description that a reader can tell what it is without scrolling
+back. There are three levels of presentation; use the lowest one that does the job.
+
+1. **Header only.** The option name in the `<th>` is self-evident -- `Postgres`,
+   `WebSocket`, `git submodule`. No subtitle, no card.
+2. **Header with subtitle.** A one-line `opt-sub` underneath the option name inside the
+   `<th>`. Use when the name alone is ambiguous and one line of context resolves it. For
+   "Throttle Próprio com reserva de Cancel" the subtitle "Separa X% do throttle para
+   cancelamentos." is enough. This is the `assets/example-lean.html` shape.
+3. **Header plus a cards block above the matrix.** A `.approaches` grid (one card per
+   option) before the table, with a paragraph of detail per option. Use only when a
+   one-line subtitle does not fit and the option needs a real description. When the cards
+   block is present, the headers carry just the option name -- do not duplicate the
+   description as a subtitle. This is the `assets/example.html` shape.
+
+Mixing levels within a single matrix is rare and usually a sign you have not picked the
+right level. Mixing levels across sub-decisions in a multi-decision artifact is fine --
+each sub-decision picks the level its options actually need.
+
+### Cells
+
+Each cell carries a **verdict** and a **short reasoning** of one or two sentences. The
+background colour carries the verdict; the cell body carries the reasoning. There is no
+inline verdict tag -- the colour does that work alone.
+
+The palette (from Rich Hickey's "Design in Practice" talk):
+
+- **Green** (`td.good`): an *appealing aspect* -- the option clearly handles the criterion
+  well. A scanning eye reads green as "this is a reason to pick this option".
+- **Yellow** (`td.ok`): a *not-so-great aspect* -- the option handles the criterion, but
+  with caveats or with effort worth knowing about. Yellow means "requires consideration",
+  not "fine".
+- **Red** (`td.bad`): a *blocker aspect* -- a serious concern, a real cost against this
+  option. A reader scanning the column should see red as a stop signal.
+- **No colour** (no class): a *neutral aspect* -- the option neither shines nor stumbles
+  on this criterion; the cell is informational only. **Most cells should land here.**
+- **Italic grey** (`td.na`): the criterion does not apply to this option. Distinct from
+  neutral -- na is "this question is meaningless here", neutral is "the answer doesn't
+  swing the decision either way".
+
+**Default to no colour.** A useful matrix typically colours only 30-50% of its cells --
+the ones that genuinely discriminate. When every cell is green, yellow, or red, the
+colour stops carrying signal: the eye has nowhere to land and the verdicts blur into
+wallpaper. Neutral cells exist precisely to give the coloured cells contrast. A row where
+three options all "handle it fine" and one fails is read more clearly with one red cell
+and three neutral cells than with three green cells and one red one.
+
+The criterion column itself uses a distinct warm background (`td.criterion`) to separate
+the row label from the data cells.
+
+Cells should be specific, not generic. "Breaks on any host that does not have
+`/home/msi/...`. CI, sandboxes, fresh laptop -- all see a dangling link." beats "not
+portable". A cell can be very short ("Yes", "Ok", "Not supported") when the criterion is
+binary -- but make sure the colour still carries the verdict.
+
+**Unknowns.** For an aspect you cannot grade concretely yet, leave the cell uncoloured
+and put a literal "?" at the start of the cell prose -- for example, "? Not measured;
+likely similar to subtree but never benchmarked." Do not introduce a new colour for
+unknown; the "?" signals the gap, the absence of colour signals "no verdict", and the
+question goes into the Open Questions block. A cell with no concrete content at all is a
+signal you do not yet understand the option well enough to compare it -- research the gap
+or mark it "?", but do not paper over it with a generic adjective.
+
+Avoid burying caveats in adjectives ("mostly works", "somewhat painful"). If something is
+mixed, say what the mix is.
+
+### Notes column (optional)
+
+A right-hand `notes` column carries cross-cutting commentary on a criterion -- observations
+that apply to all options or to none of them, caveats about the criterion itself, related
+constraints. Off by default. Turn it on only when you have something genuinely
+cross-cutting to say on most rows; if the column would be mostly empty, drop it. If every
+row has a notes entry, the column is probably restating things that belong in the
+criterion's label.
+
+### Score and weight columns (optional)
+
+**Off by default. Omit both unless the user explicitly asks for scoring.** The cell
+colours and the Interpretation prose already carry the answer; adding numbers without a
+reason makes the matrix look more authoritative than it is.
+
+Turn scoring on only when:
+
+- The user explicitly asks for a score, weighted score, or numeric ranking.
+- The decision is contentious enough that a summary statistic helps anchor against
+  intuition. Use the gap between the score and your gut as a diagnostic: if they agree,
+  you have a clean call; if they disagree, either the cells, the weights, or your
+  intuition is wrong -- figure out which.
+
+When scoring is on, **two pieces of numeric information** appear on the matrix:
+
+- **Score (1-5) per cell.** Each cell carries a small badge with its score: 5 = clearly
+  appealing, 3 = neutral or mixed, 1 = a real blocker. The score should match the cell's
+  colour band -- 4-5 reads as green territory, 3 as yellow or no-colour, 1-2 as red. For
+  unknown cells, leave the score off and put "?" in the prose.
+- **Weight column for criteria.** A "Wt" column at the left holds each criterion's
+  weight. **Defaults to 1 across all rows** -- the user can edit individual weights to
+  reflect what actually matters. Use the same 1-5 range as the cell score, where 5 means
+  "this criterion could dominate the decision" and 1 means "nice to have, would not flip
+  the call alone".
+
+A `<tfoot>` row sums `sum(score * weight)` per option. Label the footer "tune weights to
+taste" so the reader knows the number is commentary rather than a verdict.
+
+Scoring is a *thinking* aid more than a *computing* aid; two people who agree on the
+matrix can still disagree on weights, and that disagreement is itself a useful signal. If
+the score and the colours tell the same story, the score is redundant -- pull it back
+off. If they disagree, that disagreement is the artifact's most interesting output.
+
+### Interpretation
+
+A short prose section -- two to four short paragraphs -- that synthesizes the matrix:
+
+- State the leaning option and the single most important reason.
+- Name the runner-up and what would flip the call.
+- Call out any option that scored poorly in the matrix but might still tempt (and say why
+  the matrix rejects it).
+
+The matrix is a tool the user is using themselves, not a verdict being handed to them.
+Title this block **"Interpretation"** (not "My read", not "Recommendation") and phrase
+the prose in the user's voice -- "the matrix points me toward X", "the killer for B
+is...", not "I recommend X" or "you should pick X". The user is reading their own
+synthesis of their own matrix; the artifact should sound that way.
+
+### Open Questions
+
+A short list of things that would change the interpretation if answered differently. These
+are the assumptions the matrix smuggled in -- surface them so they stay live while the
+decision is in flight. Examples: "How often does this actually change?", "Is there
+another consumer to account for?", "Are we optimizing for cold-start or steady-state?"
+
+Title this block **"Open Questions"** (not "Open questions for you"). Phrase as questions
+the user is still working through, not as questions Claude is putting to the user.
+
+## Multi-decision artifacts
+
+A single research question often contains two or three smaller decisions that are coupled
+but distinct. Rather than build separate artifacts for each, stack them in one HTML
+document: one `<h2>` heading per sub-decision, with its own option cards (optional) and its
+own matrix table, in the order the reader will think about them.
+
+For example, "How should we represent contract sizes on aggregates?" can resolve into two
+matrices stacked in one artifact:
+
+1. *How do we model the size?* -- options: add a ratio column to group members vs. use a
+   contract multiplier.
+2. *Where do we apply the multiplier?* -- options: pass the adjusted quantity in the
+   request vs. apply inside the gateway vs. pass the multiplier in the request.
+
+The second decision only makes sense once the first is chosen. Stacking makes that
+sequencing explicit. After both matrices, a single recommendation section can speak to both
+decisions and the order in which to commit to them. See `assets/example-lean.html` for the
+pattern.
+
+Each sub-decision picks its own approach-presentation level and its own optional columns
+independently -- one sub-decision might need the cards block while another fits header-only
+options, and one might warrant a weight column while another does not. Visual consistency
+(same palette, same chrome) matters; matching every knob across sub-decisions does not.
+
+Limit a single artifact to two or three coupled sub-decisions. More than that, the document
+loses focus -- split into separate artifacts and link between them.
+
+## Workflow
+
+### 1. Confirm the decision is worth a matrix
+
+Ask: are there really multiple viable options here, or is the user looking for permission to
+pick the obvious one? A two-line answer is better than a forced four-column matrix.
+
+If only one option is plausible, say so directly. The skill is opt-in; not every design
+question is a decision-matrix question.
+
+### 2. Brainstorm options, including the status quo and a likely-loser
+
+Draft three or four options in plain text in the conversation first. Sanity-check coverage
+before committing to a layout:
+
+- Is the current approach represented?
+- Is there an option a reader might assume but that this decision rules out?
+- Are the options at the same level of abstraction? (Comparing "Postgres" to "key-value
+  storage" is a category error; pick "Postgres" vs "DynamoDB" vs "Redis" or "relational" vs
+  "key-value" vs "document" -- not a mix.)
+
+### 3. Draft criteria from the regret modes
+
+For each option, ask: "If we picked this, what would we regret in six months?" Each distinct
+regret becomes a candidate criterion. Then prune: drop any criterion that every option scores
+the same on, and any criterion whose distinction the user does not actually care about for
+this project.
+
+### 4. Score the cells before writing the interpretation
+
+Fill in verdicts and short reasoning for every cell before writing any Interpretation
+prose. This order matters. Writing the Interpretation first invites the matrix to be
+reverse-engineered to support it; filling in cells first lets the matrix surprise you.
+
+If filling in a cell forces you to add a criterion you had not thought of, add it. If it
+forces you to drop or merge an option, do that too. The first pass is exploratory; the matrix
+is allowed to change shape.
+
+### 5. Write the interpretation
+
+Once cells are stable, write the Interpretation block in plain prose. Name the leaning
+option, the runner-up, the conditions that would flip the call, and the option(s) the
+matrix rules out and why. Phrase it in the user's voice -- "the matrix points me
+toward X" -- not as advice handed in from outside.
+
+If scoring is on (see "Score and weight columns"), sum each column and note where the
+score and your intuition disagree -- that gap is information. Either the weights are
+wrong, the verdicts are wrong, or your intuition is wrong; figure out which. If neither
+the agreement nor the disagreement is informative, the score is doing no work -- pull
+it back off.
+
+### 6. List open questions
+
+Skim the cells for assumptions ("the team is one person", "this rarely changes", "we
+already have a CI cluster"). Each assumption that would flip the interpretation if wrong
+becomes an open question. Phrase them as questions the user is still working through, not
+as questions Claude is asking the user.
+
+### 7. Produce the HTML artifact
+
+Generate a single self-contained HTML file from the matrix. See
+[references/artifact-template.md](references/artifact-template.md) for structure, styling
+conventions, and content rules. Two reference files ship with the skill:
+
+- [assets/example.html](assets/example.html) -- a worked example with the optional knobs
+  turned on: cards block above the table, score (1-5) per cell, weight column, weighted
+  score footer, notes column on the right.
+- [assets/example-lean.html](assets/example-lean.html) -- a worked example with the
+  optional knobs turned off: option headers with subtitles, no scoring, no weights, no
+  notes column, two stacked matrices for a multi-decision artifact. Also demonstrates
+  the "?" convention for an unknown cell.
+
+Copy whichever is closer to the knob configuration you need, then adapt the title,
+options, criteria, cells, Interpretation, and Open Questions to the current decision. The
+two files share the same palette and chrome -- the difference is which knobs are on.
+
+Save the file as `<topic>-decision.html` (e.g. `cache-storage-decision.html`,
+`sync-mechanism-decision.html`) in the working directory, or wherever the user asks.
+Print the absolute path so the user can open it.
+
+### 8. Surface the interpretation in chat
+
+After writing the file, give the user a two- or three-line summary in chat: the leaning
+option, the runner-up, and the most important open question. The HTML is for reviewing
+and keeping; the chat summary is for the immediate response.
+
+## Common failure modes
+
+- **Two-column matrices.** Almost always a sign the third option was prematurely filtered.
+  Force yourself to name at least one more before committing to a two-option comparison. If
+  there really are only two, a pros-and-cons list may serve better than a matrix.
+- **Generic criteria.** "Simplicity", "performance", "quality" without further specification.
+  Replace with the project-specific property the criterion is gesturing at.
+- **An all-green row.** The criterion does not discriminate between options. Cut it or
+  replace it with a sharper version.
+- **An all-green column.** You are almost certainly rationalizing, or you have not
+  considered a criterion where this approach genuinely falters. Every real option has
+  trade-offs; a column with no yellow and no red is a column that has not been
+  cross-examined. Ask: "what would someone who hates this approach say?" -- their answer
+  is the missing criterion.
+- **Colouring every cell.** When every cell is green, yellow, or red, the colour stops
+  carrying signal -- the eye has nowhere to land. Leave neutral cells uncoloured so the
+  verdict cells stand out. If you cannot find a single neutral cell across the whole
+  matrix, you are over-grading.
+- **Reverse-engineered scores.** If you wrote the interpretation first and then filled
+  in cells to match, the artifact lies. Fill in cells first.
+- **Weighting until your favorite wins.** Weights are tunable, but tuning them after seeing
+  the score is intellectual sleight of hand. Set weights from the criteria themselves --
+  "this matters more because [concrete reason]" -- not from the desired outcome.
+- **Premature matrix.** If the user is brainstorming options and you produce a polished HTML
+  before the option set is stable, you will throw it away. Draft in plain text first; commit
+  to HTML once the shape is settled.
+- **Treating the score as the answer.** The score is a summary statistic of a structured
+  conversation. The structured conversation is the artifact.
+
+## Tone and style
+
+Apply the [writing-clearly-and-concisely](../writing-clearly-and-concisely/SKILL.md) skill
+to cell prose and the Interpretation block. Cells are read fast; needless words hurt more
+here than elsewhere. The Interpretation should be direct prose in the user's voice, not a
+recommendation from outside and not a marketing pitch.
+
+Avoid glyphs and icons (no checkmarks, no traffic lights as Unicode). The verdict is
+carried by the cell's background colour alone -- no inline tag, no emoji, no Unicode
+shapes. Plain text survives copy-paste and screen readers.
+
+## Related skills
+
+- [documentation](../documentation/SKILL.md) -- for the broader principles of writing
+  durable artifacts that survive drift. A decision matrix is closely related to an ADR
+  (architecture decision record) and can be the front matter of one.
+- [writing-clearly-and-concisely](../writing-clearly-and-concisely/SKILL.md) -- for cell
+  prose and the Interpretation block.
+- [reviewing-plans](../reviewing-plans/SKILL.md) -- if the matrix is going into a draft
+  implementation plan, run the plan through review before committing to it.
