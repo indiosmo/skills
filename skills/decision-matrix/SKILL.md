@@ -244,6 +244,27 @@ Render the block as a plain heading followed by paragraphs. Do **not** wrap it i
 highlighted box or coloured panel. The emphasis is carried by the bold lead on the
 chosen option, not by chrome around the block.
 
+### Assumptions
+
+A short list of premises the matrix takes as settled -- scope decisions, environmental
+facts, committed tooling choices -- that constrain the design space the matrix explores.
+Examples: "The graded build copies only `submission/`", "Catch2 is the committed test
+framework", "There is no second C/C++ consumer outside this directory."
+
+The block exists to make the matrix's inputs visible. A reader who disputes the call
+can check whether they actually disagree with the matrix or with one of its premises.
+It is also where resolved open questions go to live (see "Resolving open questions"
+below): when the user pins down an answer the matrix was treating as uncertain, the
+answer belongs here, not buried inside cell prose.
+
+Title this block **"Assumptions"**. Phrase each entry as a settled statement plus its
+matrix-level consequence: "Library count: at least four; past the threshold where the
+DRY-ness argument in Matrix 1 pays off." Not as a question with the answer tacked on.
+
+Omit the block entirely when there are no significant premises to surface. Three to
+five entries is typical when present; more than seven suggests the matrix is doing too
+much.
+
 ### Open Questions
 
 A short list of things that would change the decision if answered differently. These
@@ -253,6 +274,11 @@ another consumer to account for?", "Are we optimizing for cold-start or steady-s
 
 Title this block **"Open Questions"** (not "Open questions for you"). Phrase as questions
 the user is still working through, not as questions Claude is putting to the user.
+
+Both Assumptions and Open Questions render **above** the matrix tables, immediately under
+the lede. A reader should see what the matrix takes as given and what is still in flight
+before reading the comparison that depends on them. As questions get resolved in
+conversation, promote them into Assumptions -- see "Resolving open questions" below.
 
 ## Multi-decision artifacts
 
@@ -337,12 +363,21 @@ wrong, the verdicts are wrong, or your intuition is wrong; figure out which. If 
 the agreement nor the disagreement is informative, the score is doing no work -- pull
 it back off.
 
-### 6. List open questions
+### 6. List assumptions and open questions
 
-Skim the cells for assumptions ("the team is one person", "this rarely changes", "we
-already have a CI cluster"). Each assumption that would flip the decision if wrong
-becomes an open question. Phrase them as questions the user is still working through, not
-as questions Claude is asking the user.
+Skim the cells for premises: "the team is one person", "the grader copies only X", "we
+already have a CI cluster", "this rarely changes". For each premise, decide which block
+it belongs in:
+
+- If the premise is settled and you are willing to commit to it, put it in the
+  **Assumptions** block at the top with its matrix-level consequence stated.
+- If the premise is plausible but unverified, and the decision would flip if it were
+  wrong, put it in the **Open Questions** block. Phrase it as a question the user is
+  still working through, not as one Claude is asking the user.
+
+Both blocks render above the matrix so the reader sees the premises before the matrix
+that depends on them. As the user resolves questions in conversation, promote them
+from Open Questions into Assumptions -- see "Resolving open questions" below.
 
 ### 7. Produce the HTML artifact
 
@@ -359,8 +394,9 @@ conventions, and content rules. Two reference files ship with the skill:
   the "?" convention for an unknown cell.
 
 Copy whichever is closer to the knob configuration you need, then adapt the title,
-options, criteria, cells, Decision, and Open Questions to the current decision. The
-two files share the same palette and chrome -- the difference is which knobs are on.
+options, criteria, cells, Decision, Assumptions, and Open Questions to the current
+decision. The two files share the same palette and chrome -- the difference is which
+knobs are on.
 
 Save the file as `<topic>-decision.html` (e.g. `cache-storage-decision.html`,
 `sync-mechanism-decision.html`) in the working directory, or wherever the user asks.
@@ -371,6 +407,46 @@ Print the absolute path so the user can open it.
 After writing the file, give the user a two- or three-line summary in chat: the chosen
 option, the main reason, and the most important open question. The HTML is for reviewing
 and keeping; the chat summary is for the immediate response.
+
+## Resolving open questions
+
+A decision matrix is rarely settled on the first pass. The Open Questions block names
+the premises the matrix could not pin down: assumptions about scope, environmental
+facts, or tooling commitments whose answers would change the call. When the user
+resolves one in conversation, update the artifact rather than letting the answer live
+only in chat.
+
+The mechanics:
+
+1. **Promote the answer into the Assumptions block.** Move the entry from "Open
+   Questions" to "Assumptions". Restate it as a settled premise plus the matrix-level
+   consequence -- not as a question with the answer tacked on. "Library count: at
+   least four; past the threshold where Matrix 1's DRY-ness argument pays off." beats
+   "Q: how many libraries? A: four, so Matrix 1's argument applies."
+2. **Re-read the matrix against the new assumption.** If the answer narrows the
+   design space, some cells may be wrong, some criteria may become irrelevant, an
+   option may even drop out. Adjust the cells, not the decision -- the matrix still
+   has to support the call honestly.
+3. **Update the Decision block if the resolution actually changed something.** If a
+   sub-decision's call would have flipped under the previous uncertainty, say so:
+   "with X resolved as Y, the call stands but by a narrower margin; Z is now the
+   clean fallback." If the resolution confirmed the existing call cleanly, no change
+   is needed.
+4. **Leave a trail.** The Assumptions entry is the audit log -- a reader who comes
+   back six months later should be able to tell which premises shaped the matrix and
+   in what direction. Do not silently delete criteria or options that became
+   irrelevant; let the Assumptions entry name what changed.
+
+Avoid these mistakes:
+
+- **Stuffing the answer into the matrix without surfacing it.** A reader who only
+  sees the matrix should still be able to tell which premises it depends on. Hidden
+  assumptions are why decisions get re-litigated.
+- **Re-tuning weights or cells to preserve the original call.** If a resolution
+  would flip the decision, let it flip. The matrix lies if it papers over the
+  change.
+- **Leaving the open question on the list once answered.** Promotion is mandatory --
+  an entry in Open Questions is, by definition, still open.
 
 ## Common failure modes
 

@@ -79,11 +79,17 @@
   td.bad  { background: var(--bad-bg);  color: var(--bad-fg); }
   td.na   { background: var(--na-bg);   color: var(--na-fg); font-style: italic; }
 
-  .open-questions { margin-top: 28px; padding: 16px 20px; background: white; border: 1px solid var(--rule); border-radius: 6px; }
-  .open-questions h2 { margin-top: 0; }
-  .open-questions ul { margin: 0; padding-left: 20px; }
-  .open-questions li { margin: 4px 0; }
-  .open-questions li b { color: var(--accent); }
+  .assumptions, .open-questions {
+    margin: 0 0 18px;
+    padding: 16px 20px;
+    background: white;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+  }
+  .assumptions h2, .open-questions h2 { margin-top: 0; }
+  .assumptions ul, .open-questions ul { margin: 0; padding-left: 20px; }
+  .assumptions li, .open-questions li { margin: 4px 0; }
+  .assumptions li b, .open-questions li b { color: var(--accent); }
 
   code { background: #f3f1ea; padding: 1px 5px; border-radius: 3px; font-size: 12.5px; }
 </style>
@@ -98,6 +104,33 @@
   unless we normalise. Two coupled sub-decisions: how to model the size, and where in the
   pipeline to apply the multiplier.
 </p>
+
+<div class="assumptions">
+  <h2>Assumptions</h2>
+  <ul>
+    <li><b>Venue-specific weights:</b> no current group uses them. The flexibility
+        argument for the ratio column in Matrix 1 stays theoretical; revisit if a real
+        use case emerges. (Promoted from the corresponding open question.)</li>
+  </ul>
+</div>
+
+<div class="open-questions">
+  <h2>Open Questions</h2>
+  <ul>
+    <li><b>Does the contract-multiplier path work for aggregates created before the
+        multiplier service existed?</b> (The "?" cell in sub-decision 1.) Need a test that
+        loads a pre-existing aggregate and verifies the multiplier resolves correctly.</li>
+    <li><b>How often does the venue change contract sizes?</b> If less than once a year,
+        the manual fan-out cost is negligible and the ratio column becomes more
+        attractive.</li>
+    <li><b>Is there an audit-trail requirement on raw vs adjusted quantity?</b> If
+        compliance needs to reconstruct the un-adjusted order, the gateway must log both
+        -- that nudges further toward applying the multiplier inside the gateway.</li>
+    <li><b>Will a venue ever price in non-integer multiples?</b> The current multiplier
+        table assumes integer multiples; revisit if a venue ships fractional contract
+        sizes.</li>
+  </ul>
+</div>
 
 <h2 class="subdecision">1. How to model the size</h2>
 
@@ -204,26 +237,6 @@
   before the gateway can apply it -- resolve the backward-compat question first, then
   wire the gateway after a week of clean data.
 </p>
-
-<div class="open-questions">
-  <h2>Open Questions</h2>
-  <ul>
-    <li><b>Does the contract-multiplier path work for aggregates created before the
-        multiplier service existed?</b> (The "?" cell in sub-decision 1.) Need a test that
-        loads a pre-existing aggregate and verifies the multiplier resolves correctly.</li>
-    <li><b>Does any current group actually use venue-specific weights?</b> If yes, the
-        flexibility argument for the ratio column is concrete, not theoretical.</li>
-    <li><b>How often does the venue change contract sizes?</b> If less than once a year,
-        the manual fan-out cost is negligible and the ratio column becomes more
-        attractive.</li>
-    <li><b>Is there an audit-trail requirement on raw vs adjusted quantity?</b> If
-        compliance needs to reconstruct the un-adjusted order, the gateway must log both
-        -- that nudges further toward applying the multiplier inside the gateway.</li>
-    <li><b>Will a venue ever price in non-integer multiples?</b> The current multiplier
-        table assumes integer multiples; revisit if a venue ships fractional contract
-        sizes.</li>
-  </ul>
-</div>
 
 </body>
 </html>

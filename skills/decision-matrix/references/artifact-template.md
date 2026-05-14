@@ -31,20 +31,27 @@ The page reads top to bottom as:
 
 1. **Title and lede** -- one `<h1>` with a short subtitle, followed by a one-paragraph
    `<p class="lede">` that names the decision and the context. Two or three sentences.
-2. **Approach presentation** -- inline in the table headers, optionally with a cards block
+2. **Assumptions (optional)** -- an `.assumptions` block with `<h2>Assumptions</h2>` and a
+   `<ul>` of premises the matrix takes as settled (scope decisions, environmental facts,
+   tooling commitments). Omit when there are none.
+3. **Open Questions (optional)** -- an `.open-questions` block with
+   `<h2>Open Questions</h2>` and a `<ul>` of questions whose answers would change the
+   decision. Omit when there are none.
+4. **Approach presentation** -- inline in the table headers, optionally with a cards block
    (`.approaches`) above the matrix for options that need a paragraph of detail. See
    "Approach presentation knob" below.
-3. **The matrix** -- a `<table>` with columns: Criterion, (optional) Weight, one column
+5. **The matrix** -- a `<table>` with columns: Criterion, (optional) Weight, one column
    per option, (optional) Notes. An optional `<tfoot>` row carries the weighted score.
-4. **Decision** -- a plain `<h2>Decision</h2>` (or `<h3>` inside a sub-decision section)
+6. **Decision** -- a plain `<h2>Decision</h2>` (or `<h3>` inside a sub-decision section)
    followed by two to four short paragraphs. **No highlighted box, no coloured panel.**
    The emphasis is carried by a `<b>` on the chosen option in the lead sentence, not by
    chrome around the block.
-5. **Open Questions** -- an `.open-questions` block with `<h2>Open Questions</h2>` and a
-   `<ul>` of questions whose answers would change the decision.
 
-The reader's eye flows: orient (lede), see the candidates (headers or cards), compare
-(matrix), read the call (Decision), see what would change it (Open Questions).
+The reader's eye flows: orient (lede), check the premises (Assumptions), see what is
+still in flight (Open Questions), see the candidates (headers or cards), compare
+(matrix), read the call (Decision). Assumptions and Open Questions sit above the matrix
+because the matrix is read against them -- a reader who finds the call surprising should
+be able to check the premises and the unresolved questions before re-reading the cells.
 
 ## Palette and chrome
 
@@ -318,6 +325,50 @@ The block records the decision and its grounds. Do not phrase it as a reading of
 matrix ("the matrix points toward...") or as advice from outside ("I recommend...",
 "you should pick..."). State the call.
 
+## The Assumptions block
+
+An `.assumptions` block with a bullet list of premises. Each entry should be a statement
+that constrains the design space, not a question. Bold the topic lead so it scans:
+
+```html
+<div class="assumptions">
+  <h2>Assumptions</h2>
+  <ul>
+    <li><b>Premise topic:</b> settled statement plus the matrix-level consequence.</li>
+    ...
+  </ul>
+</div>
+```
+
+Style (mirrors the Open Questions block; both render as warm-paper cards above the
+matrix):
+
+```css
+.assumptions {
+  margin: 0 0 18px;
+  padding: 16px 20px;
+  background: white;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+}
+.assumptions h2 { margin-top: 0; }
+.assumptions ul { margin: 0; padding-left: 20px; }
+.assumptions li { margin: 4px 0; }
+.assumptions li b { color: var(--accent); }
+```
+
+Place the block immediately under the lede, before any sub-decision heading. In a
+multi-decision artifact, there is exactly one Assumptions block for the whole document
+-- premises apply across the matrices, not per-matrix.
+
+Three to five entries is typical when the block is present; more than seven suggests the
+matrix is doing too much. Omit the block entirely when there are no significant premises
+to surface.
+
+Promote resolved open questions into this block (see SKILL.md "Resolving open
+questions"). Restate the resolved entry as a settled statement plus its matrix-level
+consequence -- not as a question with the answer tacked on.
+
 ## The Open Questions block
 
 An `.open-questions` block with a bullet list of questions. Each question should be a
@@ -331,6 +382,27 @@ thing whose answer would change the decision. Bold the question lead so it scans
     ...
   </ul>
 </div>
+```
+
+Place the block immediately under the lede (and under the Assumptions block when both
+are present), before any sub-decision heading. There is exactly one Open Questions
+block for the whole document.
+
+Style (with the block now rendering at the top of the document rather than the bottom,
+use `margin: 0 0 24px` instead of `margin-top: 28px`):
+
+```css
+.open-questions {
+  margin: 0 0 24px;
+  padding: 16px 20px;
+  background: white;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+}
+.open-questions h2 { margin-top: 0; }
+.open-questions ul { margin: 0; padding-left: 20px; }
+.open-questions li { margin: 4px 0; }
+.open-questions li b { color: var(--accent); }
 ```
 
 Three to five questions is typical. Fewer suggests overconfidence; more suggests the
@@ -358,18 +430,26 @@ When the research question contains two or three coupled sub-decisions, build on
 document with stacked matrices. Structure:
 
 1. Title and lede (whole document).
-2. `<h2 class="subdecision">` for sub-decision 1, optionally followed by its cards block,
+2. (Optional) Assumptions block -- one for the whole document; premises apply across
+   the matrices.
+3. (Optional) Open Questions block -- one for the whole document; questions span the
+   matrices.
+4. `<h2 class="subdecision">` for sub-decision 1, optionally followed by its cards block,
    then its matrix table, then an `<h3 class="decision">Decision</h3>` block.
-3. `<h2 class="subdecision">` for sub-decision 2, optionally followed by its cards block,
+5. `<h2 class="subdecision">` for sub-decision 2, optionally followed by its cards block,
    then its matrix table, then an `<h3 class="decision">Decision</h3>` block.
-4. (Repeat as needed; cap at three sub-decisions per artifact.)
-5. One Open Questions block at the end of the document.
+6. (Repeat as needed; cap at three sub-decisions per artifact.)
 
 Place each Decision block immediately under the matrix it decides. Do not collect the
 calls into a single combined block at the end of the document -- that forces the reader
 to scroll between matrix and verdict. If the sub-decisions have an ordering dependency
 (commit A before A's choice constrains B), state that inside the relevant Decision
 block, not in a separate block.
+
+Assumptions and Open Questions go above the first sub-decision -- never at the bottom
+or interleaved between sub-decisions. A premise that applies only to one sub-decision
+is still recorded once, at the top, naming the sub-decision it bears on: "Library
+count: at least four (drives Matrix 1)."
 
 Style for the sub-decision heading:
 
@@ -420,6 +500,11 @@ A decision matrix is not write-once. After the first draft:
   cells or weights are off, not that the score is wrong.
 - Ask: would a reasonable reader pick a different option from this matrix? If yes, the
   Decision needs a stronger argument or the matrix needs another criterion.
+- When the user resolves an Open Question in conversation, promote it to the
+  Assumptions block (restated as a settled premise plus matrix-level consequence) and
+  re-read the matrix against the new assumption. Cells that depended on the
+  uncertainty may need adjustment; the Decision may need a sentence on whether the
+  call now stands more or less firmly. See SKILL.md "Resolving open questions".
 
 When the user pushes back on the Decision, do not re-tune weights to match. Either
 add a criterion the user is implicitly weighting, or update a cell whose verdict was too

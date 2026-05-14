@@ -87,11 +87,18 @@
   .decision p { margin: 8px 0; max-width: 78ch; }
   .decision p:last-child { margin-bottom: 0; }
 
-  .open-questions { margin-top: 28px; padding: 16px 20px; background: white; border: 1px solid var(--rule); border-radius: 6px; }
-  .open-questions h2 { margin-top: 0; }
-  .open-questions ul { margin: 0; padding-left: 20px; }
-  .open-questions li { margin: 4px 0; }
-  .open-questions li b { color: var(--accent); }
+  .assumptions, .open-questions {
+    margin: 0 0 18px;
+    padding: 16px 20px;
+    background: white;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+  }
+  .assumptions h2, .open-questions h2 { margin-top: 0; }
+  .assumptions ul, .open-questions ul { margin: 0; padding-left: 20px; }
+  .assumptions li, .open-questions li { margin: 4px 0; }
+  .assumptions li b, .open-questions li b { color: var(--accent); }
+  .open-questions { margin-bottom: 28px; }
 </style>
 </head>
 <body>
@@ -103,6 +110,31 @@
   copying, switch to a symlink, or use a git-native sharing mechanism. Two adjacent options
   are included for honest comparison.
 </p>
+
+<div class="assumptions">
+  <h2>Assumptions</h2>
+  <ul>
+    <li><b>Update cadence:</b> origin changes about monthly, by the maintainer. Drift
+        cost is real but not painful; the drift row in the matrix stays a tiebreaker
+        rather than the deciding factor. (Promoted from the "how often does cpp-guides
+        change?" open question.)</li>
+  </ul>
+</div>
+
+<div class="open-questions">
+  <h2>Open Questions</h2>
+  <ul>
+    <li><b>Is the origin already its own git repo?</b> If
+        <code>/home/msi/llm_workspace/skills/</code> is one big repo, subtree needs a
+        specific path or a split-out first.</li>
+    <li><b>How many other projects consume cpp-guides?</b> Symlink's blast-radius cost is
+        proportional to that number. If this is the only consumer today, symlink's
+        downside is theoretical -- but path portability still kills it.</li>
+    <li><b>Is there ever a project-specific edit to a guide</b> (e.g. an abacus-specific
+        example) that should not pollute the generic doc? Copy and subtree allow it;
+        symlink forbids it; submodule requires a branch.</li>
+  </ul>
+</div>
 
 <div class="approaches">
   <div class="approach">
@@ -281,24 +313,6 @@
     the two-step commit dance and clone-time footgun outweigh that benefit for a docs
     tree this small.
   </p>
-</div>
-
-<div class="open-questions">
-  <h2>Open Questions</h2>
-  <ul>
-    <li><b>Is the origin already its own git repo?</b> If
-        <code>/home/msi/llm_workspace/skills/</code> is one big repo, subtree needs a
-        specific path or a split-out first.</li>
-    <li><b>How many other projects consume cpp-guides?</b> Symlink's blast-radius cost is
-        proportional to that number. If this is the only consumer today, symlink's
-        downside is theoretical -- but path portability still kills it.</li>
-    <li><b>How often does cpp-guides actually change?</b> If it's "once a quarter", copy
-        is genuinely fine and the whole conversation is premature. If it's weekly, drift
-        will hurt.</li>
-    <li><b>Is there ever a project-specific edit to a guide</b> (e.g. an abacus-specific
-        example) that should not pollute the generic doc? Copy and subtree allow it;
-        symlink forbids it; submodule requires a branch.</li>
-  </ul>
 </div>
 
 </body>
