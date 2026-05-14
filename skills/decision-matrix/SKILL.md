@@ -25,7 +25,7 @@ think we should use Y" pass each other in the dark.
 
 This skill covers two things: the **concepts** -- what goes where and why -- and the
 **artifact** -- a single self-contained HTML page that renders the matrix and the
-recommendation in a form you can share and revisit.
+decision in a form you can share and revisit.
 
 ## When to reach for this
 
@@ -186,7 +186,7 @@ criterion's label.
 ### Score and weight columns (optional)
 
 **Off by default. Omit both unless the user explicitly asks for scoring.** The cell
-colours and the Interpretation prose already carry the answer; adding numbers without a
+colours and the Decision prose already carry the answer; adding numbers without a
 reason makes the matrix look more authoritative than it is.
 
 Turn scoring on only when:
@@ -217,24 +217,36 @@ matrix can still disagree on weights, and that disagreement is itself a useful s
 the score and the colours tell the same story, the score is redundant -- pull it back
 off. If they disagree, that disagreement is the artifact's most interesting output.
 
-### Interpretation
+### Decision
 
-A short prose section -- two to four short paragraphs -- that synthesizes the matrix:
+A short prose section -- two to four short paragraphs -- that records the call. Title the
+block **"Decision"** (not "Interpretation", not "Recommendation", not "My read").
 
-- State the leaning option and the single most important reason.
-- Name the runner-up and what would flip the call.
-- Call out any option that scored poorly in the matrix but might still tempt (and say why
-  the matrix rejects it).
+Structure each Decision block as:
 
-The matrix is a tool the user is using themselves, not a verdict being handed to them.
-Title this block **"Interpretation"** (not "My read", not "Recommendation") and phrase
-the prose in the user's voice -- "the matrix points me toward X", "the killer for B
-is...", not "I recommend X" or "you should pick X". The user is reading their own
-synthesis of their own matrix; the artifact should sound that way.
+1. **State the decision.** First sentence names the chosen option and emphasises it
+   visually (`<b>` on the option name or a leading "Decision: " bold). The reader who
+   only reads one line should come away with the choice.
+2. **State the reasoning.** One or two sentences naming the criteria that made the call.
+   Point at specific rows of the matrix; do not restate the cell prose.
+3. **Considerations for discarding the other options** -- only when not obvious from the
+   matrix. A sentence per option that genuinely tempted: what it would have bought, what
+   would have to change for it to flip the call. Skip this for options the matrix already
+   ruled out clearly.
+
+Phrase the prose as a direct statement of the decision and its grounds. Do not write
+"the matrix points me toward X", "the killer for B is...", or other user-voice framings
+-- the reader knows the matrix is right above; the Decision block records the call, not
+a reading of the table. Equally, do not write "I recommend X" or "you should pick X" --
+the artifact records a decision the user has made, not advice being handed to them.
+
+Render the block as a plain heading followed by paragraphs. Do **not** wrap it in a
+highlighted box or coloured panel. The emphasis is carried by the bold lead on the
+chosen option, not by chrome around the block.
 
 ### Open Questions
 
-A short list of things that would change the interpretation if answered differently. These
+A short list of things that would change the decision if answered differently. These
 are the assumptions the matrix smuggled in -- surface them so they stay live while the
 decision is in flight. Examples: "How often does this actually change?", "Is there
 another consumer to account for?", "Are we optimizing for cold-start or steady-state?"
@@ -258,9 +270,11 @@ matrices stacked in one artifact:
    request vs. apply inside the gateway vs. pass the multiplier in the request.
 
 The second decision only makes sense once the first is chosen. Stacking makes that
-sequencing explicit. After both matrices, a single recommendation section can speak to both
-decisions and the order in which to commit to them. See `assets/example-lean.html` for the
-pattern.
+sequencing explicit. Each sub-decision carries its own Decision block immediately under
+its matrix -- the reader reads the matrix, sees the call, and moves on to the next
+sub-decision. Avoid a single combined "decisions" block at the end of the artifact; it
+forces the reader to scroll back to match calls to matrices. See
+`assets/example-lean.html` for the pattern.
 
 Each sub-decision picks its own approach-presentation level and its own optional columns
 independently -- one sub-decision might need the cards block while another fits header-only
@@ -298,22 +312,24 @@ regret becomes a candidate criterion. Then prune: drop any criterion that every 
 the same on, and any criterion whose distinction the user does not actually care about for
 this project.
 
-### 4. Score the cells before writing the interpretation
+### 4. Score the cells before writing the decision
 
-Fill in verdicts and short reasoning for every cell before writing any Interpretation
-prose. This order matters. Writing the Interpretation first invites the matrix to be
+Fill in verdicts and short reasoning for every cell before writing the Decision prose.
+This order matters. Writing the Decision first invites the matrix to be
 reverse-engineered to support it; filling in cells first lets the matrix surprise you.
 
 If filling in a cell forces you to add a criterion you had not thought of, add it. If it
 forces you to drop or merge an option, do that too. The first pass is exploratory; the matrix
 is allowed to change shape.
 
-### 5. Write the interpretation
+### 5. Write the decision
 
-Once cells are stable, write the Interpretation block in plain prose. Name the leaning
-option, the runner-up, the conditions that would flip the call, and the option(s) the
-matrix rules out and why. Phrase it in the user's voice -- "the matrix points me
-toward X" -- not as advice handed in from outside.
+Once cells are stable, write the Decision block in plain prose. State the chosen option
+in the first sentence and emphasise it. Follow with one or two sentences of reasoning
+that point at the criteria that decided the call. If an alternative genuinely tempted,
+add one sentence on what would have flipped it. Do not phrase the block as a reading of
+the matrix ("the matrix points me toward...") or as outside advice ("I recommend...") --
+state the decision directly.
 
 If scoring is on (see "Score and weight columns"), sum each column and note where the
 score and your intuition disagree -- that gap is information. Either the weights are
@@ -324,7 +340,7 @@ it back off.
 ### 6. List open questions
 
 Skim the cells for assumptions ("the team is one person", "this rarely changes", "we
-already have a CI cluster"). Each assumption that would flip the interpretation if wrong
+already have a CI cluster"). Each assumption that would flip the decision if wrong
 becomes an open question. Phrase them as questions the user is still working through, not
 as questions Claude is asking the user.
 
@@ -343,17 +359,17 @@ conventions, and content rules. Two reference files ship with the skill:
   the "?" convention for an unknown cell.
 
 Copy whichever is closer to the knob configuration you need, then adapt the title,
-options, criteria, cells, Interpretation, and Open Questions to the current decision. The
+options, criteria, cells, Decision, and Open Questions to the current decision. The
 two files share the same palette and chrome -- the difference is which knobs are on.
 
 Save the file as `<topic>-decision.html` (e.g. `cache-storage-decision.html`,
 `sync-mechanism-decision.html`) in the working directory, or wherever the user asks.
 Print the absolute path so the user can open it.
 
-### 8. Surface the interpretation in chat
+### 8. Surface the decision in chat
 
-After writing the file, give the user a two- or three-line summary in chat: the leaning
-option, the runner-up, and the most important open question. The HTML is for reviewing
+After writing the file, give the user a two- or three-line summary in chat: the chosen
+option, the main reason, and the most important open question. The HTML is for reviewing
 and keeping; the chat summary is for the immediate response.
 
 ## Common failure modes
@@ -374,8 +390,8 @@ and keeping; the chat summary is for the immediate response.
   carrying signal -- the eye has nowhere to land. Leave neutral cells uncoloured so the
   verdict cells stand out. If you cannot find a single neutral cell across the whole
   matrix, you are over-grading.
-- **Reverse-engineered scores.** If you wrote the interpretation first and then filled
-  in cells to match, the artifact lies. Fill in cells first.
+- **Reverse-engineered scores.** If you wrote the Decision first and then filled in
+  cells to match, the artifact lies. Fill in cells first.
 - **Weighting until your favorite wins.** Weights are tunable, but tuning them after seeing
   the score is intellectual sleight of hand. Set weights from the criteria themselves --
   "this matters more because [concrete reason]" -- not from the desired outcome.
@@ -388,9 +404,10 @@ and keeping; the chat summary is for the immediate response.
 ## Tone and style
 
 Apply the [writing-clearly-and-concisely](../writing-clearly-and-concisely/SKILL.md) skill
-to cell prose and the Interpretation block. Cells are read fast; needless words hurt more
-here than elsewhere. The Interpretation should be direct prose in the user's voice, not a
-recommendation from outside and not a marketing pitch.
+to cell prose and the Decision block. Cells are read fast; needless words hurt more
+here than elsewhere. The Decision block states the call directly -- not as a reading of
+the matrix ("the matrix points toward...") and not as advice from outside ("I
+recommend..."). It is a record of what was decided and why.
 
 Avoid glyphs and icons (no checkmarks, no traffic lights as Unicode). The verdict is
 carried by the cell's background colour alone -- no inline tag, no emoji, no Unicode
@@ -402,6 +419,6 @@ shapes. Plain text survives copy-paste and screen readers.
   durable artifacts that survive drift. A decision matrix is closely related to an ADR
   (architecture decision record) and can be the front matter of one.
 - [writing-clearly-and-concisely](../writing-clearly-and-concisely/SKILL.md) -- for cell
-  prose and the Interpretation block.
+  prose and the Decision block.
 - [reviewing-plans](../reviewing-plans/SKILL.md) -- if the matrix is going into a draft
   implementation plan, run the plan through review before committing to it.

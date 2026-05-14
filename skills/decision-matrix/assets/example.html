@@ -10,7 +10,6 @@
     --muted: #6b6b6b;
     --rule: #d8d6cf;
     --accent: #6b5b3a;
-    --highlight: #fff6d6;
 
     --good-bg: #d8ebd2;
     --good-fg: #1f4a26;
@@ -84,14 +83,9 @@
 
   code { background: #f3f1ea; padding: 1px 5px; border-radius: 3px; font-size: 12.5px; }
 
-  .recommendation {
-    margin-top: 32px;
-    padding: 16px 20px;
-    background: var(--highlight);
-    border: 1px solid #d8c47a;
-    border-radius: 6px;
-  }
-  .recommendation h2 { margin-top: 0; color: #6a5210; text-transform: none; letter-spacing: 0; font-size: 18px; }
+  .decision { margin-top: 28px; }
+  .decision p { margin: 8px 0; max-width: 78ch; }
+  .decision p:last-child { margin-bottom: 0; }
 
   .open-questions { margin-top: 28px; padding: 16px 20px; background: white; border: 1px solid var(--rule); border-radius: 6px; }
   .open-questions h2 { margin-top: 0; }
@@ -265,34 +259,27 @@
   </tfoot>
 </table>
 
-<div class="recommendation">
-  <h2>Interpretation</h2>
+<h2>Decision</h2>
+<div class="decision">
   <p>
-    <b>Symlink is the weakest option</b> despite winning on drift and single-source. The
-    two killers are machine portability (any CI, any other contributor, any container
-    sees a dangling link) and blast radius (every edit silently leaks into every project
-    sharing the link, eliminating the ability to try changes locally). The weighted score
-    confirms what the cell pattern already shows.
+    <b>Stay on copy.</b> Reproducibility on a fresh clone and blast radius are the
+    decisive criteria, and copy is the only option that scores well on both without
+    paying a setup cost the team has not yet earned.
   </p>
   <p>
-    <b>Copy and subtree are the strong options</b>, with subtree slightly ahead on the
-    scoreboard. Copy is what's there; it's fine if "resync from origin" stays a manual
-    chore -- the guides are short enough that drift is visible during normal review.
-    Subtree is the upgrade path if drift becomes painful: same local-files ergonomics as
-    copy, plus a real command (<code>git subtree pull --prefix=docs/cpp-guides ...</code>)
-    instead of <code>cp -r</code>, and an explicit history of when origin was last
-    pulled in.
+    Subtree is the runner-up and the natural upgrade path: same local-files ergonomics
+    as copy, plus a real command (<code>git subtree pull --prefix=docs/cpp-guides ...</code>)
+    and an explicit history of when origin was last pulled in. Move to it the first
+    time drift bites -- running <code>cp -r</code> more than once a month, or shipping
+    a doc fix here and forgetting to port it back. Subtree also needs origin to be its
+    own git repo, which is the only prerequisite worth tracking.
   </p>
   <p>
-    <b>Submodule is overkill</b> unless the guides start versioning independently and
-    other consumers need to pin specific versions. The two-step commit dance and the
-    clone-time footgun outweigh the version-pinning benefit for a docs tree this small.
-  </p>
-  <p style="margin-bottom: 0;">
-    <b>Leaning toward:</b> stay on <i>copy</i> for now; revisit <i>subtree</i> the first
-    time drift bites (e.g. running <code>cp -r</code> more than once a month, or shipping
-    a doc fix here and forgetting to port it back). If origin isn't yet its own git repo,
-    that's the prerequisite for moving to subtree.
+    Symlink scores well on drift and single-source but fails on machine portability
+    (any CI, any container, any fresh laptop sees a dangling link) and blast radius
+    (every edit leaks into every consumer). Submodule's version pinning is real, but
+    the two-step commit dance and clone-time footgun outweigh that benefit for a docs
+    tree this small.
   </p>
 </div>
 

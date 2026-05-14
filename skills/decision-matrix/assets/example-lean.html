@@ -10,7 +10,6 @@
     --muted: #6b6b6b;
     --rule: #d8d6cf;
     --accent: #6b5b3a;
-    --highlight: #fff6d6;
 
     --good-bg: #d8ebd2;
     --good-fg: #1f4a26;
@@ -46,6 +45,14 @@
     border-top: 2px solid var(--rule);
     padding-top: 20px;
   }
+  h3.decision {
+    font-size: 15px;
+    margin: 22px 0 8px;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+  .decision-body { margin: 0 0 8px; max-width: 78ch; }
   p.lede { color: var(--muted); margin: 0 0 24px; max-width: 78ch; }
 
   table { width: 100%; border-collapse: collapse; background: white; font-size: 13.5px; margin-bottom: 8px; }
@@ -79,15 +86,6 @@
   .open-questions li b { color: var(--accent); }
 
   code { background: #f3f1ea; padding: 1px 5px; border-radius: 3px; font-size: 12.5px; }
-
-  .recommendation {
-    margin-top: 32px;
-    padding: 16px 20px;
-    background: var(--highlight);
-    border: 1px solid #d8c47a;
-    border-radius: 6px;
-  }
-  .recommendation h2 { margin-top: 0; color: #6a5210; text-transform: none; letter-spacing: 0; font-size: 18px; }
 </style>
 </head>
 <body>
@@ -140,6 +138,19 @@
   </tbody>
 </table>
 
+<h3 class="decision">Decision</h3>
+<p class="decision-body">
+  <b>Use the contract multiplier.</b> The instrument-size-changes-by-venue row decides
+  it: a ratio column forces a manual fan-out across every aggregate any time a venue
+  changes its contract size, and venues change contract sizes more often than expected.
+</p>
+<p class="decision-body">
+  The ratio column wins on flexibility (per-group venue weights), but that flexibility
+  has not been needed in practice and can be layered on later as a per-venue override
+  if a real use case emerges. The backward-compat gap is the only open blocker --
+  resolve before committing (see Open Questions).
+</p>
+
 <h2 class="subdecision">2. Where to apply the multiplier</h2>
 
 <table>
@@ -179,30 +190,20 @@
   </tbody>
 </table>
 
-<div class="recommendation">
-  <h2>Interpretation</h2>
-  <p>
-    <b>Sub-decision 1: contract multiplier looks like the right default.</b> The
-    ratio-column approach wins on flexibility, but flexibility we have not actually needed
-    in practice -- and the cost is paying manual fan-out every time a venue changes its
-    contract size. The multiplier is the simpler default; a per-venue override can be
-    added on top later if a real use case emerges. The backward-compat gap is the only
-    real blocker on this path -- worth resolving before committing.
-  </p>
-  <p>
-    <b>Sub-decision 2: apply the multiplier inside the gateway.</b> Centralising the
-    multiplication is the only option that prevents silent PnL drift across forgotten call
-    sites. "Pass the multiplier in the request" is the clearest at the call site, but the
-    schema bump and the per-caller consistency burden aren't worth it for a transformation
-    that is fundamentally a property of the venue, not the order.
-  </p>
-  <p style="margin-bottom: 0;">
-    <b>Order of work:</b> resolve the backward-compat question first (sub-decision 1's
-    "?"). Once the multiplier table can serve existing aggregates safely, commit to
-    sub-decision 1 -- the multiplier table is a prerequisite for sub-decision 2. After a
-    week of clean data, wire the gateway to apply it.
-  </p>
-</div>
+<h3 class="decision">Decision</h3>
+<p class="decision-body">
+  <b>Apply the multiplier inside the gateway.</b> Centralising the multiplication is
+  the only option that prevents silent PnL drift across forgotten call sites, which is
+  the heaviest cost in the matrix.
+</p>
+<p class="decision-body">
+  Passing the multiplier in the request is the clearest at the call site, but the
+  schema bump and the per-caller consistency burden aren't worth it for a transformation
+  that is fundamentally a property of the venue, not the order. This sub-decision
+  depends on sub-decision 1: the multiplier table must serve existing aggregates safely
+  before the gateway can apply it -- resolve the backward-compat question first, then
+  wire the gateway after a week of clean data.
+</p>
 
 <div class="open-questions">
   <h2>Open Questions</h2>

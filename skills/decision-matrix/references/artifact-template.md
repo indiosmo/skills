@@ -36,14 +36,15 @@ The page reads top to bottom as:
    "Approach presentation knob" below.
 3. **The matrix** -- a `<table>` with columns: Criterion, (optional) Weight, one column
    per option, (optional) Notes. An optional `<tfoot>` row carries the weighted score.
-4. **Interpretation** -- a `.recommendation` block with `<h2>Interpretation</h2>` and
-   two to four short paragraphs in the user's voice. Highlighted background so it stands
-   out.
+4. **Decision** -- a plain `<h2>Decision</h2>` (or `<h3>` inside a sub-decision section)
+   followed by two to four short paragraphs. **No highlighted box, no coloured panel.**
+   The emphasis is carried by a `<b>` on the chosen option in the lead sentence, not by
+   chrome around the block.
 5. **Open Questions** -- an `.open-questions` block with `<h2>Open Questions</h2>` and a
-   `<ul>` of questions whose answers would change the interpretation.
+   `<ul>` of questions whose answers would change the decision.
 
 The reader's eye flows: orient (lede), see the candidates (headers or cards), compare
-(matrix), read the take (Interpretation), see what would change it (Open Questions).
+(matrix), read the call (Decision), see what would change it (Open Questions).
 
 ## Palette and chrome
 
@@ -55,7 +56,6 @@ A warm-paper palette with restrained colour. Reuse the CSS variables verbatim:
 --muted: #6b6b6b;       /* lede, helper text, notes */
 --rule: #d8d6cf;        /* table and card borders */
 --accent: #6b5b3a;      /* section heading color */
---highlight: #fff6d6;   /* recommendation block background */
 
 --good-bg: #d8ebd2;     /* td.good background */
 --good-fg: #1f4a26;     /* td.good text */
@@ -66,6 +66,9 @@ A warm-paper palette with restrained colour. Reuse the CSS variables verbatim:
 --na-bg:   #ececec;     /* td.na background */
 --na-fg:   #555;        /* td.na text */
 ```
+
+The `--highlight` variable from earlier versions of the skill is gone; the Decision
+block is no longer rendered as a coloured panel.
 
 Do **not** tint option columns. The verdict colour on each cell is the only colour the
 table should carry; tinting a whole column underneath muddies the contrast.
@@ -244,47 +247,81 @@ footnote.
 Keep cell prose to one or two sentences. If a cell needs three sentences, it is either
 mixing two criteria (split the row) or burying a caveat (state the trade-off directly).
 
-## The Interpretation block
+## The Decision block
 
-Two to four short paragraphs in a highlighted box, written in the user's voice. Use
-`<b>` tags to anchor the eye on the key claims:
+A plain heading followed by two to four short paragraphs. **No coloured panel, no
+highlighted box.** The chosen option is emphasised inline with a `<b>` tag in the lead
+sentence; chrome around the block is unnecessary.
+
+For a single-matrix artifact, use a top-level `<h2>` heading (the existing accented
+uppercase style applies):
 
 ```html
-<div class="recommendation">
-  <h2>Interpretation</h2>
-  <p>
-    <b>Option B is the weakest</b> despite winning on [criterion]. The two killers are
-    [criterion 1] and [criterion 2].
-  </p>
-  <p>
-    <b>Options A and D are the strong options.</b> [Why A is fine for now; what D buys
-    if conditions change.]
-  </p>
-  <p>
-    <b>Option C is overkill</b> unless [specific condition]. [Why the matrix rejects it.]
-  </p>
-  <p style="margin-bottom: 0;">
-    <b>Leaning toward:</b> [option] for now; revisit [other option] when [trigger
-    condition].
-  </p>
-</div>
+<h2>Decision</h2>
+<p>
+  <b>Subtree.</b> The two criteria that decided it are blast radius and reproducibility:
+  every other option either leaks edits across consumers or fails on a fresh clone.
+</p>
+<p>
+  Copy is the runner-up and would have stayed the call if the guides had not started
+  drifting; subtree buys an explicit "last pulled" history without losing the
+  local-files ergonomics. Submodule's version-pinning is real, but it costs the
+  two-step commit dance and the clone-time footgun -- not worth it for a docs tree
+  this small.
+</p>
+<p>Revisit when guides ship independently of this repo or another consumer needs them.</p>
 ```
 
-Use **bold leads** to make the block scannable. The reader who only reads the bold text
-should still come away with the position.
+For a multi-decision artifact, place a Decision block immediately after each
+sub-decision's matrix using an `<h3 class="decision">` heading. Style:
 
-The final paragraph names the leaning option with a trigger condition for revisiting.
-Decision matrices are most useful when they include the "when to revisit" clause -- that
-is what makes them durable artifacts rather than one-time analyses.
+```css
+h3.decision {
+  font-size: 15px;
+  margin: 18px 0 8px;
+  color: var(--accent);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+```
 
-The block reads as the user's own synthesis of their own matrix. Use "the matrix points
-toward...", "the killer for B is...", "leaning toward..." -- not "I recommend...", "you
-should pick...".
+Example inside a sub-decision section:
+
+```html
+<h3 class="decision">Decision</h3>
+<p>
+  <b>Apply the multiplier inside the gateway.</b> Centralising the multiplication is
+  the only option that prevents silent PnL drift across forgotten call sites.
+</p>
+<p>
+  Passing the multiplier in the request is the clearest at the call site, but the schema
+  bump and per-caller consistency burden aren't worth it for a transformation that is
+  fundamentally a property of the venue, not the order.
+</p>
+```
+
+Content rules for the Decision block:
+
+- **First sentence states the choice and emphasises it.** `<b>` on the option name (or a
+  leading `<b>Decision: option-name.</b>`). The reader who only reads the bold lead
+  should come away with the call.
+- **One or two sentences of reasoning.** Point at the criteria that decided it; do not
+  restate the cell prose.
+- **Discarded options only when not obvious.** If an alternative genuinely tempted, add a
+  sentence on what would have flipped it. Skip this for options the matrix already ruled
+  out clearly.
+- **Optional revisit clause.** A single short sentence on the trigger that would re-open
+  the decision. This is what makes decision matrices durable rather than one-time
+  analyses; include it when there is a concrete trigger to name.
+
+The block records the decision and its grounds. Do not phrase it as a reading of the
+matrix ("the matrix points toward...") or as advice from outside ("I recommend...",
+"you should pick..."). State the call.
 
 ## The Open Questions block
 
 An `.open-questions` block with a bullet list of questions. Each question should be a
-thing whose answer would change the interpretation. Bold the question lead so it scans:
+thing whose answer would change the decision. Bold the question lead so it scans:
 
 ```html
 <div class="open-questions">
@@ -322,13 +359,17 @@ document with stacked matrices. Structure:
 
 1. Title and lede (whole document).
 2. `<h2 class="subdecision">` for sub-decision 1, optionally followed by its cards block,
-   then its matrix table.
+   then its matrix table, then an `<h3 class="decision">Decision</h3>` block.
 3. `<h2 class="subdecision">` for sub-decision 2, optionally followed by its cards block,
-   then its matrix table.
+   then its matrix table, then an `<h3 class="decision">Decision</h3>` block.
 4. (Repeat as needed; cap at three sub-decisions per artifact.)
-5. One Interpretation block that addresses all sub-decisions and the order in which to
-   commit.
-6. One Open Questions block.
+5. One Open Questions block at the end of the document.
+
+Place each Decision block immediately under the matrix it decides. Do not collect the
+calls into a single combined block at the end of the document -- that forces the reader
+to scroll between matrix and verdict. If the sub-decisions have an ordering dependency
+(commit A before A's choice constrains B), state that inside the relevant Decision
+block, not in a separate block.
 
 Style for the sub-decision heading:
 
@@ -378,8 +419,8 @@ A decision matrix is not write-once. After the first draft:
 - If scoring is on, check the weighted score against your intuition. Mismatch means the
   cells or weights are off, not that the score is wrong.
 - Ask: would a reasonable reader pick a different option from this matrix? If yes, the
-  Interpretation needs a stronger argument or the matrix needs another criterion.
+  Decision needs a stronger argument or the matrix needs another criterion.
 
-When the user pushes back on the interpretation, do not re-tune weights to match. Either
+When the user pushes back on the Decision, do not re-tune weights to match. Either
 add a criterion the user is implicitly weighting, or update a cell whose verdict was too
 generous. The matrix should reflect the conversation, not paper over it.
