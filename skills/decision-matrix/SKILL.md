@@ -257,9 +257,14 @@ It is also where resolved open questions go to live (see "Resolving open questio
 below): when the user pins down an answer the matrix was treating as uncertain, the
 answer belongs here, not buried inside cell prose.
 
-Title this block **"Assumptions"**. Phrase each entry as a settled statement plus its
-matrix-level consequence: "Library count: at least four; past the threshold where the
-DRY-ness argument in Matrix 1 pays off." Not as a question with the answer tacked on.
+Title this block **"Assumptions"**. Phrase each entry as a settled premise on its own
+terms -- e.g. "Library count: at least four (a utils library plus order routing,
+market data, and matching engine) and one application." Do not phrase the entry as a
+question with the answer tacked on, and do not append a matrix-level consequence: the
+matrix is evaluated against the assumptions, never the reverse. When an assumption
+bears on a specific verdict, reference it from the cell or the Decision block where
+it actually decides something ("B's faithfulness to the grader holds because the
+pipeline copies only `submission/`"); the assumption itself stays neutral.
 
 Omit the block entirely when there are no significant premises to surface. Three to
 five entries is typical when present; more than seven suggests the matrix is doing too
@@ -366,18 +371,10 @@ it back off.
 ### 6. List assumptions and open questions
 
 Skim the cells for premises: "the team is one person", "the grader copies only X", "we
-already have a CI cluster", "this rarely changes". For each premise, decide which block
-it belongs in:
-
-- If the premise is settled and you are willing to commit to it, put it in the
-  **Assumptions** block at the top with its matrix-level consequence stated.
-- If the premise is plausible but unverified, and the decision would flip if it were
-  wrong, put it in the **Open Questions** block. Phrase it as a question the user is
-  still working through, not as one Claude is asking the user.
-
-Both blocks render above the matrix so the reader sees the premises before the matrix
-that depends on them. As the user resolves questions in conversation, promote them
-from Open Questions into Assumptions -- see "Resolving open questions" below.
+already have a CI cluster", "this rarely changes". Settled premises go in the
+**Assumptions** block; unverified premises whose answer would flip the call go in the
+**Open Questions** block. See the "Assumptions" and "Open Questions" sections under
+Anatomy for the phrasing rules.
 
 ### 7. Produce the HTML artifact
 
@@ -418,11 +415,8 @@ only in chat.
 
 The mechanics:
 
-1. **Promote the answer into the Assumptions block.** Move the entry from "Open
-   Questions" to "Assumptions". Restate it as a settled premise plus the matrix-level
-   consequence -- not as a question with the answer tacked on. "Library count: at
-   least four; past the threshold where Matrix 1's DRY-ness argument pays off." beats
-   "Q: how many libraries? A: four, so Matrix 1's argument applies."
+1. **Promote the answer into the Assumptions block** (using the phrasing rules in
+   the Assumptions section above). Remove it from Open Questions.
 2. **Re-read the matrix against the new assumption.** If the answer narrows the
    design space, some cells may be wrong, some criteria may become irrelevant, an
    option may even drop out. Adjust the cells, not the decision -- the matrix still
@@ -430,12 +424,13 @@ The mechanics:
 3. **Update the Decision block if the resolution actually changed something.** If a
    sub-decision's call would have flipped under the previous uncertainty, say so:
    "with X resolved as Y, the call stands but by a narrower margin; Z is now the
-   clean fallback." If the resolution confirmed the existing call cleanly, no change
-   is needed.
+   clean fallback." The Decision block is where you name the assumption that did the
+   deciding. If the resolution confirmed the existing call cleanly, leave the block
+   alone.
 4. **Leave a trail.** The Assumptions entry is the audit log -- a reader who comes
-   back six months later should be able to tell which premises shaped the matrix and
-   in what direction. Do not silently delete criteria or options that became
-   irrelevant; let the Assumptions entry name what changed.
+   back six months later should be able to tell which premises shaped the matrix.
+   Do not silently delete criteria or options that became irrelevant; the cells or
+   the Decision block should make the consequence visible where it actually applies.
 
 Avoid these mistakes:
 

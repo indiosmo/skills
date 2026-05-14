@@ -83,9 +83,7 @@
 
   code { background: #f3f1ea; padding: 1px 5px; border-radius: 3px; font-size: 12.5px; }
 
-  .decision { margin-top: 28px; }
-  .decision p { margin: 8px 0; max-width: 78ch; }
-  .decision p:last-child { margin-bottom: 0; }
+  .decision-body { margin: 8px 0; max-width: 78ch; }
 
   .assumptions, .open-questions {
     margin: 0 0 18px;
@@ -114,10 +112,7 @@
 <div class="assumptions">
   <h2>Assumptions</h2>
   <ul>
-    <li><b>Update cadence:</b> origin changes about monthly, by the maintainer. Drift
-        cost is real but not painful; the drift row in the matrix stays a tiebreaker
-        rather than the deciding factor. (Promoted from the "how often does cpp-guides
-        change?" open question.)</li>
+    <li><b>Update cadence:</b> origin changes about monthly, by the maintainer.</li>
   </ul>
 </div>
 
@@ -292,28 +287,26 @@
 </table>
 
 <h2>Decision</h2>
-<div class="decision">
-  <p>
-    <b>Stay on copy.</b> Reproducibility on a fresh clone and blast radius are the
-    decisive criteria, and copy is the only option that scores well on both without
-    paying a setup cost the team has not yet earned.
-  </p>
-  <p>
-    Subtree is the runner-up and the natural upgrade path: same local-files ergonomics
-    as copy, plus a real command (<code>git subtree pull --prefix=docs/cpp-guides ...</code>)
-    and an explicit history of when origin was last pulled in. Move to it the first
-    time drift bites -- running <code>cp -r</code> more than once a month, or shipping
-    a doc fix here and forgetting to port it back. Subtree also needs origin to be its
-    own git repo, which is the only prerequisite worth tracking.
-  </p>
-  <p>
-    Symlink scores well on drift and single-source but fails on machine portability
-    (any CI, any container, any fresh laptop sees a dangling link) and blast radius
-    (every edit leaks into every consumer). Submodule's version pinning is real, but
-    the two-step commit dance and clone-time footgun outweigh that benefit for a docs
-    tree this small.
-  </p>
-</div>
+<p class="decision-body">
+  <b>Stay on copy.</b> Reproducibility on a fresh clone and blast radius are the
+  decisive criteria, and copy is the only option that scores well on both without
+  paying a setup cost the team has not yet earned.
+</p>
+<p class="decision-body">
+  Subtree is the runner-up and the natural upgrade path: same local-files ergonomics
+  as copy, plus a real command (<code>git subtree pull --prefix=docs/cpp-guides ...</code>)
+  and an explicit history of when origin was last pulled in. Move to it the first
+  time drift bites -- running <code>cp -r</code> more than once a month, or shipping
+  a doc fix here and forgetting to port it back. Subtree also needs origin to be its
+  own git repo, which is the only prerequisite worth tracking.
+</p>
+<p class="decision-body">
+  Symlink scores well on drift and single-source but fails on machine portability
+  (any CI, any container, any fresh laptop sees a dangling link) and blast radius
+  (every edit leaks into every consumer). Submodule's version pinning is real, but
+  the two-step commit dance and clone-time footgun outweigh that benefit for a docs
+  tree this small.
+</p>
 
 </body>
 </html>

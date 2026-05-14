@@ -74,9 +74,6 @@ A warm-paper palette with restrained colour. Reuse the CSS variables verbatim:
 --na-fg:   #555;        /* td.na text */
 ```
 
-The `--highlight` variable from earlier versions of the skill is gone; the Decision
-block is no longer rendered as a coloured panel.
-
 Do **not** tint option columns. The verdict colour on each cell is the only colour the
 table should carry; tinting a whole column underneath muddies the contrast.
 
@@ -256,31 +253,45 @@ mixing two criteria (split the row) or burying a caveat (state the trade-off dir
 
 ## The Decision block
 
-A plain heading followed by two to four short paragraphs. **No coloured panel, no
-highlighted box.** The chosen option is emphasised inline with a `<b>` tag in the lead
-sentence; chrome around the block is unnecessary.
+A plain heading followed by two to four short paragraphs of class `decision-body`.
+**No wrapping div, no coloured panel, no highlighted box.** The chosen option is
+emphasised inline with a `<b>` tag in the lead sentence; chrome around the block is
+unnecessary.
 
 For a single-matrix artifact, use a top-level `<h2>` heading (the existing accented
 uppercase style applies):
 
 ```html
 <h2>Decision</h2>
-<p>
+<p class="decision-body">
   <b>Subtree.</b> The two criteria that decided it are blast radius and reproducibility:
   every other option either leaks edits across consumers or fails on a fresh clone.
 </p>
-<p>
+<p class="decision-body">
   Copy is the runner-up and would have stayed the call if the guides had not started
   drifting; subtree buys an explicit "last pulled" history without losing the
-  local-files ergonomics. Submodule's version-pinning is real, but it costs the
-  two-step commit dance and the clone-time footgun -- not worth it for a docs tree
-  this small.
+  local-files ergonomics.
 </p>
-<p>Revisit when guides ship independently of this repo or another consumer needs them.</p>
+<p class="decision-body">Revisit when guides ship independently of this repo.</p>
 ```
 
-For a multi-decision artifact, place a Decision block immediately after each
-sub-decision's matrix using an `<h3 class="decision">` heading. Style:
+For a multi-decision artifact, use `<h3 class="decision">` immediately after each
+sub-decision's matrix, with the same `decision-body` paragraphs underneath:
+
+```html
+<h3 class="decision">Decision</h3>
+<p class="decision-body">
+  <b>Apply the multiplier inside the gateway.</b> Centralising the multiplication is
+  the only option that prevents silent PnL drift across forgotten call sites.
+</p>
+<p class="decision-body">
+  Passing the multiplier in the request is the clearest at the call site, but the
+  schema bump and per-caller consistency burden aren't worth it for a transformation
+  that is fundamentally a property of the venue, not the order.
+</p>
+```
+
+Styles:
 
 ```css
 h3.decision {
@@ -290,21 +301,7 @@ h3.decision {
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
-```
-
-Example inside a sub-decision section:
-
-```html
-<h3 class="decision">Decision</h3>
-<p>
-  <b>Apply the multiplier inside the gateway.</b> Centralising the multiplication is
-  the only option that prevents silent PnL drift across forgotten call sites.
-</p>
-<p>
-  Passing the multiplier in the request is the clearest at the call site, but the schema
-  bump and per-caller consistency burden aren't worth it for a transformation that is
-  fundamentally a property of the venue, not the order.
-</p>
+.decision-body { margin: 8px 0; max-width: 78ch; }
 ```
 
 Content rules for the Decision block:
@@ -327,14 +324,14 @@ matrix ("the matrix points toward...") or as advice from outside ("I recommend..
 
 ## The Assumptions block
 
-An `.assumptions` block with a bullet list of premises. Each entry should be a statement
-that constrains the design space, not a question. Bold the topic lead so it scans:
+See SKILL.md "Assumptions" for what goes in this block and how to phrase entries.
+Markup:
 
 ```html
 <div class="assumptions">
   <h2>Assumptions</h2>
   <ul>
-    <li><b>Premise topic:</b> settled statement plus the matrix-level consequence.</li>
+    <li><b>Premise topic:</b> settled statement of fact, on its own terms.</li>
     ...
   </ul>
 </div>
@@ -361,18 +358,9 @@ Place the block immediately under the lede, before any sub-decision heading. In 
 multi-decision artifact, there is exactly one Assumptions block for the whole document
 -- premises apply across the matrices, not per-matrix.
 
-Three to five entries is typical when the block is present; more than seven suggests the
-matrix is doing too much. Omit the block entirely when there are no significant premises
-to surface.
-
-Promote resolved open questions into this block (see SKILL.md "Resolving open
-questions"). Restate the resolved entry as a settled statement plus its matrix-level
-consequence -- not as a question with the answer tacked on.
-
 ## The Open Questions block
 
-An `.open-questions` block with a bullet list of questions. Each question should be a
-thing whose answer would change the decision. Bold the question lead so it scans:
+See SKILL.md "Open Questions" for what goes here and how to phrase entries. Markup:
 
 ```html
 <div class="open-questions">
@@ -388,8 +376,7 @@ Place the block immediately under the lede (and under the Assumptions block when
 are present), before any sub-decision heading. There is exactly one Open Questions
 block for the whole document.
 
-Style (with the block now rendering at the top of the document rather than the bottom,
-use `margin: 0 0 24px` instead of `margin-top: 28px`):
+Style:
 
 ```css
 .open-questions {
@@ -404,10 +391,6 @@ use `margin: 0 0 24px` instead of `margin-top: 28px`):
 .open-questions li { margin: 4px 0; }
 .open-questions li b { color: var(--accent); }
 ```
-
-Three to five questions is typical. Fewer suggests overconfidence; more suggests the
-matrix ran ahead of the research. Phrase as questions the user is still working through,
-not as questions Claude is asking the user.
 
 ## Content rules
 
@@ -447,9 +430,8 @@ to scroll between matrix and verdict. If the sub-decisions have an ordering depe
 block, not in a separate block.
 
 Assumptions and Open Questions go above the first sub-decision -- never at the bottom
-or interleaved between sub-decisions. A premise that applies only to one sub-decision
-is still recorded once, at the top, naming the sub-decision it bears on: "Library
-count: at least four (drives Matrix 1)."
+or interleaved between sub-decisions. A premise that applies to only one sub-decision
+is still recorded once, at the top.
 
 Style for the sub-decision heading:
 
@@ -489,23 +471,10 @@ can open it with `xdg-open <path>` or equivalent.
 A decision matrix is not write-once. After the first draft:
 
 - Read each row aloud. Cells that mumble need rewriting.
-- Scan each column for all-green. A column with no yellow and no red means you are
-  rationalizing or missing a criterion the approach fails on. Real options have trade-offs;
-  if you cannot find one, ask what someone who dislikes the option would say.
-- Scan each row for all-green. A row with no discrimination is a wasted row; cut it or
-  sharpen the criterion.
-- Scan the whole matrix for over-colouring. If more than ~60% of cells are coloured, you
-  are over-grading -- look for cells whose verdict is mild and pull them back to neutral.
-- If scoring is on, check the weighted score against your intuition. Mismatch means the
-  cells or weights are off, not that the score is wrong.
-- Ask: would a reasonable reader pick a different option from this matrix? If yes, the
-  Decision needs a stronger argument or the matrix needs another criterion.
-- When the user resolves an Open Question in conversation, promote it to the
-  Assumptions block (restated as a settled premise plus matrix-level consequence) and
-  re-read the matrix against the new assumption. Cells that depended on the
-  uncertainty may need adjustment; the Decision may need a sentence on whether the
-  call now stands more or less firmly. See SKILL.md "Resolving open questions".
-
-When the user pushes back on the Decision, do not re-tune weights to match. Either
-add a criterion the user is implicitly weighting, or update a cell whose verdict was too
-generous. The matrix should reflect the conversation, not paper over it.
+- Ask: would a reasonable reader pick a different option from this matrix? If yes,
+  the Decision needs a stronger argument or the matrix needs another criterion.
+- Run the draft against SKILL.md "Common failure modes" -- the all-green row/column,
+  over-colouring, weighting-until-favourite-wins, and reverse-engineered-score
+  checks all live there.
+- When the user resolves an Open Question, work through SKILL.md "Resolving open
+  questions".
