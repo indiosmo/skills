@@ -110,6 +110,30 @@ point -- happy path vs. rejection, initial state vs. post-transition --
 `SECTION` keeps the common setup from being duplicated while naming each
 outcome explicitly.
 
+### What an integration test should assert
+
+Prefer assertions that no single component test could make on its own:
+
+- **Workflow coordination** -- components hand off data through a real
+  boundary without losing or corrupting it.
+- **State consistency across boundaries** -- the same entity has consistent
+  state in every component that tracks it.
+- **Error propagation** -- an error produced in one component triggers the
+  expected reaction in another (rollback, cancel, rejection).
+- **Triggered side effects** -- one component initiates an action (cancel,
+  notification) observed in another.
+- **Silent absorption at boundaries** -- unknown or unexpected inputs
+  (unknown identifiers, duplicate request IDs) are absorbed without state
+  corruption.
+
+Integration tests must not re-assert behaviour that a component test already
+covers. Numeric computation (limits, margins, fees), graph traversal, and
+state-machine transitions of a single tracker each belong in the component's
+own test. The smell to watch for is an integration test whose assertions
+could be reproduced by handing the right inputs to one component -- if so,
+move the assertion down to the component test and delete the integration
+version.
+
 ## See also
 
 - `test-patterns.md` -- choosing the Catch2 construct that matches the
