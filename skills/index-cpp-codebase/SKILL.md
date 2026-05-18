@@ -1,25 +1,15 @@
 ---
 name: index-cpp-codebase
 description: >-
-  Generate or incrementally update an INDEX.md navigation map for a C++ /
-  CMake codebase -- a structured map of where things live, with per-module
-  summaries and per-header descriptions grounded in actual code. Use this
-  skill whenever the user asks to "create an INDEX.md", "index this
-  codebase", "generate a navigation map", "produce a map of the repo for
-  agents", "build an AI-friendly project index", "update the index",
-  "refresh INDEX.md", "what changed since the index was last updated", or
-  wants a fresh INDEX.md after substantial structural changes (modules
-  added, renamed, restructured). Also use it when the user says "where do
-  things live in this project", "give me an orientation map", "summarize
-  this C++ project's layout for an agent". Triggers on: INDEX.md, project
-  index, codebase index, navigation map, AI-readable project map, module
-  map, where things live, orient an agent, update the index, refresh
-  index, index changes, what changed in the index. Works on C++/CMake
-  projects only. Produces a root INDEX.md (system overview + module
-  summaries), a per-module INDEX.md under each module's source
-  directory carrying that module's file list, and a companion
-  INDEX-report.md that surfaces ambiguities, README/code conflicts, and
-  (in update mode) the changes that drove the partial regeneration.
+  Generate or update an INDEX.md navigation map for a C++/CMake codebase,
+  grounded in the actual source tree. Use when the user asks to create,
+  refresh, regenerate, or incrementally update an INDEX.md; index a
+  codebase; build an AI-friendly project map; explain where things live;
+  orient an agent; summarize a C++ project layout; or report what changed
+  since the index was last updated. Produces a root INDEX.md with system
+  and module summaries, per-module INDEX.md files with header descriptions,
+  and an INDEX-report.md for ambiguities, README/code conflicts, and update
+  notes.
 license: MIT
 ---
 
