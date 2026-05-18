@@ -15,23 +15,41 @@ description: >-
   index, codebase index, navigation map, AI-readable project map, module
   map, where things live, orient an agent, update the index, refresh
   index, index changes, what changed in the index. Works on C++/CMake
-  projects only. Produces INDEX.md plus a companion INDEX-report.md that
-  surfaces ambiguities, README/code conflicts, and (in update mode) the
-  changes that drove the partial regeneration.
+  projects only. Produces a root INDEX.md (system overview + module
+  summaries), a per-module INDEX.md under each module's source
+  directory carrying that module's file list, and a companion
+  INDEX-report.md that surfaces ambiguities, README/code conflicts, and
+  (in update mode) the changes that drove the partial regeneration.
 license: MIT
 ---
 
 # Index a C++ Codebase
 
-Walk a C++ / CMake codebase and produce a single `INDEX.md` at the project
-root: a navigation map for AI agents (and humans) that points to *where
-things live*, with enough context per file that a reader can pick the right
-one without opening five wrong ones first.
+Walk a C++ / CMake codebase and produce a navigation map for AI agents
+(and humans) that points to *where things live*, with enough context per
+file that a reader can pick the right one without opening five wrong
+ones first.
 
-The skill also writes a sibling `INDEX-report.md` that captures everything
-the run noticed but deliberately left out of the index -- ambiguities,
-README/code conflicts, headers with no includers, files the run could not
-parse. The report is for the user; the index is for downstream agents.
+The map is split across two layers so context stays cheap even on large
+projects:
+
+- **Root `INDEX.md`** at the project root -- system overview, tech
+  stack, directory tree, and a 2-4 sentence summary of every module
+  plus a pointer to that module's file list. An agent reads this to
+  orient.
+- **Per-module `src/<module>/INDEX.md`** -- the file list (public and
+  internal headers with one-line descriptions) for a single module. An
+  agent reads only the modules it actually needs.
+
+This shape decouples root size from project size: the root scales with
+the number of modules, the file lists scale with module size, and an
+agent following the map only loads what it asks for.
+
+The skill also writes a sibling `INDEX-report.md` at the project root
+that captures everything the run noticed but deliberately left out of
+the index -- ambiguities, README/code conflicts, headers with no
+includers, files the run could not parse. The report is for the user;
+the indexes are for downstream agents.
 
 ## What this skill is for
 
@@ -52,8 +70,9 @@ Scope:
 
 ## When to (re)run
 
-`INDEX.md` is living documentation. Regenerate it when a structural change
-in the session would make the index drift:
+The index (root `INDEX.md` + per-module `src/<module>/INDEX.md` files)
+is living documentation. Regenerate when a structural change in the
+session would make it drift:
 
 - A header is added, removed, renamed, or moved.
 - A header's intent or central role changes substantially (a thin wrapper
@@ -72,9 +91,9 @@ prompt and the state of the project:
 
 | Mode | When to use | What it does |
 |------|-------------|--------------|
-| **Full** | No `INDEX.md` exists at the project root, or the user explicitly asks to "regenerate" / "rewrite" / "create from scratch". | Runs every phase end-to-end. Writes a brand-new `INDEX.md` and `INDEX-report.md`. |
-| **Scoped** | The user names one or more modules ("re-index just `<module>`", "update the `<module>` section"). | Runs discovery + drafting on the named modules only. Splices their sections into the existing `INDEX.md`. Leaves sections 1-3 alone unless the directory tree changed. |
-| **Incremental** | `INDEX.md` already exists at the project root and the user asks to "update", "refresh", "rerun", or "see what changed". | Uses git to find files changed since `INDEX.md` was last committed, derives the set of affected modules, and runs the scoped mode against them. Also produces a *changes report* so the user can see what drove the update. |
+| **Full** | No root `INDEX.md` exists at the project root, or the user explicitly asks to "regenerate" / "rewrite" / "create from scratch". | Runs every phase end-to-end. Writes a brand-new root `INDEX.md`, one `src/<module>/INDEX.md` per module, and `INDEX-report.md`. |
+| **Scoped** | The user names one or more modules ("re-index just `<module>`", "update the `<module>` section"). | Runs discovery + drafting on the named modules only. Overwrites each affected `src/<module>/INDEX.md`, and splices the root section only if the summary changed. Leaves sections 1-3 alone unless the directory tree changed. |
+| **Incremental** | The root `INDEX.md` already exists and the user asks to "update", "refresh", "rerun", or "see what changed". | Uses git to find files changed since the root `INDEX.md` was last committed, derives the set of affected modules, and runs the scoped mode against them. Also produces a *changes report* so the user can see what drove the update. |
 
 Mode selection precedence: explicit user instruction > project state. If
 the user says "regenerate from scratch" even though `INDEX.md` exists,
@@ -120,7 +139,8 @@ Layout:
 |   |-- <module>.md              per-module discovery output
 |   `-- <module>.tests.md        nested test-intent summaries
 |-- drafting/
-|   `-- <module>.md              per-module draft of the INDEX section
+|   |-- <module>.root.md         module section for the root INDEX.md
+|   `-- <module>.module.md       contents of src/<module>/INDEX.md
 `-- report-fragments/
     `-- <module>.md              per-module findings for the companion report
 ```
@@ -139,8 +159,9 @@ Rules:
   through messages.
 - **The folder is not cleaned on completion.** It survives the run for
   debugging; `/tmp` self-cleans on a system schedule.
-- **Final artifacts go to the project root**, not the working folder.
-  `INDEX.md` and `INDEX-report.md` live in the repo.
+- **Final artifacts go to the repo, not the working folder.** The root
+  `INDEX.md` and `INDEX-report.md` live at the project root; each
+  module gets its `INDEX.md` at `src/<module>/INDEX.md`.
 - **`run.log` is append-only.** Each phase logs its start and end with a
   timestamp so a post-mortem can see where the run spent time.
 
@@ -230,36 +251,74 @@ For each module the subagent:
      ambiguous -> `(P)` per the bias rule below.
 
 Each subagent writes its full discovery output to
-`discovery/<module>.md` and its drafted INDEX section to
-`drafting/<module>.md`, plus any findings to
-`report-fragments/<module>.md`.
+`discovery/<module>.md` and its two drafts to
+`drafting/<module>.root.md` (the root-index section) and
+`drafting/<module>.module.md` (the per-module index file), plus any
+findings to `report-fragments/<module>.md`.
 
 ### Phase 4: Drafting and assembly
 
-Each subagent produces its module's section in the exact format specified
-under "Output format" below. Writing follows the project's documentation
-conventions: subagents should consult the `documentation` skill for
-structure and section choices, and `writing-clearly-and-concisely` for
-prose-level conventions (active voice, no hedging, no filler).
+Each module is documented in two artefacts:
 
-When all subagents complete, this thread assembles `INDEX.md`:
+- A **root section** in the top-level `INDEX.md` -- the module heading,
+  the 2-4 sentence summary, and the `Headers: src/<module>/INDEX.md`
+  pointer. No file list here.
+- A **per-module index file** at `src/<module>/INDEX.md` -- the title,
+  back-link to the root, base path, and the full header list with
+  descriptions.
 
-1. System overview, tech stack, directory tree (sections 1-3).
-2. Module sections in a **stable, dependency-aware order**: shared /
-   utility libraries first, then leaf domains, then composition domains,
-   then runtime / application shells. This matches the natural dependency
-   order and the order a new reader would want.
-3. Write `INDEX.md` to the project root.
+The split keeps the root a navigable map: a reader learns what each
+module *does* without paying the context cost of every header in the
+project. When the reader decides which module matters, the pointer
+takes them to the file list they actually need.
 
-This thread also assembles `INDEX-report.md` from `report-fragments/*.md`.
+Each subagent produces both drafts in the exact format specified under
+"Output format" below and writes them to:
+
+- `drafting/<module>.root.md` -- the module's section for the root
+  `INDEX.md`. Heading + summary + pointer. **No header list in this
+  file** -- if a draft contains `- (P)` or `- (I)` lines, it belongs in
+  the other file.
+- `drafting/<module>.module.md` -- the contents of
+  `src/<module>/INDEX.md`. Title + back-link + base path + header list.
+
+Drafting follows the project's documentation conventions: subagents
+consult the `documentation` skill for structure and section choices, and
+`writing-clearly-and-concisely` for prose-level conventions (active
+voice, no hedging, no filler).
+
+When all subagents complete, this thread assembles the index:
+
+1. Build the root `INDEX.md`:
+   - Sections 1-3 (overview, tech stack, directory tree) from the
+     thread's detection output.
+   - The `## Modules` section by concatenating
+     `drafting/<module>.root.md` files in a **stable, dependency-aware
+     order**: shared / utility libraries first, then leaf domains, then
+     composition domains, then runtime / application shells. This
+     matches the natural dependency order and the order a new reader
+     would want.
+   - Write to `<project-root>/INDEX.md`.
+2. Copy each `drafting/<module>.module.md` to its destination at
+   `<project-root>/src/<module>/INDEX.md`. Overwrite any existing file
+   at that path (the working folder is the source of truth for what
+   this run produced).
+
+This thread also assembles `INDEX-report.md` at the project root from
+`report-fragments/*.md`.
 
 ### Phase 5: Verification
 
 Before declaring done:
 
-- Every file path in `INDEX.md` resolves to a real file (`test -f` each
-  one).
-- Every module listed in section 4 corresponds to a real directory.
+- Every module listed in the root `INDEX.md` has a corresponding
+  `src/<module>/INDEX.md` file (`test -f` each one).
+- Every `src/<module>/INDEX.md` written by the run corresponds to a
+  module section in the root index. No orphaned per-module files.
+- Every file path inside each per-module index, resolved against the
+  module's stated base path, points to a real file.
+- Every module listed in the root corresponds to a real directory under
+  `src/` (or wherever the project's layout puts modules).
 - The directory tree in section 3 matches the actual top-level layout
   (`tree -d -L 2` diff).
 - No section is empty.
@@ -281,15 +340,18 @@ might be stale."
 ### Preconditions
 
 - The project is a git repository.
-- `INDEX.md` exists at the project root and is tracked by git.
+- The root `INDEX.md` exists at the project root and is tracked by
+  git. The per-module files are not used as the baseline anchor; their
+  freshness is judged by the source diff, not by their own history.
 - The working tree is in a reasonable state (no unresolved merge
   conflicts in the files we want to read).
 
-If `INDEX.md` exists but is untracked or uncommitted, the skill cannot
-locate a baseline. Stop and tell the user: "INDEX.md is uncommitted; I
-can't compute a diff. Commit it (or pass an explicit baseline), or rerun
-with full-mode regeneration." Do not silently fall back -- the user
-asked for an incremental update; surface the prerequisite.
+If the root `INDEX.md` exists but is untracked or uncommitted, the
+skill cannot locate a baseline. Stop and tell the user: "INDEX.md is
+uncommitted; I can't compute a diff. Commit it (or pass an explicit
+baseline), or rerun with full-mode regeneration." Do not silently fall
+back -- the user asked for an incremental update; surface the
+prerequisite.
 
 ### Computing the change set
 
@@ -387,16 +449,23 @@ the new INDEX.md lands.
 
 Once the change set is computed:
 
-1. **If only existing modules are affected**: run discovery + drafting
-   on each affected module, then splice the resulting sections into the
-   existing `INDEX.md`. Replace the old section for each affected
-   module; leave every other module's section byte-for-byte alone.
+1. **For each affected existing module**: run discovery + drafting,
+   then overwrite `src/<module>/INDEX.md` with the new draft. The root
+   `INDEX.md` only needs touching if the module's root section changed
+   -- compare the new `drafting/<module>.root.md` against the existing
+   section in the root and splice only if it differs. Most updates
+   touch the file list (which lives in the per-module file) without
+   shifting the summary, so the root index often stays untouched.
 2. **If a new module appeared**: run discovery on it as if in full
-   mode, then insert its section in the right place in the dependency-
-   aware order. Also re-derive section 3 (directory tree) to include
-   it.
-3. **If a module disappeared**: drop its section from `INDEX.md` and
-   re-derive section 3.
+   mode, write its `src/<new-module>/INDEX.md`, splice its root
+   section into the root `INDEX.md` in the dependency-aware order, and
+   re-derive section 3 (directory tree) to include the new module's
+   path.
+3. **If a module disappeared**: drop its section from the root
+   `INDEX.md`, re-derive section 3, and delete its
+   `src/<module>/INDEX.md` if the directory still exists. (If the
+   source directory was removed, the per-module file is gone with it
+   -- no action needed.)
 4. **If tech-stack-impacting files changed**: re-derive section 2 from
    the current `CMakeLists.txt` and other manifests. Diff against the
    old section 2 and record any added / removed dependencies in
@@ -421,25 +490,36 @@ update only needs the most recent diff.
 The standard verification still applies, plus:
 
 - Every module that was *not* in the affected set must have an
-  identical section in the new `INDEX.md` (byte-for-byte). If you see
-  drift in an untouched module's section, you spliced incorrectly --
-  abort and report.
-- The new `INDEX.md` must still have every module listed in section 3
-  (directory tree) and vice versa.
+  identical root section in the new `INDEX.md` (byte-for-byte) **and**
+  an untouched `src/<module>/INDEX.md`. If you see drift in an
+  untouched module, you spliced or copied incorrectly -- abort and
+  report.
+- Every module mentioned in the root has a present
+  `src/<module>/INDEX.md`; every present `src/<module>/INDEX.md`
+  appears in the root.
+- The new root `INDEX.md` must still have every module listed in
+  section 3 (directory tree) and vice versa.
 
 ---
 
-## Output format: INDEX.md
+## Output format: root INDEX.md
 
-Four sections, in this order. The format is precise on purpose:
-downstream agents grep for the section headers and the `(P|I) path -- desc`
-line shape.
+The root index lives at `<project-root>/INDEX.md`. It has four
+sections, in this order. The format is precise on purpose: downstream
+agents grep for the section headers and the `Headers: src/<module>/INDEX.md`
+pointer shape.
 
 **Each section MUST use the exact `##` heading shown.** The file opens
 with a `# INDEX` title; the four sections follow under it. An opening
 paragraph that fills the role of "System overview" without the heading
 is not acceptable -- downstream tooling greps for `## System overview`
 specifically.
+
+The root carries the system overview, tech stack, directory tree, and a
+**summary + pointer** per module. **File lists never appear in the root**
+-- they live in per-module files (described in the next section). This
+keeps the root's size proportional to the number of modules, not the
+size of every module.
 
 Skeleton:
 
@@ -461,9 +541,16 @@ Skeleton:
 ## Modules
 
 ### <module-1>
-...
+
+<2-4 sentence summary>
+
+Headers: [`src/<module-1>/INDEX.md`](src/<module-1>/INDEX.md)
+
 ### <module-2>
-...
+
+<2-4 sentence summary>
+
+Headers: [`src/<module-2>/INDEX.md`](src/<module-2>/INDEX.md)
 ```
 
 ### 1. `## System overview`
@@ -528,15 +615,17 @@ Example shape (placeholders -- substitute real module names):
 ### 4. `## Modules`
 
 The `## Modules` heading opens section 4. Below it, one `### <module>`
-sub-section per logical unit. Each module section has:
+sub-section per logical unit. Each module section is exactly three
+parts: heading, summary, pointer.
 
-**Header** -- the module name and a **2-4 sentence summary** of *what
-the module does*: its responsibility, the abstractions it owns, the
-problem it solves inside the system.
+**Summary** -- a **2-4 sentence** description of *what the module
+does*: its responsibility, the abstractions it owns, the problem it
+solves inside the system.
 
 **The summary is 2-4 sentences. Hard cap. Count them.** Five sentences
-is over the limit even if every sentence is good. Split content out into
-the per-header lines, or cut.
+is over the limit even if every sentence is good. Cut, or push detail
+into the per-module file's header descriptions where the line anchors
+the content.
 
 **Dependencies and consumers are NOT part of the summary** -- they're
 input the agent uses while writing it, not output the reader needs to
@@ -563,14 +652,14 @@ Good (says what it does in its own terms):
 > index.
 
 The good version describes the module's job; the reader can find out
-*who* it talks to by reading section 3 (directory tree) and the file
-lines themselves. The bad version turns the index into a dependency
-diagram, which is `DESIGN.md`'s job, not the index's.
+*who* it talks to by reading section 3 (directory tree) and the per-
+module file lines themselves. The bad version turns the index into a
+dependency diagram, which is `DESIGN.md`'s job, not the index's.
 
 The summary is informed by reading the module's README if one exists,
 plus a full read of the module's headers **and** implementation files.
-The header list is what ends up in `INDEX.md`; the implementation files
-are read for context so the descriptions are grounded.
+The summary is what ends up in the root; the implementation files are
+read for context so it is grounded in reality, not in declarations.
 
 **Resolving README/code conflicts.** When a README claim contradicts what
 the code actually does, the agent resolves intent from the surrounding
@@ -580,15 +669,84 @@ sides quoted so the user can confirm which was right.
 
 **The summary should not paraphrase the README -- it should compress it.**
 
-**Base path** -- stated once at the top of the section:
+**Pointer** -- one line under the summary, exactly:
 
 ```
+Headers: [`src/<module>/INDEX.md`](src/<module>/INDEX.md)
+```
+
+The literal `Headers: ` prefix lets downstream agents grep for the
+pointer cheaply. The path is the per-module file's location (see the
+next section). The markdown link is for human readers; the bare path
+is for grep.
+
+Full shape (placeholders -- real output uses real module and file names):
+
+```
+### <core-domain>
+
+Two-to-four-sentence summary of what this module does, the abstractions
+it owns, and the problem it solves inside the system. No dependency
+list, no consumer list.
+
+Headers: [`src/<core-domain>/INDEX.md`](src/<core-domain>/INDEX.md)
+```
+
+---
+
+## Output format: per-module INDEX.md
+
+Every module has its own index file at
+`<project-root>/src/<module>/INDEX.md`. It carries the base path and the
+full header list -- the part of the navigation map that scales with
+module size.
+
+Co-locating the per-module file with the module has two payoffs:
+
+- The path is predictable from the module name -- agents and humans both
+  reach it without a lookup.
+- The file travels with the module on rename or move (git tracks it as
+  a rename) and disappears when the module is deleted, so the root index
+  never accumulates orphan sections.
+
+The file has four parts: title, back-link, base path, header list.
+
+Skeleton:
+
+```
+# <module> index
+
+Part of the [project index](../../INDEX.md).
+
 Base path: `<project>/src/<module>/<module>/`
+
+Headers:
+
+- (P|I) <relative path>  -- <description>
+- (P|I) <relative path>  -- <description>
 ```
 
-**File list** -- one line per header. Both public and internal headers
-are listed; working on the module itself requires knowing where internal
-helpers live too.
+**Title** -- `# <module> index`. The H1 carries the module name so the
+file is self-describing when opened in isolation (via grep, directory
+listing, or a pointer in someone else's documentation).
+
+**Back-link** -- `Part of the [project index](../../INDEX.md).`
+A relative link from `src/<module>/INDEX.md` up to the root. An agent
+that landed here without going through the root can take one hop to get
+the project-level orientation.
+
+**Base path** -- stated once, the source-of-truth anchor for the
+relative paths in the file list. The base path includes the conventional
+inner module directory (e.g. `src/<module>/<module>/`) when the project
+uses that layout; if the module's headers sit directly under
+`src/<module>/`, the base path matches that.
+
+See `references/path-format-tradeoff.md` for why paths are relative to
+a stated base path rather than absolute on every line.
+
+**Header list** -- one line per header, under a `Headers:` label. Both
+public and internal headers are listed; working on the module itself
+requires knowing where internal helpers live too.
 
 Format per file line:
 
@@ -611,13 +769,11 @@ toward the cheaper mistake. Record the ambiguity in the report.
 Full shape (placeholders -- real output uses real module and file names):
 
 ```
-### <core-domain>
+# core-domain index
 
-Base path: `<project>/src/<core-domain>/<core-domain>/`
+Part of the [project index](../../INDEX.md).
 
-Two-to-four-sentence summary of what this module does, the abstractions
-it owns, and the problem it solves inside the system. No dependency
-list, no consumer list.
+Base path: `<project>/src/core-domain/core-domain/`
 
 Headers:
 
@@ -627,8 +783,8 @@ Headers:
 - (I) detail/algorithm.hpp -- core algorithm implementation
 ```
 
-See `references/output-template.md` for a complete worked example
-against a realistic project layout.
+See `references/output-template.md` for a complete worked example of
+the root and per-module files against a realistic project layout.
 
 ---
 
@@ -763,6 +919,7 @@ rulebook; the map is not the design doc. Keep it a map.
   under a stated base path were chosen over full repo-root paths on
   every line. Read this if asked to switch the format or if you're
   tempted to redesign the file-list format.
-- `references/output-template.md` -- a complete worked example of
-  `INDEX.md` and `INDEX-report.md`, so a subagent drafting a section
-  has the target shape in front of it.
+- `references/output-template.md` -- a complete worked example of the
+  root `INDEX.md`, the per-module `src/<module>/INDEX.md` files, and
+  `INDEX-report.md`, so a subagent drafting a section has the target
+  shape in front of it.
