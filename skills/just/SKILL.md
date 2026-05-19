@@ -1,16 +1,6 @@
 ---
 name: just
-description: >
-  Write, review, and debug just (https://github.com/casey/just) command runner recipes and
-  justfiles. Covers recipe syntax, parameters, dependencies, attributes, variables, settings,
-  cross-platform patterns, shebang recipes, imports, and modules. Use when creating or modifying
-  justfiles, writing just recipes, reviewing justfiles for correctness and best practices,
-  debugging just invocations, or organizing justfile repositories with imports/modules.
-  Triggers on: justfile, .justfile, just recipes, just command runner, just tasks, task runner,
-  Makefile alternative, project commands, justfile syntax errors, command runner. Even if the user
-  just says "task runner" or "command runner" in a context where just is being used, consult this
-  skill. Always load this skill when a justfile is present in the project or the user mentions just
-  in the context of running tasks.
+description: Write, review, and debug justfiles for the `just` command runner.
 ---
 
 # Authoring just Recipes

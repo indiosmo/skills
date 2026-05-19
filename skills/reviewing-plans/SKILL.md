@@ -1,6 +1,6 @@
 ---
 name: reviewing-plans
-description: Review and red-team implementation plans before finalization. Triggers on phrases like "review my plan", "check this plan for issues", "red-team this implementation plan", "is this plan complete", "find flaws in my plan". Dispatches a review agent to find logic errors, missed edge cases, regressions, incomplete steps, and specification gaps, then consolidates findings into a revised plan.
+description: Review and red-team a draft implementation plan.
 ---
 
 # Reviewing Plans

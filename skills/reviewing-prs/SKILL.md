@@ -1,6 +1,6 @@
 ---
 name: reviewing-prs
-description: "Produce single-file HTML artifacts for reviewing a branch against a base (defaults to `main`): severity-tagged diff review, author-voice writeup, and code-understanding artifacts. Works on any local git repo; no GitHub auth required."
+description: Produce HTML artifacts for reviewing a branch -- diff review, author writeup, and code-understanding.
 ---
 
 # Reviewing PRs

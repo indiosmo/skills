@@ -1,6 +1,6 @@
 ---
 name: searching-docs
-description: "Search library/API documentation using Context7 and Ref MCP tools. Use whenever Claude needs to look up anything about a library, framework, or API -- even if it seems simple. Triggers include: (1) Look up API syntax, method signatures, or code snippets, (2) Search library documentation or changelogs, (3) Research implementation patterns or best practices, (4) Debug issues or error messages using docs, (5) Explore unfamiliar libraries or frameworks, (6) Verify whether a method, parameter, or feature exists, (7) Confirm behavior that Claude is uncertain about. Also use this skill when the user asks things like 'how do I use X library', 'what's the syntax for Y', 'show me examples of Z', 'does this method accept a callback', or when the user is confused about how a library works, needs to check if a method exists, wants to understand error messages from a framework, or is asking about version-specific behavior."
+description: Search library/API documentation via Context7 and Ref MCP tools.
 ---
 
 ## Tool Selection

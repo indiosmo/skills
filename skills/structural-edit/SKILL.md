@@ -1,12 +1,6 @@
 ---
 name: structural-edit
-description: >
-  Structural code search and refactoring with comby and semgrep. Use this skill whenever you need to
-  find or transform code patterns that involve nesting, span multiple lines, or require syntax awareness
-  -- especially when grep/sed would be fragile or produce false positives. Also use it when the user asks
-  about comby, semgrep, structural search, code patterns, codemod, or large-scale refactoring across files.
-  Even simple-sounding requests like "rename this function everywhere" or "find all calls to X with argument Y"
-  benefit from this skill if the pattern involves parentheses, braces, or multi-line spans.
+description: Structural code search and refactoring with comby and semgrep.
 ---
 
 # Structural Edit

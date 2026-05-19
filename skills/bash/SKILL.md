@@ -1,14 +1,6 @@
 ---
 name: bash
-description: >-
-  Write reliable, maintainable Bash scripts with proper error handling, quoting,
-  and defensive patterns. Use when creating new Bash scripts, reviewing existing
-  ones, fixing shell scripting bugs, or adding tests to shell scripts. Covers
-  strict mode with caveats, trap-based cleanup, ShellCheck integration, and
-  BATS testing. Triggers on: bash scripts, shell scripts, .sh files, shellcheck,
-  bats tests, shell scripting best practices, debugging a pipeline failure in a
-  shell script, writing a CI/CD step that runs shell commands, wrapping a CLI
-  tool in a script, quoting/word-splitting issues.
+description: Write and review Bash scripts (.sh).
 ---
 
 # Writing Bash Scripts

@@ -1,17 +1,6 @@
 ---
 name: grafana-stack
-description: >-
-  Build Grafana dashboards, write PromQL and Flux queries, provision data sources
-  and dashboards as code, configure alerting, and manage an on-premises Grafana +
-  Prometheus + InfluxDB observability stack. Use this skill whenever the user
-  mentions Grafana dashboards, PromQL queries, Prometheus metrics, recording rules,
-  alert rules, dashboard provisioning, dashboard JSON, panel configuration, template
-  variables, Flux queries for InfluxDB in Grafana, time series visualization,
-  Grafana alerting, or observability stack setup. Also use when the user wants to
-  add a panel, create a stat or gauge, write a rate() or histogram_quantile()
-  query, set up dashboard folders, configure a Prometheus or InfluxDB data source,
-  or export/import dashboard JSON -- even if they do not say "Grafana" explicitly.
-  This skill covers self-hosted, open-source Grafana only (not Grafana Cloud).
+description: Build Grafana dashboards and PromQL/Flux queries for self-hosted Grafana + Prometheus + InfluxDB.
 ---
 
 # Grafana Observability Stack

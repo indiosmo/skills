@@ -1,6 +1,6 @@
 ---
 name: dispatching-parallel-agents
-description: Use the Agent tool to dispatch concurrent subagents whenever a request naturally decomposes into 2 or more separable subtasks. Always consider this skill when a user's request naturally decomposes into 2 or more separable subtasks, even if the user doesn't explicitly ask for parallelism. Examples include exploring separate subsystems then consolidating findings, fixing independent failures in parallel, testing competing hypotheses simultaneously, researching multiple topics concurrently, or any work that can be split into concurrent subagent calls.
+description: Dispatch concurrent subagents via the Agent tool for independent subtasks.
 ---
 
 # Dispatching Parallel Agents

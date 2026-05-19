@@ -1,15 +1,6 @@
 ---
 name: index-cpp-codebase
-description: >-
-  Generate or update an INDEX.md navigation map for a C++/CMake codebase,
-  grounded in the actual source tree. Use when the user asks to create,
-  refresh, regenerate, or incrementally update an INDEX.md; index a
-  codebase; build an AI-friendly project map; explain where things live;
-  orient an agent; summarize a C++ project layout; or report what changed
-  since the index was last updated. Produces a root INDEX.md with system
-  and module summaries, per-module INDEX.md files with header descriptions,
-  and an INDEX-report.md for ambiguities, README/code conflicts, and update
-  notes.
+description: Generate or update an INDEX.md navigation map for a C++/CMake codebase.
 license: MIT
 ---
 

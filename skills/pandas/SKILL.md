@@ -1,6 +1,6 @@
 ---
 name: pandas
-description: "Activate for ANY task involving tabular data, DataFrames, CSV wrangling, data cleaning, groupby, merge/join, pivot, melt, reshaping, aggregation, or time series analysis -- even if they don't explicitly mention 'pandas' or 'best practices'. Covers idiomatic pandas patterns, performance optimization (vectorization, dtypes, avoiding apply), proper data reshaping (tidy data, melt/pivot), merge/join correctness, Copy-on-Write, categoricals, string operations, and common gotchas."
+description: Write idiomatic, performant pandas for DataFrame and CSV/TSV wrangling.
 ---
 
 # Pandas Best Practices

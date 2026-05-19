@@ -1,17 +1,6 @@
 ---
 name: decision-matrix
-description: >-
-  Compare two or more viable options across explicit criteria and produce a single-file HTML
-  decision-matrix artifact that the user can read, discuss, and keep. Use this skill during the
-  research or design phase of any task where multiple approaches plausibly work and the right
-  choice is not obvious. Trigger on phrases like "compare options", "trade-offs between X and Y",
-  "should I use X or Y", "evaluate alternatives", "options analysis", "decision matrix",
-  "compare approaches", "weigh the trade-offs", "pros and cons of X vs Y", "which one should I
-  pick", "design choices for X". Also use proactively whenever the user is choosing between
-  libraries, architectures, storage strategies, sync mechanisms, deployment targets, schemas, or
-  any other design point with more than one credible answer -- even if the user does not say
-  "matrix". Inspired by Rich Hickey's "Design in Practice": surface the alternatives, name the
-  criteria, and let the structure expose where the real disagreement lives.
+description: Compare options across criteria and produce a single-file HTML decision-matrix artifact.
 ---
 
 # Decision Matrix

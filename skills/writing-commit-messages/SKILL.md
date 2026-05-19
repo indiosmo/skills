@@ -1,15 +1,6 @@
 ---
 name: writing-commit-messages
-description: >-
-  Claude must use this skill whenever it writes, reviews, edits, or suggests a
-  git commit message. This includes: composing a commit message during "commit
-  this" or "save my changes" requests, reviewing or rewriting existing commit
-  messages, preparing commits for a pull request, squashing or rewording commits
-  during interactive rebase, amending commit descriptions, and generating
-  changelogs or release notes from commit history. Triggers on: git commit,
-  commit message, commit description, writing commits, save my changes, commit
-  this, squash commits, amend commit, reword commit, changelog from commits,
-  prepare PR commits, review commit messages.
+description: Write, review, or rewrite git commit messages.
 ---
 
 # Writing Commit Messages

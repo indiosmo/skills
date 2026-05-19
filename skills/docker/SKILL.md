@@ -1,19 +1,6 @@
 ---
 name: docker
-description: >-
-  Practical Docker and Docker Compose patterns for local development, container
-  security, networking, volume strategies, and multi-service orchestration. Use
-  when setting up Docker Compose for local dev with hot-reload and service
-  dependencies, designing multi-container architectures with service discovery
-  and network isolation, hardening container images and runtime policies,
-  troubleshooting container networking/DNS/volume issues, reviewing Dockerfiles
-  for security and size, or migrating local dev workflows to container-based
-  CI/CD pipelines. Trigger phrases: "containerize my app", "microservices",
-  "run alongside Postgres", "dev environment with services", "run my app with
-  a database", "Docker Compose setup", "multi-container", "add a Redis
-  container", "Dockerize". This skill is NOT for Kubernetes orchestration,
-  Helm charts, cloud-native deployment (ECS/Cloud Run/Fly.io), or container
-  registries and CI image publishing.
+description: Author and review Dockerfiles and Docker Compose stacks.
 ---
 
 # Docker Patterns

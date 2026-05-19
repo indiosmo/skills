@@ -1,16 +1,6 @@
 ---
 name: documentation
-description: >-
-  Guidelines for writing, updating, and reviewing project documentation -- READMEs, architecture
-  overviews, runbooks, ADRs, and guides. Use this skill whenever asked to
-  create, update, or review documentation of any kind, including when the user says "document this",
-  "write a README", "add a runbook", "explain how X works", "write an ADR", "document this
-  decision", or wants to improve existing docs. Also use when producing documentation as part of a
-  larger task (adding a new module, finishing a feature) even if the user does not explicitly mention
-  documentation. Use it when a significant technical choice is being made and should be captured as
-  an ADR, even if the user does not say "ADR" explicitly. Triggers on: document, README, runbook,
-  architecture doc, ADR, decision record, guide, explain, write docs, update docs, review docs,
-  how does this work, add documentation, record this decision, why did we choose X.
+description: Write, update, or review project documentation (READMEs, runbooks, ADRs, guides).
 ---
 
 # Writing Documentation

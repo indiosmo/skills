@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-description: Ensures all completion claims are backed by fresh verification evidence. Triggers whenever about to claim work is complete, tests pass, builds succeed, bugs are fixed, or any positive status; also applies before committing, creating PRs, closing issues, or reporting status.
+description: Run fresh verification before claiming work is complete, tests pass, or builds succeed.
 ---
 
 # Verification Before Completion
