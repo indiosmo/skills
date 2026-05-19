@@ -22,4 +22,5 @@
     BAD (non-responsibility, inline): `// caller must hold the session mutex`
     GOOD: if the locking contract is non-obvious and load-bearing, that is a legitimate "why" -- keep it, but phrase it as a precondition the function relies on, not a chore the caller has been assigned: `// precondition: session mutex is held; we read session_.next_seq without locking`
 
+- Treat `work-in-progress/` as ephemeral feature-work space. Files there may be created while a feature is in flight and deleted when the work is done, so keep references to `work-in-progress/` out of code, permanent documentation, configuration, and any other durable project artifact.
 - When multiple viable approaches exist for solving a problem, build a decision matrix to guide the choice. Identify the candidate options and the criteria that matter (e.g. complexity, performance, reversibility, blast radius, maintenance cost, ergonomics, testability, coupling, etc), and score each option against the criteria. Present the matrix and the options for the user to decide, unless there is a very clear winner.
