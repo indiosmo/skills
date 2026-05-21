@@ -503,7 +503,7 @@ Style:
 
 - **No marketing language.** "Robust", "scalable", "elegant" are not specifications.
   Replace with the concrete property.
-- **Specific over generic.** "Breaks on any host that does not have `/home/msi/...`"
+- **Specific over generic.** "Breaks on any host that does not have `/home/alice/...`"
   beats "not portable".
 - **The verdict is the cell's background colour.** No inline uppercase tags, no bare
   adjectives standing in for a verdict. Cells that genuinely have no verdict get no class

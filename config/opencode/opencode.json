@@ -49,7 +49,7 @@
 			"command": ["npx", "-y", "cclsp@latest"],
       "enabled": true,
       "environment": {
-        "CCLSP_CONFIG_PATH": "/home/msi/.config/claude/cclsp.json"
+        "CCLSP_CONFIG_PATH": "{env:HOME}/.config/claude/cclsp.json"
       }
     }
 

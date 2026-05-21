@@ -157,7 +157,7 @@ tool's own config. Representative cases:
   renders configs that a separate Terraform workspace consumes, so that workspace must apply
   after this role has run." Neither side's dependency graph captures the other.
 - **Implicit runtime prerequisites.** State that must already exist but that the tool neither
-  creates nor declares. "This role assumes the `msi` user already exists on the host (the
+  creates nor declares. "This role assumes the `alice` user already exists on the host (the
   `server` role creates it earlier in the playbook); no meta edge enforces the order."
 - **Non-code prerequisites.** Things the system has no hook for at all: a manual SSH key
   placement, a DNS record in an unrelated change-management system, firewall rules provisioned

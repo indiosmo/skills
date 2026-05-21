@@ -256,7 +256,7 @@ See `validate()` in `order.py` for the specific checks.
 
 Bad (drifts when the host or port changes):
 ```markdown
-Configures SSH-based git access for the `msi` user. Deploys an SSH config block
+Configures SSH-based git access for the `alice` user. Deploys an SSH config block
 for github.com (over port 443) and pins the GitHub host key in known_hosts.
 ```
 
@@ -266,7 +266,7 @@ Configures SSH-based git access for the deploy user. The SSH config tunnels
 GitHub SSH through the HTTPS port and pins the matching host key in known_hosts.
 ```
 
-The first version names the user (`msi`), the host (`github.com`), and the port
+The first version names the user (`alice`), the host (`github.com`), and the port
 (`443`) -- three values that live in `tasks/main.yml` and a template. The second
 describes what the step accomplishes; readers who need the literals open the task.
 

@@ -104,7 +104,7 @@
 <h1>cpp-guides: copy vs symlink <span class="sub">decision matrix</span></h1>
 <p class="lede">
   <code>docs/cpp-guides/</code> is currently a copy of the source-of-truth at
-  <code>/home/msi/llm_workspace/skills/docs/cpp-guides/</code>. The question is whether to keep
+  <code>/home/alice/projects/skills/docs/cpp-guides/</code>. The question is whether to keep
   copying, switch to a symlink, or use a git-native sharing mechanism. Two adjacent options
   are included for honest comparison.
 </p>
@@ -120,7 +120,7 @@
   <h2>Open Questions</h2>
   <ul>
     <li><b>Is the origin already its own git repo?</b> If
-        <code>/home/msi/llm_workspace/skills/</code> is one big repo, subtree needs a
+        <code>/home/alice/projects/skills/</code> is one big repo, subtree needs a
         specific path or a split-out first.</li>
     <li><b>How many other projects consume cpp-guides?</b> Symlink's blast-radius cost is
         proportional to that number. If this is the only consumer today, symlink's
@@ -138,7 +138,7 @@
   </div>
   <div class="approach">
     <h3>B. Symlink</h3>
-    <p><code>docs/cpp-guides</code> &rarr; <code>/home/msi/llm_workspace/skills/docs/cpp-guides</code>. Symlink itself is git-tracked.</p>
+    <p><code>docs/cpp-guides</code> &rarr; <code>/home/alice/projects/skills/docs/cpp-guides</code>. Symlink itself is git-tracked.</p>
   </div>
   <div class="approach">
     <h3>C. Git submodule</h3>

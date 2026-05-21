@@ -6,7 +6,7 @@ This is a reference for working inside the Claude Code sandbox without burning c
 
 Claude Code runs every `Bash` invocation inside an OS-level sandbox: bubblewrap on Linux and WSL2, Seatbelt on macOS. The sandbox enforces filesystem and network boundaries on the bash subprocess and on every child process it spawns, including tools like `npm`, `pytest`, `kubectl`, `terraform`, and `git`. `Read`, `Edit`, and `Write` are governed by the permission system rather than the sandbox, but they share the same configured filesystem deny rules.
 
-The current deployment uses managed settings (`/home/msi/llm_workspace/skills/claude/managed-settings.json`) that the local agent cannot loosen:
+The current deployment uses managed settings (`claude/managed-settings.json`, relative to this repo root) that the local agent cannot loosen:
 
 - `sandbox.enabled: true`
 - `sandbox.failIfUnavailable: true` -- if the OS sandbox cannot start, commands fail rather than silently falling back to unsandboxed execution.

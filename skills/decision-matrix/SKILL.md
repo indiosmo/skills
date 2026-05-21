@@ -148,7 +148,7 @@ The criterion column itself uses a distinct warm background (`td.criterion`) to 
 the row label from the data cells.
 
 Cells should be specific, not generic. "Breaks on any host that does not have
-`/home/msi/...`. CI, sandboxes, fresh laptop -- all see a dangling link." beats "not
+`/home/alice/...`. CI, sandboxes, fresh laptop -- all see a dangling link." beats "not
 portable". A cell can be very short ("Yes", "Ok", "Not supported") when the criterion is
 binary -- but make sure the colour still carries the verdict.
 

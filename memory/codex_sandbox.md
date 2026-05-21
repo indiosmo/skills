@@ -9,7 +9,7 @@ Codex CLI wraps every tool call in an OS-level sandbox and runs a managed approv
 - **Sandbox mode** sets the boundary: what filesystem and network access is permitted at all.
 - **Approval policy** decides what happens when the agent wants to cross that boundary.
 
-The current deployment is configured by `/home/msi/llm_workspace/skills/codex/requirements.toml`:
+The current deployment is configured by `codex/requirements.toml` (relative to this repo root):
 
 - `allowed_sandbox_modes = ["read-only", "workspace-write"]` -- `danger-full-access` is not available. There is no way to disable the sandbox.
 - `allowed_approval_policies = ["on-request"]` -- the agent runs under `on-request`. Commands inside the boundary execute without prompting; commands that cross the boundary fall back to an approval prompt.
