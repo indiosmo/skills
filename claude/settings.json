@@ -47,8 +47,10 @@
     "enabled": true,
     "autoAllowBashIfSandboxed": true,
     "allowUnsandboxedCommands": false,
+    "failIfUnavailable": true,
     "filesystem": {
-      "allowWrite": ["/tmp"]
+      "allowWrite": ["/tmp"],
+      "denyRead": ["~/.ssh/**", "~/.aws/**", "~/.config/gh/**"]
     }
   }
 }
