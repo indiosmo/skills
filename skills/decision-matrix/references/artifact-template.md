@@ -42,7 +42,9 @@ The page reads top to bottom as:
    "Approach presentation knob" below.
 5. **The matrix** -- a `<table>` with columns: Criterion, (optional) Weight, one column
    per option, (optional) Notes. An optional `<tfoot>` row carries the weighted score.
-6. **Decision** -- a plain `<h2>Decision</h2>` (or `<h3>` inside a sub-decision section)
+6. **Code samples (optional)** -- one small sample per option, below the matrix, when API
+   shape, syntax, or call-site ergonomics are part of the comparison.
+7. **Decision** -- a plain `<h2>Decision</h2>` (or `<h3>` inside a sub-decision section)
    followed by two to four short paragraphs. **No highlighted box, no coloured panel.**
    The emphasis is carried by a `<b>` on the chosen option in the lead sentence, not by
    chrome around the block.
@@ -79,6 +81,9 @@ table should carry; tinting a whole column underneath muddies the contrast.
 
 Typography: system sans-serif at ~15px. No web fonts. Uppercase section headings with
 letter spacing distinguish structural heads from content.
+
+Code-sample blocks use a local gruvbox dark medium palette. Keep the colours scoped to
+the sample block; do not change the page palette.
 
 ## The matrix table
 
@@ -241,6 +246,107 @@ Off by default. Turn on when most rows have genuinely cross-cutting commentary t
 caveats about the criterion itself, constraints that apply across all options, context the
 column readings would otherwise miss. If most rows would be empty, drop the column.
 
+### Code samples (optional)
+
+Use code samples when comparing API shapes, syntax, or caller-side ergonomics and the
+side-by-side snippets reveal something the prose matrix cannot. Typical triggers:
+call-site clarity, error-handling shape, generic type noise, migration edits, or whether
+the domain concept is named at the caller.
+
+Skip the block when the code would be toy scaffolding, when the decision is mostly
+operational or architectural, or when the relevant syntax already fits cleanly inside a
+cell. Code samples are supporting evidence, not another required section.
+
+Place the block immediately below the matrix it supports and before that matrix's
+Decision block. In multi-decision artifacts, each sub-decision may include or omit its
+own block.
+
+Markup:
+
+```html
+<section class="code-samples" aria-labelledby="api-shape-samples">
+  <h3 id="api-shape-samples">Caller shape</h3>
+  <div class="code-sample-grid four-options">
+    <figure class="code-sample">
+      <figcaption>A. Free function</figcaption>
+      <pre><code><span class="syn-keyword">auto</span> order =
+  make_order(symbol, side, quantity);</code></pre>
+    </figure>
+    <figure class="code-sample">
+      <figcaption>B. Builder</figcaption>
+      <pre><code><span class="syn-keyword">auto</span> order =
+  OrderBuilder(symbol).side(side).quantity(quantity).build();</code></pre>
+    </figure>
+    ...
+  </div>
+</section>
+```
+
+Use one sample per option. Keep samples short and comparable; prefer the caller's view
+over implementation sketches. With four options, use the `four-options` class so the
+samples render as a two-column grid. With two or three options, use the base grid.
+
+Style:
+
+```css
+.code-samples {
+  margin: 18px 0 26px;
+}
+.code-samples h3 {
+  margin: 0 0 10px;
+  color: var(--accent);
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.code-sample-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+.code-sample-grid.four-options {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.code-sample {
+  margin: 0;
+  border: 1px solid #504945;
+  border-radius: 6px;
+  background: #282828;
+  color: #ebdbb2;
+  overflow: hidden;
+}
+.code-sample figcaption {
+  padding: 8px 12px;
+  border-bottom: 1px solid #504945;
+  background: #32302f;
+  color: #d5c4a1;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.code-sample pre {
+  margin: 0;
+  padding: 12px;
+  overflow-x: auto;
+  font: 12.5px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.code-sample code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  color: inherit;
+  font-size: inherit;
+}
+.syn-keyword { color: #fb4934; }
+.syn-type { color: #fabd2f; }
+.syn-function { color: #83a598; }
+.syn-string { color: #b8bb26; }
+.syn-number { color: #d3869b; }
+.syn-comment { color: #928374; font-style: italic; }
+```
+
+These simple inline classes are enough for short illustrative samples. Do not pull in
+highlight.js, Prism, web fonts, or a CDN for a decision-matrix artifact.
+
 ### Number of option columns
 
 Three or four is the sweet spot for most decisions. Two collapses into pros-and-cons; six
@@ -276,7 +382,8 @@ uppercase style applies):
 ```
 
 For a multi-decision artifact, use `<h3 class="decision">` immediately after each
-sub-decision's matrix, with the same `decision-body` paragraphs underneath:
+sub-decision's matrix, or after its optional code-sample block, with the same
+`decision-body` paragraphs underneath:
 
 ```html
 <h3 class="decision">Decision</h3>
@@ -418,16 +525,18 @@ document with stacked matrices. Structure:
 3. (Optional) Open Questions block -- one for the whole document; questions span the
    matrices.
 4. `<h2 class="subdecision">` for sub-decision 1, optionally followed by its cards block,
-   then its matrix table, then an `<h3 class="decision">Decision</h3>` block.
+   then its matrix table, optional code samples, then an `<h3 class="decision">Decision</h3>`
+   block.
 5. `<h2 class="subdecision">` for sub-decision 2, optionally followed by its cards block,
-   then its matrix table, then an `<h3 class="decision">Decision</h3>` block.
+   then its matrix table, optional code samples, then an `<h3 class="decision">Decision</h3>`
+   block.
 6. (Repeat as needed; cap at three sub-decisions per artifact.)
 
-Place each Decision block immediately under the matrix it decides. Do not collect the
-calls into a single combined block at the end of the document -- that forces the reader
-to scroll between matrix and verdict. If the sub-decisions have an ordering dependency
-(commit A before A's choice constrains B), state that inside the relevant Decision
-block, not in a separate block.
+Place each Decision block immediately under the matrix it decides, with only that matrix's
+optional code-sample block between them. Do not collect the calls into a single combined
+block at the end of the document -- that forces the reader to scroll between matrix and
+verdict. If the sub-decisions have an ordering dependency (commit A before A's choice
+constrains B), state that inside the relevant Decision block, not in a separate block.
 
 Assumptions and Open Questions go above the first sub-decision -- never at the bottom
 or interleaved between sub-decisions. A premise that applies to only one sub-decision

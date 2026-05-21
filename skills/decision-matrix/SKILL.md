@@ -172,6 +172,22 @@ cross-cutting to say on most rows; if the column would be mostly empty, drop it.
 row has a notes entry, the column is probably restating things that belong in the
 criterion's label.
 
+### Code samples (optional)
+
+When the options are API shapes, syntax choices, call-site conventions, or caller-side
+ergonomics, the matrix can understate the difference. Add a short code-sample block below
+the matrix when seeing the alternatives side by side would change how a reader judges a
+row like "call-site clarity", "migration burden", or "error handling".
+
+Skip code samples when the choice is architectural, operational, or policy-heavy and the
+code would be toy scaffolding. Also skip them when the cell prose already names the
+important shape concretely enough. The block earns its place only when it makes a real
+ergonomic or syntactic trade-off visible.
+
+Use one sample per option. Keep each sample small enough to scan without horizontal
+scrolling; prefer the call site over an implementation sketch. With four options, render
+the samples as a two-column grid so the block stays readable.
+
 ### Score and weight columns (optional)
 
 **Off by default. Omit both unless the user explicitly asks for scoring.** The cell
@@ -291,10 +307,10 @@ matrices stacked in one artifact:
 
 The second decision only makes sense once the first is chosen. Stacking makes that
 sequencing explicit. Each sub-decision carries its own Decision block immediately under
-its matrix -- the reader reads the matrix, sees the call, and moves on to the next
-sub-decision. Avoid a single combined "decisions" block at the end of the artifact; it
-forces the reader to scroll back to match calls to matrices. See
-`assets/example-lean.html` for the pattern.
+its matrix, with only that matrix's optional code-sample block between them -- the reader
+reads the matrix, sees the call, and moves on to the next sub-decision. Avoid a single
+combined "decisions" block at the end of the artifact; it forces the reader to scroll
+back to match calls to matrices. See `assets/example-lean.html` for the pattern.
 
 Each sub-decision picks its own approach-presentation level and its own optional columns
 independently -- one sub-decision might need the cards block while another fits header-only
@@ -342,7 +358,14 @@ If filling in a cell forces you to add a criterion you had not thought of, add i
 forces you to drop or merge an option, do that too. The first pass is exploratory; the matrix
 is allowed to change shape.
 
-### 5. Write the decision
+### 5. Add code samples when syntax or call sites decide something
+
+If the comparison is about API shape, syntax, or caller-side ergonomics, add the optional
+code-sample block under the matrix before writing the Decision. Keep it to one small
+sample per option and let the samples demonstrate what the matrix cells are comparing.
+If the samples would be generic placeholders, skip the block.
+
+### 6. Write the decision
 
 Once cells are stable, write the Decision block in plain prose. State the chosen option
 in the first sentence and emphasise it. Follow with one or two sentences of reasoning
@@ -357,7 +380,7 @@ wrong, the verdicts are wrong, or your intuition is wrong; figure out which. If 
 the agreement nor the disagreement is informative, the score is doing no work -- pull
 it back off.
 
-### 6. List assumptions and open questions
+### 7. List assumptions and open questions
 
 Skim the cells for premises: "the team is one person", "the grader copies only X", "we
 already have a CI cluster", "this rarely changes". Settled premises go in the
@@ -365,7 +388,7 @@ already have a CI cluster", "this rarely changes". Settled premises go in the
 **Open Questions** block. See the "Assumptions" and "Open Questions" sections under
 Anatomy for the phrasing rules.
 
-### 7. Produce the HTML artifact
+### 8. Produce the HTML artifact
 
 Generate a single self-contained HTML file from the matrix. See
 [references/artifact-template.md](references/artifact-template.md) for structure, styling
@@ -388,7 +411,7 @@ Save the file as `<topic>-decision.html` (e.g. `cache-storage-decision.html`,
 `sync-mechanism-decision.html`) in the working directory, or wherever the user asks.
 Print the absolute path so the user can open it.
 
-### 8. Surface the decision in chat
+### 9. Surface the decision in chat
 
 After writing the file, give the user a two- or three-line summary in chat: the chosen
 option, the main reason, and the most important open question. The HTML is for reviewing
