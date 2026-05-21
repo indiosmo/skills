@@ -1,39 +1,42 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+
   "sandbox": {
     "enabled": true,
     "failIfUnavailable": true,
     "autoAllowBashIfSandboxed": true,
     "allowUnsandboxedCommands": false,
+
     "filesystem": {
       "allowWrite": ["/tmp"],
       "denyRead": ["~/.ssh/**", "~/.aws/**", "~/.config/gh/**"]
     },
+
     "network": {
       "allowedDomains": [],
       "deniedDomains": [],
       "allowManagedDomainsOnly": false
     }
   },
-  {
-    "allowManagedHooksOnly": true,
-    "hooks": {
-      "PreToolUse": [
-        {
-          "matcher": "Bash",
-          "hooks": [
-            {
-              "type": "command",
-              "command": "/usr/local/bin/claude-block-git-write.sh"
-            }
-          ]
-        }
-      ]
-    }
+
+  "allowManagedHooksOnly": true,
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/local/bin/claude-block-git-write.sh"
+          }
+        ]
+      }
+    ]
   },
+
+  "allowManagedPermissionRulesOnly": true,
   "permissions": {
     "deny": [],
     "disableBypassPermissionsMode": "disable"
-  },
-  "allowManagedPermissionRulesOnly": true,
-  "disableAutoMode": "disable"
+  }
 }
