@@ -20,10 +20,10 @@ command_string=$(jq -r '.tool_input.command // ""')
 #   ([^|&;]*[[:space:]])?         optional args between git and the
 #                                 subcommand, but only within one shell
 #                                 command (no |, &, ; separators)
-#   (commit|push)                 the subcommand we want to catch
+#   (commit|push|reset|rebase)    the subcommand we want to catch
 #   ([[:space:]]|$)               followed by whitespace or end of string,
 #                                 so "commit.py" / "pushed" don't match
-pattern='\bgit\b([^|&;]*[[:space:]])?(commit|push)([[:space:]]|$)'
+pattern='\bgit\b([^|&;]*[[:space:]])?(commit|push|reset|rebase)([[:space:]]|$)'
 
 if printf '%s' "$command_string" | grep -qE "$pattern"; then
     cat >&2 <<EOF
