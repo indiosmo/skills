@@ -1,15 +1,17 @@
 ---
 name: dispatching-parallel-agents
-description: Dispatch concurrent subagents via the Agent tool for independent subtasks.
+description: Dispatch concurrent subagents for independent subtasks in Claude Code or Codex CLI.
 ---
 
 # Dispatching Parallel Agents
 
-Dispatch one subagent per independent task using the Agent tool. Let them work concurrently, then consolidate results. Always consider parallel dispatch when a request decomposes into 2+ separable subtasks, even if the user did not explicitly ask for parallelism.
+Dispatch one subagent per independent task. Let them work concurrently, then consolidate results in the current branch and working tree. Use this skill when a request decomposes into 2 or more separable subtasks.
+
+The orchestrating agent owns the split, the prompts, and the final integration. Subagents own only the files, modules, or questions assigned to them.
 
 ## When to Dispatch
 
-Use parallel agents when tasks are **independent** -- no shared state, no sequential dependencies, no file conflicts.
+Use parallel agents when tasks are **independent**: no sequential dependency, no shared decision point, and no overlapping file ownership.
 
 Common patterns:
 
@@ -21,54 +23,72 @@ Common patterns:
 | Research | Look up docs for 3 libraries concurrently |
 | Code changes | Fix bug in backend API while updating frontend component |
 
-Do NOT use when:
-- Tasks are related (one result informs another)
-- Agents would edit the same files
-- You need full system context before acting
+Do not dispatch subagents when:
+- One task's result determines another task's scope
+- Two agents would edit the same file or tightly coupled files
+- You need full system context before splitting the work
+- The runtime cannot safely support concurrent writes in the current checkout
 
 ## The Pattern
 
 ### 1. Identify independent units of work
 
-Split by problem domain, subsystem, or question. Each unit must be self-contained -- an agent should be able to complete its task without knowing what other agents are doing.
+Split by problem domain, subsystem, file set, or question. Each unit must be self-contained: an agent should be able to complete its task without knowing what the other agents are doing.
+
+For code changes, assign a disjoint write scope to each subagent:
+- Specific files: `src/auth/session.ts` and `src/auth/session.test.ts`
+- A module or package: `packages/billing/`
+- A read-only topic: "map the routing flow and return file references"
+
+If the write scopes overlap, do the shared part yourself in the orchestrating thread or serialize that part after the parallel work returns.
 
 ### 2. Write focused agent prompts
 
 Each prompt needs:
 - **Scope** -- exactly what to investigate, fix, or produce
 - **Context** -- error messages, file paths, relevant background
-- **Constraints** -- what NOT to touch, boundaries
+- **Ownership** -- the files, directories, or subsystem the agent may edit
+- **Constraints** -- boundaries, commands to avoid, and files not to touch
 - **Expected output** -- what to return (summary, code, answer)
 
 Why focused prompts matter: a narrow, context-rich prompt gives the subagent a clear objective and avoids wasted work. Broad prompts ("fix all the tests") cause the agent to spend tokens discovering scope instead of solving the problem, and increase the chance it drifts into another agent's territory.
 
 ### 3. Dispatch all agents in a single message
 
-Call the Agent tool multiple times in one response so they run concurrently. This is critical: if you dispatch agents across separate messages they run sequentially, losing the entire concurrency benefit.
+Dispatch all subagents in one turn so they run concurrently. If you dispatch agents across separate turns, many runtimes will run them sequentially and lose the concurrency benefit.
 
-Use `isolation: "worktree"` when agents make code changes. Worktree isolation gives each agent its own git working tree so concurrent file writes do not collide. Without it, two agents editing files in the same working tree will produce git conflicts or silently overwrite each other's work. Skip worktree isolation for read-only tasks (exploration, research, running existing tests) where agents do not modify files.
+Platform notes:
+- **If Claude Code:** use the Agent or Task tool available in that environment. Send one tool call per independent task in the same response. Keep agents in the current checkout unless the user explicitly asks for a separate checkout.
+- **If Codex CLI:** Codex spawns subagents only when explicitly asked. Use direct wording such as "spawn one subagent per point" or use the available subagent tool. Pick `explorer` for read-heavy work and `worker` for implementation work when those agent types are available.
 
-Example Agent tool call structure:
+Keep the work in the current branch and working tree. Avoid prompts that tell subagents to create separate checkouts, make commits, merge branches, or run broad git operations. If the user's environment forbids commits, tell subagents not to commit and to leave file edits unstaged.
 
-```
-Tool: Agent
-prompt: "Investigate and fix the 3 failing tests in src/auth/session.test.ts. The failures are: [paste errors]. Read the test file, identify root causes, fix them. Do NOT change production code unless it has a bug. Return a summary of root cause and fix for each test."
-isolation: "worktree"
-```
+Example subagent prompt structure:
 
 ```
-Tool: Agent
-prompt: "Investigate and fix the 2 failing tests in src/billing/invoice.test.ts. The failures are: [paste errors]. Read the test file, identify root causes, fix them. Do NOT change production code unless it has a bug. Return a summary of root cause and fix for each test."
-isolation: "worktree"
+Investigate and fix the 3 failing tests in src/auth/session.test.ts.
+Ownership: src/auth/session.ts and src/auth/session.test.ts only.
+Context: [paste failures].
+Constraints: do not edit billing, routing, or database files. Do not commit.
+Return: root cause, files changed, tests run, and any remaining risk.
 ```
 
-Both calls appear in the same response, so they execute concurrently.
+```
+Investigate and fix the 2 failing tests in src/billing/invoice.test.ts.
+Ownership: src/billing/ only.
+Context: [paste failures].
+Constraints: do not edit auth files. Do not commit.
+Return: root cause, files changed, tests run, and any remaining risk.
+```
+
+Both agents are dispatched in the same turn, so they execute concurrently.
 
 ### 4. Consolidate results
 
 When agents return:
 - Read each summary
-- Check for conflicts (especially if agents edited code)
+- Inspect the changed files
+- Check for overlapping edits or inconsistent assumptions
 - Synthesize findings into a coherent answer or integrated changeset
 - Verify the combined result (run tests, review, etc.)
 
@@ -81,7 +101,7 @@ If an agent fails or times out:
 
 ## Practical Concurrency Limits
 
-Keep parallel dispatches to roughly 3-5 concurrent agents. Beyond that, resource contention and context-switching overhead outweigh the speed gains, and consolidation becomes significantly harder. If you have more than 5 independent subtasks, batch them into rounds.
+Keep parallel dispatches to roughly 3 to 5 concurrent agents. Beyond that, resource contention and consolidation overhead usually outweigh the speed gains. If you have more than 5 independent subtasks, batch them into rounds.
 
 ## Agent Prompt Examples
 
@@ -102,8 +122,9 @@ Fix the 3 failing tests in src/agents/agent-tool-abort.test.ts:
 3. "should properly track pendingToolCount" - expects 3 results but gets 0
 
 Read the test file, identify root causes, fix them.
-Do NOT change production code unless it has a bug.
-Return: summary of root cause and fix for each test.
+Ownership: src/agents/agent-tool-abort.test.ts and the smallest required production file only.
+Do not edit unrelated tests. Do not commit.
+Return: summary of root cause and fix for each test, files changed, and tests run.
 ```
 
 ### Testing competing hypotheses simultaneously
@@ -136,7 +157,9 @@ Both run concurrently. When results return, compare them to determine which hypo
 
 **Context-rich, not vague.** Paste error messages, file paths, relevant details.
 
-**Constrained.** "Only modify files in src/auth/" or "Do NOT change production code."
+**Owned, not overlapping.** "Modify only src/auth/ and its tests" not "fix anything related to login."
+
+**Constrained.** "Do not commit" or "do not edit database migrations."
 
 **Output-specific.** "Return a summary of findings" or "Return the fixed code."
 
@@ -144,10 +167,10 @@ Both run concurrently. When results return, compare them to determine which hypo
 
 The consolidation approach depends on what the agents produced.
 
-**Merging code from worktrees.** Each worktree agent produces commits on an isolated branch. After all agents finish, merge each branch into the main working tree one at a time. Run the test suite after each merge to catch integration issues early rather than after all merges.
+**Combining local code edits.** Each code-writing agent edits only its assigned files in the current branch and working tree. After all agents finish, review `git diff`, inspect touched files, and run the relevant tests. Resolve any integration issue in the orchestrating thread.
 
 **Synthesizing research.** When agents explored different subsystems or documentation sources, read all summaries, extract the key facts from each, and combine them into a single structured answer. Call out any gaps where no agent covered a topic.
 
 **Reconciling contradictions.** When agents reach different conclusions about the same question, present both findings side by side, identify the specific evidence each agent relied on, and either resolve the conflict yourself or dispatch a targeted follow-up agent with both sets of evidence to arbitrate.
 
-**Combining test fixes.** If agents fixed tests in separate files, merge all changes and run the full test suite to confirm no cross-test regressions.
+**Combining test fixes.** If agents fixed tests in separate files, review the combined changes and run the full test suite to confirm no cross-test regressions.
