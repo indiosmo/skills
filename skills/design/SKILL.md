@@ -61,6 +61,14 @@ Find the seed for the discovery pass:
 
 Pin down the working directory and the parts of the codebase the change is likely to touch. Discovery agents need a real entry point; "look at the whole repo" wastes their context.
 
+Pick a `<topic>` slug for the change (e.g. `oauth-login`, `cache-migration`, `mil-preprocessor-consolidation`) and create a working folder for the artifacts this skill produces:
+
+- Default: `work-in-progress/<topic>/` under the repo root, if that directory already exists or matches project convention.
+- Otherwise: `<topic>/` in the working directory.
+- If the user names a folder, use that.
+
+Every artifact this skill produces -- raw agent findings, the discovery comparison, the HTML brief, any follow-up notes -- lands in that folder. A reader who opens the folder later should be able to reconstruct the design pass without rereading chat scrollback.
+
 ### 2. Dispatch discovery agents in parallel
 
 Read [references/discovery-prompt.md](references/discovery-prompt.md) for the discovery prompt template. Substitute `[TASK]` with the user's task description (or the summary you confirmed), and `[STARTING_CONTEXT]` with the files, modules, or entry points to start from.
@@ -79,24 +87,42 @@ Dispatch both in one message so they run concurrently.
 
 Both agents return structured findings: requirements, impact map (with `file:line` refs), decision points (with options and trade-offs), open questions, risks. They do *not* produce HTML and they do *not* propose an implementation plan.
 
-### 3. Consolidate
+### 3. Persist agent findings and compare
 
-When all agents return:
+Before consolidating, write each agent's raw markdown to the working folder so the user can review the inputs to the brief, and so a later agent (a consolidator, an implementation planner) can read them from disk instead of relying on orchestrator context.
 
-1. Read each agent's findings.
+Write:
+
+- `<topic>/agent-claude.md` -- the Claude discovery agent's findings verbatim.
+- `<topic>/agent-codex.md` -- the Codex agent's findings verbatim, if it ran.
+- `<topic>/discovery-comparison.md` -- a short side-by-side covering:
+  - **Agreement**: convergent conclusions both agents reached independently. Strong signal for the brief.
+  - **Disagreement**: items where the agents contradict each other. These become decision points in the brief, not silently-resolved details.
+  - **Only Claude surfaced** / **Only Codex surfaced**: items one agent found and the other missed. Often coverage gaps (different headers walked, different starting context interpreted) rather than real disagreements -- but worth listing so the brief can carry the union with confidence levels visible.
+  - One short closing paragraph on what the comparison implies for the brief (scope changes, additional decisions, removed redundancy).
+
+Skip the comparison file when only one agent ran -- there is nothing to compare. The single agent's findings file is enough.
+
+The comparison is the bridge between raw findings and the consolidated brief. Producing it forces the orchestrator to actually read both agents' outputs against each other, not just deduplicate by string match.
+
+### 4. Consolidate
+
+Working from the on-disk findings (not orchestrator memory):
+
+1. Read each agent's findings file and the comparison.
 2. Deduplicate overlapping items. Two agents naming the same requirement is a signal; record it once.
-3. Surface disagreements explicitly -- if one agent says the auth module is fine to extend and the other says it needs replacing, that disagreement is a decision point, not an item to silently resolve.
+3. Surface disagreements explicitly -- if one agent says the auth module is fine to extend and the other says it needs replacing, that disagreement is a decision point in the brief, not an item to silently resolve.
 4. Group impact-map entries by module so the reader sees the shape of the blast radius.
 5. For each decision point, decide whether it warrants a full decision matrix or just a one-line trade-off note. Use the [decision-matrix](../decision-matrix/SKILL.md) skill's "When to reach for this" criteria.
 6. For each code sample candidate, decide whether a side-by-side snippet would change the read. Skip the rest.
 
-### 4. Produce the HTML artifact
+### 5. Produce the HTML artifact
 
 Generate a single self-contained HTML file. See [references/artifact-template.md](references/artifact-template.md) for structure, palette, and content conventions. The brief reuses the [decision-matrix](../decision-matrix/SKILL.md) skill's warm-paper palette and chrome so embedded matrices read consistently and so a project's design briefs and decision matrices look like one family of documents.
 
-Save as `<topic>-design.html` in the working directory (or wherever the user asks). Print the absolute path so the user can open it with `xdg-open <path>` or equivalent.
+Save as `<topic>/<topic>-design.html` in the working folder picked in step 1. Print the absolute path so the user can open it with `xdg-open <path>` or equivalent.
 
-### 5. Surface in chat
+### 6. Surface in chat
 
 After writing the file, give the user a short summary in chat:
 
@@ -106,7 +132,7 @@ After writing the file, give the user a short summary in chat:
 
 Do not restate the impact map or the full requirements list in chat -- the HTML carries that. The chat summary is the bridge to the artifact, not a duplicate of it.
 
-### 6. Iterate
+### 7. Iterate
 
 The brief is not done on the first pass. As the user answers open questions and makes decisions:
 
@@ -120,6 +146,8 @@ When every open question is resolved and every decision is recorded, the brief i
 ## Pitfalls to avoid
 
 - **Discovery agents that propose solutions.** The agents surface the design space; they do not pick from it. A return value that reads "we should do X" is the agent overstepping -- the user picks, not the agent. Re-prompt or strip the proposal.
+- **Skipping the persistence step.** The orchestrator's working memory is opaque to the user and is lost when the session ends. The on-disk findings and the discovery comparison are what gets reviewed, what a later planner agent reads, and what survives a `/compact` or a fresh session. "I already have the findings in context" is not a substitute -- write them out.
+- **Comparison file that is just two bullet lists side by side.** The point is the synthesis: where the agents converged (strong signal), where they contradicted (decision point), what each found alone (coverage gap or unique catch). A reader should be able to skim the comparison and know whether the brief leans on consensus or on a single agent's catch.
 - **Impact maps from memory.** Every `file:line` reference comes from a file the agent actually read. Made-up line numbers in a design brief poison every downstream decision that hangs off them.
 - **Requirements that are not verifiable.** "Should be performant" is not a requirement; "p99 latency stays under 50ms for the existing benchmark suite" is. If a requirement cannot be checked, it cannot be planned against.
 - **Premature decision matrices.** A matrix on a one-option "decision" is theater. Embed a matrix only when two or more options are real and the call is non-obvious.
