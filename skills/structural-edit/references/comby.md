@@ -15,11 +15,12 @@ Complete syntax and usage reference for comby. See https://comby.dev/docs/ for u
 ## Command syntax
 
 ```
-comby 'MATCH_TEMPLATE' 'REWRITE_TEMPLATE' [OPTIONS]
+comby 'MATCH_TEMPLATE' 'REWRITE_TEMPLATE' [FULL_FILE_PATHS_OR_FILE_SUFFIXES ...] [OPTIONS]
 ```
 
 - First argument: the match template (pattern to find)
 - Second argument: the rewrite template (replacement text, use `''` with `-match-only`)
+- Optional positional arguments select full file paths or file suffixes to process
 - Everything else in the match template is literal -- only `:[hole]` syntax is special
 - Whitespace handling: a single space in the template matches *any amount* of whitespace (spaces, tabs, newlines), but requires at least some whitespace at that position. So `f(:[a], :[b])` matches `f(x,  y)` but not `f(x,y)`.
 
@@ -121,27 +122,31 @@ comby 'config {:[body]}' '' -rule 'where rewrite :[body] { "timeout = :[v]" -> "
 
 ## Matchers
 
-Comby has built-in parsers for balanced delimiters per language. Specify with `-matcher` or `-m`:
+Comby has built-in parsers for balanced delimiters per language. Specify one with `-matcher` or `-m`:
 
 ```bash
 comby 'pattern' 'rewrite' -matcher .py -d src/
 ```
 
-Common matchers: `.c`, `.cpp`, `.h`, `.hpp`, `.py`, `.go`, `.rs`, `.java`, `.js`, `.ts`, `.json`, `.yaml`, `.html`, `.xml`, `.sh`, `.generic`
+Common matchers from `comby -list`: `.c`, `.py`, `.go`, `.rs`, `.java`, `.js`, `.ts`, `.json`, `.html`, `.xml`, `.sh`, `.generic`
+
+Use `.c` for C and C++ matching, then use `-extensions .cpp,.hpp,.h,.c` when scanning a mixed directory. Use `.generic` for YAML and other text-like formats that do not have a listed matcher.
 
 The matcher determines:
 - What counts as a string literal (and thus skipped during matching)
 - What counts as a comment
 - What balanced delimiters to recognize
 
-Use `-list` to see all supported languages: `comby -list`
+The matcher selects the parser. It does not select which files are scanned. Use `-extensions`, explicit suffix/path arguments, or `-ripgrep` to narrow the file set.
+
+Use `comby -help` to see flags and `comby -list` to see supported matchers.
 
 ## Common flags
 
 | Flag | Effect |
 |------|--------|
 | `-match-only` | Only show matches, don't rewrite. Second arg is ignored but required (use `''`). |
-| `-d PATH` | Search recursively in directory (default: current dir) |
+| `-d PATH` | Search recursively in one directory (default: current dir) |
 | `-in-place` | Modify files on disk |
 | `-diff` | Output a unified diff (preview changes without writing) |
 | `-matcher EXT` / `-m` | Force this language matcher for all files |
@@ -152,6 +157,7 @@ Use `-list` to see all supported languages: `comby -list`
 | `-count` | Just show match count per file |
 | `-json-lines` | Output as JSON (useful for programmatic processing) |
 | `-stdin` | Read input from stdin instead of files |
+| `-stdout` | Print rewritten stdin output instead of a patch-style preview |
 | `-rule RULE` | Apply a rule expression to filter/transform matches |
 | `-bound-count N` | Stop after finding at least N matches |
 | `-jobs N` | Number of parallel workers (default: 4) |
@@ -165,7 +171,7 @@ Use `-list` to see all supported languages: `comby -list`
 comby 'json.loads(:[arg])' '' -match-only -matcher .py -d src/
 
 # C++: all calls to make_leaf_error with two args
-comby 'make_leaf_error(:[a], :[b])' '' -match-only -matcher .cpp -d src/
+comby 'make_leaf_error(:[a], :[b])' '' -match-only -matcher .c -extensions .cpp,.hpp,.h,.c -d src/
 
 # Go: find all defer statements closing something
 comby 'defer :[x].Close()' '' -match-only -matcher .go -d .
@@ -177,7 +183,7 @@ comby 'defer :[x].Close()' '' -match-only -matcher .go -d .
 comby 'assertEqual(:[a], :[b])' 'assertEqual(:[b], :[a])' -matcher .py -d tests/ -diff
 
 # C++
-comby 'std::pair(:[a], :[b])' 'std::pair(:[b], :[a])' -matcher .cpp -d src/ -diff
+comby 'std::pair(:[a], :[b])' 'std::pair(:[b], :[a])' -matcher .c -extensions .cpp,.hpp,.h,.c -d src/ -diff
 ```
 
 ### Wrap a call
@@ -186,7 +192,7 @@ comby 'std::pair(:[a], :[b])' 'std::pair(:[b], :[a])' -matcher .cpp -d src/ -dif
 comby 'open(:[args])' 'Path(:[args]).open()' -matcher .py -d src/ -diff
 
 # C++: wrap raw pointer returns with unique_ptr
-comby 'return new :[type](:[args]);' 'return std::make_unique<:[type]>(:[args]);' -matcher .cpp -d src/ -diff
+comby 'return new :[type](:[args]);' 'return std::make_unique<:[type]>(:[args]);' -matcher .c -extensions .cpp,.hpp,.h,.c -d src/ -diff
 ```
 
 ### Rename with case conversion
@@ -205,7 +211,7 @@ comby 'TypeVar(":[name~[A-Z][a-zA-Z]*]")' '' -match-only -matcher .py -d src/
 ```bash
 # Find if-else chains (needs -match-newline-at-toplevel)
 comby 'if (:[c1]) {:[_]} else if (:[c2]) {:[_]}' '' \
-  -match-only -matcher .cpp -match-newline-at-toplevel -d src/
+  -match-only -matcher .c -extensions .cpp,.hpp,.h,.c -match-newline-at-toplevel -d src/
 
 # Find try/except blocks in Python
 comby 'try::[body]except :[exc]:' '' \
@@ -218,5 +224,5 @@ comby 'try::[body]except :[exc]:' '' \
 comby '{"name": :[val], :[rest]}' '' -match-only -matcher .json -d config/
 
 # Find YAML values
-comby 'timeout: :[val]' '' -match-only -matcher .yaml -d config/
+comby 'timeout: :[val]' '' -match-only -matcher .generic -extensions .yaml,.yml -d config/
 ```

@@ -55,12 +55,12 @@ Comby understands the nesting structure of code -- parentheses, braces, brackets
 - Finding patterns across multiple lines (e.g., a variable declaration followed by its use)
 - Swapping arguments: `comby 'swap(:[a], :[b])' 'swap(:[b], :[a])'`
 - Matching nested structures where regex would need to count braces
-- Working with languages comby supports but semgrep doesn't, or with config files/data formats
+- Working with text-like formats where a lightweight structural rewrite is enough
 - You want a quick one-liner without writing a YAML rule file
 
 **Comby strengths:**
 - Simple, intuitive hole syntax (`:[var]` captures anything balanced)
-- Works on 50+ languages and data formats (JSON, YAML, HTML, etc.)
+- Works on many languages and text-like formats
 - Fast (~2-4x faster than semgrep on equivalent patterns)
 - Works on incomplete/partial code fragments
 - Powerful rewrite properties (case conversion, position info)
@@ -94,12 +94,12 @@ Semgrep parses code into an AST and matches against the tree structure. This mea
 - Rich ecosystem of community rules
 
 **Semgrep limitations:**
-- Requires language support (check `semgrep --show-supported-languages`)
+- Requires language support (check `semgrep scan --show-supported-languages`)
 - Slower than comby for simple structural patterns
 - Inline CLI patterns (`-e`) are limited -- complex rules need YAML files
 - Cannot match across file boundaries (single-file analysis by default)
-- No support for arbitrary data formats (unlike comby)
-- Sends telemetry by default -- use `--metrics off` in air-gapped or privacy-sensitive environments
+- Limited support for data and config formats; Semgrep supports JSON, YAML, XML, HTML, Terraform/HCL, and generic mode, but Comby is often simpler for ad hoc rewrites across arbitrary text-like formats
+- Metrics default to `auto`: local patterns and local rule files do not send metrics, but registry configs or logged-in runs may. Use `--metrics off` when you want an explicit no-metrics run
 
 ## Quick reference
 
@@ -107,22 +107,22 @@ Semgrep parses code into an AST and matches against the tree structure. This mea
 
 ```bash
 # Search only (no rewrite)
-comby 'pattern' '' -match-only -matcher .py -d src/
+comby 'pattern' '' -match-only -matcher .py -extensions .py -d src/
 
 # Search and preview diff
-comby 'match' 'rewrite' -matcher .py -d src/ -diff
+comby 'match' 'rewrite' -matcher .py -extensions .py -d src/ -diff
 
 # Search and replace in-place
-comby 'match' 'rewrite' -matcher .py -d src/ -in-place
+comby 'match' 'rewrite' -matcher .py -extensions .py -d src/ -in-place
 
-# Exclude files/dirs
-comby 'match' 'rewrite' -matcher .py -d src/ -exclude 'test,vendor'
+# Exclude directories
+comby 'match' 'rewrite' -matcher .py -extensions .py -d src/ -exclude-dir test,vendor
 
 # Multi-line matching (:[hole] spans newlines at top level)
-comby 'if (:[cond]) {:[body]}' 'rewrite' -match-newline-at-toplevel -matcher .cpp -d src/
+comby 'if (:[cond]) {:[body]}' 'rewrite' -match-newline-at-toplevel -matcher .c -extensions .cpp,.hpp,.h,.c -d src/
 
 # Stdin mode (for piping or testing patterns)
-comby 'swap(:[a], :[b])' 'swap(:[b], :[a])' -stdin .py <<< 'swap(x, y)'
+printf 'swap(x, y)\n' | comby 'swap(:[a], :[b])' 'swap(:[b], :[a])' -stdin -stdout .py
 ```
 
 **Hole types** (see `references/comby.md` for full details):
@@ -140,19 +140,21 @@ comby 'swap(:[a], :[b])' 'swap(:[b], :[a])' -stdin .py <<< 'swap(x, y)'
 
 ```bash
 # Inline pattern search
-semgrep -e 'pattern' --lang python src/ --metrics off
+semgrep scan -e 'pattern' --lang python src/ --metrics off
 
 # Inline pattern with autofix
-semgrep -e 'foo($X, $Y)' --autofix 'bar($Y, $X)' --lang python src/ --metrics off
+semgrep scan -e 'foo($X, $Y)' --replacement 'bar($Y, $X)' --autofix --lang python src/ --metrics off
 
 # Dry-run autofix (preview changes)
-semgrep -e 'foo($X, $Y)' --autofix 'bar($Y, $X)' --lang python src/ --dryrun --metrics off
+semgrep scan -e 'foo($X, $Y)' --replacement 'bar($Y, $X)' --autofix --dryrun --lang python src/ --metrics off
 
 # Using a YAML rule file
-semgrep --config rules/my-rule.yaml src/ --metrics off
+semgrep scan --config rules/my-rule.yaml src/ --metrics off
+```
 
-# Multiple patterns (use YAML for complex logic)
-semgrep --config - --metrics off <<'EOF'
+For complex logic, put multiple patterns in a YAML rule file:
+
+```yaml
 rules:
   - id: my-rule
     patterns:
@@ -162,7 +164,10 @@ rules:
     languages: [python]
     severity: WARNING
     fix: safe_func($X)
-EOF
+```
+
+```bash
+semgrep scan --config rules/my-rule.yaml src/ --metrics off
 ```
 
 **Metavariable types** (see `references/semgrep.md` for full details):
@@ -182,17 +187,17 @@ The escalation ladder suggests picking one tool per task, but sometimes **using 
 
 **Example: duplicate conditions in if/else-if chains**
 
-Consider `if (a) {} else if (b) {} else if (a) {}` — the first and third conditions are duplicates, but separated by an intermediate else-if block (the condition is "transitive" across intermediate blocks).
+Consider `if (a) {} else if (b) {} else if (a) {}` -- the first and third conditions are duplicates, but separated by an intermediate else-if block (the condition is "transitive" across intermediate blocks).
 
 Run comby to catch transitive duplicates across intermediate else-if blocks:
 ```bash
 comby 'if (:[c]) {:[_]}:[_]else if (:[c]) {:[_]}' '' \
-  -match-only -matcher .cpp -match-newline-at-toplevel -d src/
+  -match-only -matcher .c -extensions .cpp,.hpp,.h,.c -match-newline-at-toplevel -d src/
 ```
 
 Run semgrep to catch direct duplicates that differ only in formatting:
 ```bash
-semgrep -e 'if ($COND) { ... } else if ($COND) { ... }' --lang cpp src/ --metrics off
+semgrep scan -e 'if ($COND) { ... } else if ($COND) { ... }' --lang cpp src/ --metrics off
 ```
 
 Neither tool alone catches everything. Comby finds the transitive case but requires byte-identical conditions. Semgrep handles formatting differences but can't bridge across nested else-if levels. Use both and union the results.
@@ -203,35 +208,35 @@ Neither tool alone catches everything. Comby finds the transitive case but requi
 
 ### Example 1: Find all calls with a specific argument pattern (comby)
 
-Python — find all `logging.warning()` calls that use %-formatting instead of lazy formatting:
+Python -- find all `logging.warning()` calls that use %-formatting instead of lazy formatting:
 ```bash
 comby 'logging.warning(:[msg] % :[args])' '' -match-only -matcher .py -d src/
 ```
 
-C++ — find all `make_leaf_error` calls with two arguments:
+C++ -- find all `make_leaf_error` calls with two arguments:
 ```bash
-comby 'make_leaf_error(:[a], :[b])' '' -match-only -matcher .cpp -d src/
+comby 'make_leaf_error(:[a], :[b])' '' -match-only -matcher .c -extensions .cpp,.hpp,.h,.c -d src/
 ```
 
 Comby is the right choice: the pattern involves balanced parentheses and we don't care about types or semantics.
 
 ### Example 2: Enforce identity check pattern (semgrep)
 
-Finding `x == x` comparisons (likely bugs) — works across languages:
+Finding `x == x` comparisons (likely bugs) -- works across languages:
 
 ```bash
 # Python
-semgrep -e '$X == $X' --lang python src/ --metrics off
+semgrep scan -e '$X == $X' --lang python src/ --metrics off
 
 # C++
-semgrep -e '$X == $X' --lang cpp src/ --metrics off
+semgrep scan -e '$X == $X' --lang cpp src/ --metrics off
 ```
 
 Semgrep is the right choice: metavariable identity (`$X` must be the *same expression* in both positions) is a semantic concept that comby can only approximate with textual equality.
 
 ### Example 3: Replace a deprecated API call (comby rewrite)
 
-Python — replace old-style string formatting in logging calls:
+Python -- replace old-style string formatting in logging calls:
 ```bash
 comby \
   'logger.info(":[msg]" % :[args])' \
@@ -239,19 +244,19 @@ comby \
   -matcher .py -d src/ -diff
 ```
 
-C++ — wrap raw `new` with `make_unique`:
+C++ -- wrap raw `new` with `make_unique`:
 ```bash
 comby \
   'return new :[type](:[args]);' \
   'return std::make_unique<:[type]>(:[args]);' \
-  -matcher .cpp -d src/ -diff
+  -matcher .c -extensions .cpp,.hpp,.h,.c -d src/ -diff
 ```
 
 Review with `-diff` first, then re-run with `-in-place` when satisfied.
 
 ### Example 4: Lint rule with autofix (semgrep YAML)
 
-Python — catch bare `except:` clauses:
+Python -- catch bare `except:` clauses:
 ```yaml
 rules:
   - id: no-bare-except
@@ -271,12 +276,12 @@ rules:
 ```
 
 ```bash
-semgrep --config rule.yaml src/ --autofix --dryrun --metrics off
+semgrep scan --config rule.yaml src/ --autofix --dryrun --metrics off
 ```
 
 ### Example 5: Find patterns in config/data files (comby)
 
-Comby works on non-code formats that semgrep doesn't support:
+Comby is often the simpler choice for ad hoc rewrites in text-like config and data files:
 
 ```bash
 # Find all JSON objects with a "deprecated" key
@@ -286,7 +291,7 @@ comby '{"deprecated": :[_], :[rest]}' '' -match-only -matcher .json -d config/
 comby '<div class="legacy-:[name]">:[content]</div>' '' -match-only -matcher .html -d templates/
 
 # Find YAML blocks with a specific structure
-comby 'timeout: :[val]' '' -match-only -matcher .yaml -d config/
+comby 'timeout: :[val]' '' -match-only -matcher .generic -extensions .yaml,.yml -d config/
 ```
 
 ## Reference docs

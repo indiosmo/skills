@@ -2,7 +2,7 @@
 
 Complete syntax and usage reference for semgrep. See https://semgrep.dev/docs/ for upstream docs.
 
-Note: semgrep sends telemetry by default. Use `--metrics off` to disable, especially in air-gapped or privacy-sensitive environments.
+Note: Semgrep metrics default to `auto`: local patterns and local rule files do not send metrics, but registry configs or logged-in runs may. Use `--metrics off` when you want an explicit no-metrics run.
 
 ## Table of Contents
 
@@ -22,33 +22,26 @@ Note: semgrep sends telemetry by default. Use `--metrics off` to disable, especi
 
 ```bash
 # Basic search
-semgrep -e 'PATTERN' --lang LANG [PATH] --metrics off
+semgrep scan -e 'PATTERN' --lang LANG [PATH] --metrics off
+
+# Inline autofix
+semgrep scan -e 'OLD($X)' --replacement 'NEW($X)' --autofix --lang LANG [PATH] --metrics off
 
 # Apply fixes from a YAML rule file
-semgrep --config rules.yaml --autofix [PATH] --metrics off
+semgrep scan --config rules.yaml --autofix [PATH] --metrics off
 
 # Dry-run autofix (preview without modifying)
-semgrep --config rules.yaml --autofix --dryrun [PATH] --metrics off
+semgrep scan --config rules.yaml --autofix --dryrun [PATH] --metrics off
 ```
 
 ### YAML rules (complex logic)
 
 ```bash
 # From a file
-semgrep --config rules.yaml [PATH] --metrics off
-
-# From stdin (here-doc)
-semgrep --config - --metrics off <<'EOF'
-rules:
-  - id: rule-name
-    pattern: 'PATTERN'
-    message: "Description"
-    languages: [python]
-    severity: WARNING
-EOF
+semgrep scan --config rules.yaml [PATH] --metrics off
 ```
 
-Use inline `-e` for quick one-off searches. Use YAML rules when you need pattern composition (pattern-not, pattern-either), metavariable conditions, or persistent lint rules.
+Use inline `-e` for quick one-off searches. Use YAML rules when you need pattern composition (pattern-not, pattern-either), metavariable conditions, or persistent lint rules. Current official CLI docs describe `--config` values as files, directories, URLs, or registry entries.
 
 ## Pattern syntax
 
@@ -154,7 +147,7 @@ rules:
   - id: unique-rule-id           # Required. Identifier for the rule.
     message: "Human-readable"     # Required. Shown when rule matches.
     languages: [python]           # Required. List of target languages.
-    severity: WARNING             # Required. LOW, MEDIUM, HIGH, or CRITICAL (legacy: ERROR→HIGH, WARNING→MEDIUM, INFO→LOW).
+    severity: WARNING             # Required. LOW, MEDIUM, HIGH, or CRITICAL. Legacy values map as ERROR to HIGH, WARNING to MEDIUM, and INFO to LOW.
 
     # Pattern (one of these is required):
     pattern: 'code pattern'       # Simple pattern
@@ -289,11 +282,17 @@ fix: ''                   # Empty fix removes the matched code
 
 ### CLI autofix
 ```bash
+# Apply an inline replacement in-place
+semgrep scan -e 'old_api($X)' --replacement 'new_api($X)' --autofix --lang python src/ --metrics off
+
+# Preview an inline replacement
+semgrep scan -e 'old_api($X)' --replacement 'new_api($X)' --autofix --dryrun --lang python src/ --metrics off
+
 # Apply fixes in-place
-semgrep --config rule.yaml --autofix src/ --metrics off
+semgrep scan --config rule.yaml --autofix src/ --metrics off
 
 # Preview without writing
-semgrep --config rule.yaml --autofix --dryrun src/ --metrics off
+semgrep scan --config rule.yaml --autofix --dryrun src/ --metrics off
 ```
 
 ## Common flags
@@ -302,20 +301,21 @@ semgrep --config rule.yaml --autofix --dryrun src/ --metrics off
 |------|--------|
 | `-e PATTERN` | Inline pattern (no YAML needed) |
 | `--lang LANG` | Language for inline patterns (cpp, python, go, java, js, ts, etc.) |
-| `--config FILE` | YAML rule file (or `-` for stdin) |
+| `--replacement FIX` | Replacement template for inline `-e` autofix |
+| `--config FILE` | YAML rule file, rule directory, URL, or registry entry |
 | `--autofix` | Apply fixes defined in rules |
 | `--dryrun` | Preview autofix without modifying files |
 | `--json` | Output results as JSON |
 | `--verbose` | Detailed output |
-| `--include GLOB` | Only scan matching files |
-| `--exclude GLOB` | Skip matching files |
+| `--include=GLOB` | Only scan matching files; can be repeated |
+| `--exclude=GLOB` | Skip matching files; can be repeated |
 | `--max-target-bytes N` | Skip files larger than N bytes |
-| `--metrics off` | Disable telemetry (recommended) |
+| `--metrics off` | Disable metrics for this run |
 | `--no-git-ignore` | Don't respect .gitignore |
 
 ### Generic mode
 
-For unsupported languages or config files, use `--lang generic` (internally called "spacegrep"). Key differences:
+For unsupported text-like files, use `--lang generic` (internally called "spacegrep"). Key differences:
 - `...` spans up to 10 lines (use multiple `...` for wider spans, or set `options: {generic_ellipsis_max_span: N}`)
 - `$X` captures single words only (`[A-Za-z0-9_]+`), not multi-token sequences
 - Indentation defines nesting scope (braces provide secondary nesting within lines)
@@ -325,9 +325,9 @@ For unsupported languages or config files, use `--lang generic` (internally call
 
 ### Find identical subexpressions (any language)
 ```bash
-semgrep -e '$X == $X' --lang python src/ --metrics off
-semgrep -e '$X and $X' --lang python src/ --metrics off
-semgrep -e '$X || $X' --lang cpp src/ --metrics off
+semgrep scan -e '$X == $X' --lang python src/ --metrics off
+semgrep scan -e '$X and $X' --lang python src/ --metrics off
+semgrep scan -e '$X || $X' --lang cpp src/ --metrics off
 ```
 
 ### Find unchecked return values (C++)
