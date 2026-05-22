@@ -264,88 +264,107 @@ own block.
 Markup:
 
 ```html
-<section class="code-samples" aria-labelledby="api-shape-samples">
-  <h3 id="api-shape-samples">Caller shape</h3>
-  <div class="code-sample-grid four-options">
-    <figure class="code-sample">
-      <figcaption>A. Free function</figcaption>
-      <pre><code><span class="syn-keyword">auto</span> order =
-  make_order(symbol, side, quantity);</code></pre>
-    </figure>
-    <figure class="code-sample">
-      <figcaption>B. Builder</figcaption>
-      <pre><code><span class="syn-keyword">auto</span> order =
-  OrderBuilder(symbol).side(side).quantity(quantity).build();</code></pre>
-    </figure>
-    ...
+<div class="samples">
+  <div class="sample">
+    <h3>A. Free function</h3>
+<pre><code><span class="kw">auto</span> order =
+  <span class="fn">make_order</span>(symbol, side, quantity);</code></pre>
   </div>
-</section>
+  <div class="sample">
+    <h3>B. Builder</h3>
+<pre><code><span class="kw">auto</span> order =
+  <span class="type">OrderBuilder</span>(symbol).<span class="fn">side</span>(side).<span class="fn">quantity</span>(quantity).<span class="fn">build</span>();</code></pre>
+  </div>
+</div>
 ```
 
-Use one sample per option. Keep samples short and comparable; prefer the caller's view
-over implementation sketches. With four options, use the `four-options` class so the
-samples render as a two-column grid. With two or three options, use the base grid.
+Two arrangements show up in practice:
 
-Style:
+- **Multi-card grid (option-by-option comparison).** One `<div class="sample">` per option,
+  inside one `<div class="samples">`. The auto-fit grid wraps the cards into two columns
+  on a wide screen and stacks them on narrow ones. This is the most common use of the
+  block -- placed under a decision-point matrix, before its Decision block, when seeing
+  the call sites side by side would change the read.
+- **Single card ("this is the chosen shape").** One `<div class="sample">` alone inside a
+  `<div class="samples">`. Useful after a decision is settled and the artifact wants to
+  show the canonical call-site shape the chosen option produces -- typically placed under
+  the Decision block, not above it. Distinct from the comparison block: this one's job is
+  reference, not comparison.
+
+Keep snippets small enough to scan without horizontal scrolling. Prefer the caller's view
+over implementation sketches. The auto-fit grid handles two, three, or four columns
+without per-count overrides -- pick the snippet count from the decision, not from a
+layout constraint.
+
+The card header (`<h3>`) carries the option name (in a multi-card block) or a short label
+(in a single-card block). The body uses inline `<span>` classes for syntax highlighting:
+
+- `kw` -- keywords and language built-ins (`auto`, `const`, `template`, `typename`, `return`)
+- `type` -- type names (`Order`, `OrderBuilder`)
+- `fn` -- function and method names (`make_order`, `build`)
+- `ns` -- namespaces and module prefixes (`std`, `aor`)
+- `str` -- string literals
+- `com` -- comments
+
+Highlight only what the comparison turns on. Over-highlighting (every identifier coloured)
+reads like a rainbow and adds no information. Under-highlighting (one keyword in the
+whole snippet) wastes the chrome. Highlight the names the matrix cells reference and the
+syntax shape (keywords, types) that distinguishes one option from another.
+
+Style (paste into the page `<style>` block):
 
 ```css
-.code-samples {
-  margin: 18px 0 26px;
+:root {
+  --code-bg:   #282828;
+  --code-fg:   #d4be98;
+  --code-rule: #504945;
+  --code-head: #1d2021;
 }
-.code-samples h3 {
-  margin: 0 0 10px;
-  color: var(--accent);
-  font-size: 14px;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-.code-sample-grid {
+.samples {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: 14px;
+  margin: 14px 0 18px;
 }
-.code-sample-grid.four-options {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-.code-sample {
-  margin: 0;
-  border: 1px solid #504945;
+.sample {
+  background: var(--code-bg);
+  border: 1px solid var(--code-rule);
   border-radius: 6px;
-  background: #282828;
-  color: #ebdbb2;
+  color: var(--code-fg);
+  min-width: 0;
   overflow: hidden;
 }
-.code-sample figcaption {
-  padding: 8px 12px;
-  border-bottom: 1px solid #504945;
-  background: #32302f;
-  color: #d5c4a1;
-  font-size: 12.5px;
-  font-weight: 600;
-}
-.code-sample pre {
+.sample h3 {
+  background: var(--code-head);
+  color: #fabd2f;
+  font-size: 12px;
+  letter-spacing: 0.04em;
   margin: 0;
-  padding: 12px;
+  padding: 8px 12px;
+  text-transform: uppercase;
+}
+.sample pre {
+  font: 12.5px/1.5 "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  margin: 0;
   overflow-x: auto;
-  font: 12.5px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  padding: 12px 14px 14px;
 }
-.code-sample code {
-  background: transparent;
-  padding: 0;
-  border-radius: 0;
-  color: inherit;
-  font-size: inherit;
-}
-.syn-keyword { color: #fb4934; }
-.syn-type { color: #fabd2f; }
-.syn-function { color: #83a598; }
-.syn-string { color: #b8bb26; }
-.syn-number { color: #d3869b; }
-.syn-comment { color: #928374; font-style: italic; }
+.sample pre code { background: transparent; border-radius: 0; color: inherit; font-size: inherit; padding: 0; }
+.sample .kw   { color: #fb4934; }
+.sample .type { color: #fabd2f; }
+.sample .fn   { color: #b8bb26; }
+.sample .ns   { color: #83a598; }
+.sample .str  { color: #b8bb26; }
+.sample .com  { color: #928374; font-style: italic; }
 ```
 
-These simple inline classes are enough for short illustrative samples. Do not pull in
-highlight.js, Prism, web fonts, or a CDN for a decision-matrix artifact.
+The `.sample pre code` override is necessary because the page's default `code` styling
+gives inline `<code>` a warm-paper background; the dark sample card has its own
+background and the inline rule has to be cleared inside it.
+
+These inline classes are enough for short illustrative samples. Do not pull in
+highlight.js, Prism, web fonts, or a CDN for a decision-matrix artifact. See
+`assets/example-lean.html` for a worked code-samples block under sub-decision 2.
 
 ### Number of option columns
 

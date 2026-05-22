@@ -486,8 +486,8 @@ Avoid these mistakes:
 
 ## Tone and style
 
-Apply the [writing-clearly-and-concisely](../writing-clearly-and-concisely/SKILL.md) skill
-to cell prose and the Decision block. Cells are read fast; needless words hurt more
+Apply the `writing-clearly-and-concisely` skill (installed separately) to cell prose and
+the Decision block. Cells are read fast; needless words hurt more
 here than elsewhere. The Decision block states the call directly -- not as a reading of
 the matrix ("the matrix points toward...") and not as advice from outside ("I
 recommend..."). It is a record of what was decided and why.
@@ -501,7 +501,9 @@ shapes. Plain text survives copy-paste and screen readers.
 - [documentation](../documentation/SKILL.md) -- for the broader principles of writing
   durable artifacts that survive drift. A decision matrix is closely related to an ADR
   (architecture decision record) and can be the front matter of one.
-- [writing-clearly-and-concisely](../writing-clearly-and-concisely/SKILL.md) -- for cell
-  prose and the Decision block.
-- [reviewing-plans](../reviewing-plans/SKILL.md) -- if the matrix is going into a draft
-  implementation plan, run the plan through review before committing to it.
+- `writing-clearly-and-concisely` -- separately installed; apply to cell prose and the
+  Decision block.
+- [design](../design/SKILL.md) -- a design brief embeds decision matrices inline alongside
+  requirements, impact analysis, and open questions. If the matrix is one of several
+  decisions for a single change, it likely belongs inside a design brief rather than as a
+  standalone artifact.
