@@ -1,7 +1,9 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "env": {
-    "CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING": "1"
+    "CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING": "1",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DISABLE_GROWTHBOOK": "1"
   },
   "permissions": {
     "deny": []
@@ -26,5 +28,62 @@
   "skipAutoPermissionPrompt": true,
   "feedbackSurveyState": {
     "lastShownTime": 1754148821130
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'h=\"$HARNESS_TERMINAL_ID\"; [ -z \"$h\" ] && h=\"$CLAUDE_HARNESS_ID\"; [ -z \"$h\" ] && exit 0; d=/tmp/harness-status; mkdir -p \"$d\"; p=$(cat); [ -z \"$p\" ] && p=null; printf \"{\\\"event\\\":\\\"UserPromptSubmit\\\",\\\"ts\\\":%s,\\\"payload\\\":%s}\\n\" \"$(date +%s)\" \"$p\" >> \"$d/$h.ndjson\"'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'h=\"$HARNESS_TERMINAL_ID\"; [ -z \"$h\" ] && h=\"$CLAUDE_HARNESS_ID\"; [ -z \"$h\" ] && exit 0; d=/tmp/harness-status; mkdir -p \"$d\"; p=$(cat); [ -z \"$p\" ] && p=null; printf \"{\\\"event\\\":\\\"PreToolUse\\\",\\\"ts\\\":%s,\\\"payload\\\":%s}\\n\" \"$(date +%s)\" \"$p\" >> \"$d/$h.ndjson\"'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'h=\"$HARNESS_TERMINAL_ID\"; [ -z \"$h\" ] && h=\"$CLAUDE_HARNESS_ID\"; [ -z \"$h\" ] && exit 0; d=/tmp/harness-status; mkdir -p \"$d\"; p=$(cat); [ -z \"$p\" ] && p=null; printf \"{\\\"event\\\":\\\"PostToolUse\\\",\\\"ts\\\":%s,\\\"payload\\\":%s}\\n\" \"$(date +%s)\" \"$p\" >> \"$d/$h.ndjson\"'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'h=\"$HARNESS_TERMINAL_ID\"; [ -z \"$h\" ] && h=\"$CLAUDE_HARNESS_ID\"; [ -z \"$h\" ] && exit 0; d=/tmp/harness-status; mkdir -p \"$d\"; p=$(cat); [ -z \"$p\" ] && p=null; printf \"{\\\"event\\\":\\\"Stop\\\",\\\"ts\\\":%s,\\\"payload\\\":%s}\\n\" \"$(date +%s)\" \"$p\" >> \"$d/$h.ndjson\"'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'h=\"$HARNESS_TERMINAL_ID\"; [ -z \"$h\" ] && h=\"$CLAUDE_HARNESS_ID\"; [ -z \"$h\" ] && exit 0; d=/tmp/harness-status; mkdir -p \"$d\"; p=$(cat); [ -z \"$p\" ] && p=null; printf \"{\\\"event\\\":\\\"Notification\\\",\\\"ts\\\":%s,\\\"payload\\\":%s}\\n\" \"$(date +%s)\" \"$p\" >> \"$d/$h.ndjson\"'",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
   }
 }
