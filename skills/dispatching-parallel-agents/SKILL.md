@@ -60,6 +60,7 @@ Dispatch all subagents in one turn so they run concurrently. If you dispatch age
 Platform notes:
 - **If Claude Code:** use the Agent or Task tool available in that environment. Send one tool call per independent task in the same response. Keep agents in the current checkout unless the user explicitly asks for a separate checkout.
 - **If Codex CLI:** Codex spawns subagents only when explicitly asked. Use direct wording such as "spawn one subagent per point" or use the available subagent tool. Pick `explorer` for read-heavy work and `worker` for implementation work when those agent types are available.
+  - In Codex MultiAgentV2, do not use `fork_context`; the runtime rejects it. When setting `agent_type`, `model`, or `reasoning_effort`, set `fork_turns: "none"` or provide a focused self-contained prompt. Full-history forks inherit the parent role, model, and reasoning effort, and reject those overrides.
 
 Keep the work in the current branch and working tree. Avoid prompts that tell subagents to create separate checkouts, make commits, merge branches, or run broad git operations. If the user's environment forbids commits, tell subagents not to commit and to leave file edits unstaged.
 
