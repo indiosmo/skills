@@ -1,9 +1,9 @@
 {
   "kind": "review",
   "title": "Add optimistic updates to task list mutations",
-  "repo_line": "birchline/web \u00b7 Pull Request #247",
+  "repo_line": "example-app/web \u00b7 Pull Request #247",
   "head": {
-    "ref": "mo/optimistic-tasks",
+    "ref": "feature/optimistic-tasks",
     "sha": "a1b2c3d4"
   },
   "base": {
@@ -18,7 +18,7 @@
   "commits": [
     {
       "sha": "a1b2c3d",
-      "author": "Mira Okafor",
+      "author": "Alex Example",
       "date": "2026-05-10",
       "subject": "Add optimistic updates to task list"
     }

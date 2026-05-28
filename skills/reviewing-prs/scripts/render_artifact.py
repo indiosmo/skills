@@ -1010,12 +1010,12 @@ def validate_spec(spec: dict[str, Any]) -> list[str]:
 EXAMPLE_REVIEW_SPEC = {
     "kind": "review",
     "title": "Add optimistic updates to task list mutations",
-    "repo_line": "birchline/web · Pull Request #247",
-    "head": {"ref": "mo/optimistic-tasks", "sha": "a1b2c3d4"},
+    "repo_line": "example-app/web · Pull Request #247",
+    "head": {"ref": "feature/optimistic-tasks", "sha": "a1b2c3d4"},
     "base": {"ref": "main", "sha": "e5f6a7b8"},
     "stats": {"files": 6, "insertions": 142, "deletions": 38},
     "commits": [
-        {"sha": "a1b2c3d", "author": "Mira Okafor", "date": "2026-05-10",
+        {"sha": "a1b2c3d", "author": "Alex Example", "date": "2026-05-10",
          "subject": "Add optimistic updates to task list"}
     ],
     "summary_md": (

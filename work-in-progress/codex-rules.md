@@ -1,6 +1,6 @@
 add rules for basic allowed commands like ls, cat, etc so we don't get asked all the time.
 
-project specific rules to e.g. abacus
+project specific rules
 
 ```
 prefix_rule(

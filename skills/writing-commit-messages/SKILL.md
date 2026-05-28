@@ -113,27 +113,25 @@ Closes #1234
 Multi-concern commit -- each paragraph leads with an imperative
 verb and states what was done plus why:
 ```
-Add gateway console certification helper
+Add webhook retry certification helper
 
-Implement the BOE gateway console tool for manual certification
-of the inbound-error-disconnect scenario. The helper accepts a
-local BOE session and lets the operator inject unknown
-ExecutionReportNew messages to trigger the error threshold
-disconnect.
+Implement a console tool for manual certification of the
+webhook delivery retry scenario. The helper accepts a local
+queue session and lets the operator inject failed deliveries
+to trigger the retry threshold.
 
-Fix session lifecycle: remove unschedule from stop() as the
-fsm_async_close path already handles it. The duplicated call
-would throw with "is not scheduled" before calling into
-disconnect().
+Fix worker lifecycle: remove redundant stop() cleanup as the
+graceful-shutdown path already handles it. The duplicated call
+would throw with "worker not running" before releasing resources.
 
-Improve scheduler logging with session IDs.
+Improve worker logging with request IDs.
 ```
 
 Bad body style -- "Also" glues unrelated items and buries the
 motivation:
 ```
-Also add auction-order and client-does-not-resend certification
-scenarios, and remove a stray break-after-return in ospec
+Also add batch-retry and duplicate-delivery certification
+scenarios, and remove a stray break-after-return in payload
 normalization.
 ```
 Each of those deserves its own paragraph with an imperative lead

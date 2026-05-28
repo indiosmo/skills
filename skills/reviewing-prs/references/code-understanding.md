@@ -6,9 +6,9 @@ This template is modelled on https://thariqs.github.io/html-effectiveness/04-cod
 
 ## Required sections, in order
 
-1. **Title** in the form "How X flows through Y" or "Walkthrough: X in Y". Concrete is better than generic. "How authentication flows through birchline/web" beats "Authentication in birchline/web".
+1. **Title** in the form "How X flows through Y" or "Walkthrough: X in Y". Concrete is better than generic. "How authentication flows through example-app/web" beats "Authentication in example-app/web".
 
-2. **Intro** -- one or two short paragraphs. Establish the trust boundary or framing assumption ("birchline uses cookie-based sessions with a single trust boundary: every API route runs `verifyToken()` before doing anything else"). Name the entry point and the exit point of the flow you're about to walk through.
+2. **Intro** -- one or two short paragraphs. Establish the trust boundary or framing assumption ("example-app uses cookie-based sessions with a single trust boundary: every API route runs `verifyToken()` before doing anything else"). Name the entry point and the exit point of the flow you're about to walk through.
 
 3. **Request path / data flow diagram (Mermaid)** -- a horizontal flow showing the journey from input to output. For a request flow: `browser → API route → middleware → handler → store → db`. For a render flow: `state → selector → component → DOM`. Keep it small; six or seven nodes is plenty. Use a `flowchart LR`.
 

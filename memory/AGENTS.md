@@ -17,7 +17,7 @@
     GOOD: delete the comment. If the runtime layer's role needs explaining, document it where that layer lives.
 
     BAD (non-responsibility): `/* Stateless converters ... integration of the resulting events (e.g. routing, status resolution) is the caller's responsibility. */`
-    GOOD: `/* Stateless converters from OnixS B3 UMDF messages to macuco market data domain types. */` -- describe what the functions do; do not enumerate what they don't.
+    GOOD: `/* Stateless converters from exchange feed messages to internal market data domain types. */` -- describe what the functions do; do not enumerate what they don't.
 
     BAD (non-responsibility, inline): `// caller must hold the session mutex`
     GOOD: if the locking contract is non-obvious and load-bearing, that is a legitimate "why" -- phrase it as a precondition the function relies on, not a chore assigned to the caller: `// precondition: session mutex is held; we read session_.next_seq without locking`
