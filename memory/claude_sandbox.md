@@ -63,14 +63,15 @@ When a network call is refused, do not iterate -- the allowlist will not change 
 
 ## Git
 
-A managed `PreToolUse` hook runs `claude-block-git-write.sh` on every `Bash` call and blocks git operations that mutate remote state or rewrite local history in unsafe ways. Expect rejection for, at minimum:
+A managed `PreToolUse` hook runs `claude-block-git-write.sh` on every `Bash` call and blocks commits, remote-mutating operations, and history-rewriting operations. Expect rejection for, at minimum:
 
+- `git commit`
 - `git push`, `git push --force`, `git push --force-with-lease`
 - `git reset --hard` against shared refs
 - `git rebase` / `git commit --amend` of published commits
 - Anything passed with `--no-verify` or `--no-gpg-sign`
 
-Read commands (`git status`, `git log`, `git diff`, `git show`, `git fetch`) are unaffected. Local commits and `git add` are unaffected. If you genuinely need a blocked operation, ask the user to run it.
+Read commands (`git status`, `git log`, `git diff`, `git show`, `git fetch`) are unaffected. `git add` is unaffected. If you genuinely need a blocked operation, ask the user to run it.
 
 ## Multi-statement bash and shell expansion
 

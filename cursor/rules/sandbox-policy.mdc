@@ -1,0 +1,11 @@
+---
+description: Cursor sandbox and git-write policy
+globs:
+alwaysApply: true
+---
+
+- Run terminal work inside the Cursor sandbox whenever possible.
+- Treat the opened workspace as the write boundary. Keep durable outputs under the workspace root.
+- Do not create commits, push, reset, rebase, or bypass hooks/signing. Leave changes unstaged unless the user explicitly asks for staging.
+- When a command fails because it needs access outside the sandbox, stop after the first clear refusal and explain the blocked path, host, or permission.
+- With this repository's Cursor sandbox, system temp writes are disabled. Put scratch files under a workspace-local scratch path and remove them when they are no longer useful.

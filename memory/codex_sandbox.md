@@ -74,14 +74,15 @@ When the user denies a network request, do not retry with a different URL or a d
 
 ## Git
 
-The `codex-block-git-write.sh` hook blocks remote-mutating and history-rewriting git operations. Expect rejection for, at minimum:
+The `codex-block-git-write.sh` hook blocks commits, remote-mutating operations, and history-rewriting operations. Expect rejection for, at minimum:
 
+- `git commit`
 - `git push`, `git push --force`, `git push --force-with-lease`
 - `git reset --hard` against shared refs
 - `git rebase` and `git commit --amend` of published commits
 - Anything passed with `--no-verify` or `--no-gpg-sign`
 
-Reads (`git status`, `git log`, `git diff`, `git show`, `git fetch`) and local commits (`git add`, `git commit`) are unaffected. The hook fails the call rather than queueing it for approval; if you need a blocked operation, ask the user to run it directly.
+Reads (`git status`, `git log`, `git diff`, `git show`, `git fetch`) and staging (`git add`) are unaffected. The hook fails the call rather than queueing it for approval; if you need a blocked operation, ask the user to run it directly.
 
 ## Multi-statement bash and shell expansion
 
