@@ -158,6 +158,18 @@ the guidelines below.
 
 - Write in plain, direct prose. No marketing language, no filler, no throat-clearing ("It should
   be noted that...", "In order to...").
+- Make claims in positive, declarative form: state what a thing is and does. Avoid antithesis
+  framing that defines something by contrast for emphasis -- "the point is not X, it is Y", "this
+  is not a Z, it is a W", "not just X but Y", "X is a guide, not a release train". A direct
+  statement carries the same information without the rhetorical setup. (This differs from the
+  negative-documentation anti-pattern in the DO NOT list, which concerns a module's absent behavior
+  or dependencies; this rule concerns rhetorical emphasis in any prose. A plain factual negative --
+  "references are not stable across mutation" -- is fine; it states a real constraint rather than
+  staging a contrast for effect.)
+- Keep a professional, instructional register. Drop slogans, motivational buildup, and editorial
+  flourishes ("It is the climb", "cleverness is bought with a measurement", "part tech demo and
+  part study guide"). Engineering documents -- READMEs, design notes, ADRs, runbooks -- stay
+  matter-of-fact and terse without dropping information.
 - Use the same terminology the codebase uses. If the code calls it a "transform", the docs call
   it a "transform" -- not a "processor" or "handler" or "middleware".
 - Keep sentences short. If a paragraph exceeds four or five sentences, consider splitting it or
@@ -323,6 +335,10 @@ into the final draft, the doc will age badly.
   `references/readme.md`).
 - **Dependents** -- "roles X, Y, Z depend on this one". Drifts the moment a
   new dependent appears.
+- **Antithesis framing and slogans** -- "the point is not X, it is Y", "not
+  just X but Y", "X is a guide, not a release train", "It is the climb". State
+  the fact in positive, declarative form. Keep plain factual negatives that
+  name a real constraint ("references are not stable across mutation").
 - **Rationale restated from an ADR, parent README, or sibling** -- link and
   summarize in one sentence; don't repeat.
 - **Transcribed code behavior** -- "the function checks that X, Y, and Z".
