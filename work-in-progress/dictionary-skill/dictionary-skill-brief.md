@@ -125,22 +125,29 @@ Each term is one entry. Keep the fields lightweight:
 - **term** -- the concept name (canonical, lower_snake as it reads in the
   domain).
 - **definition** -- one or two neutral sentences. No narrative, no rationale.
-- **carried by** -- the type(s) and domain(s) that express it (e.g.
-  `types::price` in all three domains). Points at the domain concept, not a
-  versioned header path.
-- **aliases** -- divergent names for the same concept across domains. This is
-  where a cross-boundary rename is recorded while it stays small.
+- **carried by** -- the strong type(s) and domain(s) that express it (e.g.
+  `types::price` in all three domains). Name the type and the owning domain, not
+  the per-message field paths or an exhaustive list of call sites -- those churn
+  and make the field drift. When one concept has a different strong type per
+  domain, list each (e.g. `types::quantity` (`matching_engine`),
+  `types::leaves_qty` (`market_data`)).
+- **aliases** -- the bare alias name(s) only, no domain tag or gloss (e.g.
+  `last_px`). An alias appears when a concept keeps a genuinely different name on
+  one side of a boundary. When the domains instead share the name, the concept is
+  a single term carried by both -- no alias.
 - **related** -- see-also links to sibling terms.
 - **not to be confused with** -- the polysemy guard (e.g. an order's `side` vs a
-  trade's `aggressor_side`; `resting_quantity` on an add vs `remaining_quantity`
-  on an update).
+  trade's `aggressor_side`; an order's limit `price` vs the execution price
+  `trade_price`).
 
 Give enum-like terms their valid values inline (e.g. `order_type`: limit,
 market; `time_in_force`: day, ioc).
 
-The `related`, `aliases`, and `not to be confused with` fields render as
-intra-document links to the target term's entry, not as plain text. A reader on
-GitHub clicks `resting_quantity` in a `related` line and jumps to that entry.
+The `related` and `not to be confused with` fields, and any inline term mention
+that has its own entry, render as intra-document links to that entry, not as
+plain text. A reader on GitHub clicks `order_qty` in a `related` line and jumps
+to that entry. The `aliases` field carries bare names; link one only if that
+alias is itself a term entry (usually it is not, so it stays plain text).
 Link to GitHub's auto-generated heading anchor: lowercase the heading, replace
 spaces with hyphens, drop punctuation -- `### user, user_id` becomes
 `#user-user_id`, so the link is `[user_id](#user-user_id)`. When a target term is
@@ -153,11 +160,13 @@ a header) use ordinary relative links.
 The dictionary's distinctive value is exposing where one concept wears different
 names across the boundary. Two outcomes, and the skill must distinguish them:
 
-- **Deliberate boundary rename** -> record as an inline **alias** on the concept
-  entry, attributed to the converter that performs it. Example: the public feed
-  re-expresses internal names in FIX vocabulary (`remaining_quantity` ->
-  `leaves_qty`, `trade_price` -> `last_px`). That is intentional; the dictionary
-  documents it, it does not flag it for change.
+- **Deliberate boundary rename** -> record as an inline bare **alias** on the
+  concept entry. Example: the public feed re-expresses the execution price in FIX
+  vocabulary (`trade_price` -> `last_px`). That is intentional; the dictionary
+  documents it, it does not flag it for change. (If the team instead unifies the
+  name across the boundary -- as the quantity stages now share `order_qty` /
+  `leaves_qty` / `last_qty` between engine and feed, differing only in strong type
+  -- the concept becomes one term carried by both domains, with no alias.)
 - **Accidental divergence** (the same concept named inconsistently with no
   deliberate reason) -> document the current state factually, and flag it in
   `DICTIONARY-report.md` as a unify-or-keep decision for the human. The skill
@@ -171,15 +180,16 @@ raising it in the report when intent is unclear. Let the human decide.
 Model the precise shapes on the index skill's "Output format" sections, adapted
 to vocabulary:
 
-- **Root `DICTIONARY.md`**: a short framing paragraph (reference material,
-  scope, version-independence), a "how to read an entry" note naming the schema
-  fields, a "cross-domain naming" note pointing at the converters that own the
-  renames, then the entries grouped by theme (identity, order attributes,
-  quantities, prices, matching/event stream, etc.), and a maintenance note (when
-  a module earns its own file; that it is hand-maintained and unenforced). The
-  theme groups are `##` headings and each term is a `###` heading, so GitHub
-  renders a usable section structure and every term gets a linkable anchor.
-  Cross-references between entries are real anchor links (see entry schema).
+- **Root `DICTIONARY.md`**: a short framing paragraph that states what the file
+  is (reference material, scope, version-independence), a "how to read an entry"
+  note naming the schema fields, then the entries grouped by theme (identity,
+  order attributes, quantities, prices, matching/event stream, etc.). No
+  cross-domain-naming section and no maintenance section: a rename shows up as a
+  bare alias on the concept entry, and maintenance rules live in `AGENTS.md`, not
+  the glossary. The theme groups are `##` headings and each term is a `###`
+  heading, so GitHub renders a usable section structure and every term gets a
+  linkable anchor. Cross-references between entries are real anchor links (see
+  entry schema).
 - **Per-module `DICTIONARY.md`** (only when earned): title, back-link to the
   root (`Part of the [project dictionary](../../DICTIONARY.md).`), the module's
   genuinely local terms, and the inbound-translation table for the seam it
@@ -266,16 +276,27 @@ Shared concepts (each domain owns its own `types::` version): `symbol` (an
 `order_id`/`user_order_id`, `order_type` (limit/market), `time_in_force`
 (day/ioc), and the engine's `order_key` (user_id + order_id).
 
+Quantity stages: `order_quantity` (the size submitted on a new order), and the
+shared engine/feed names `order_qty` (size that rests after any immediate fill),
+`leaves_qty` (residual after a partial fill), and `last_qty` (size filled in a
+match).
+
 Matching and the event stream: `maker`/`taker`, `aggressor_side`, `resting
 order`, `book delta` (order_added/order_updated/order_removed), `trade`/`trade
 tape`, `engine_event`, `order_book` and `top of book`/`best bid`/`best ask`.
 
-The instructive divergences (your skill must handle both kinds):
+The instructive divergences (your skill must handle every kind):
 
-- **Deliberate FIX boundary renames** at the public feed, owned by the `project*`
-  converter in `market_data`: `resting_quantity`/`order_quantity` -> `order_qty`,
-  `remaining_quantity` -> `leaves_qty`, `trade_price` -> `last_px`,
-  `trade_quantity` -> `last_qty`. These are aliases, not problems.
+- **A genuine boundary alias**: the execution price is `trade_price` in the
+  engine and `last_px` on the public feed, performed by the `project*` converter
+  in `market_data`. This is the one surviving cross-boundary rename; record it as
+  a bare alias on the concept entry, not as a problem.
+- **A name unified across the boundary**: the quantity lifecycle stages
+  (`order_qty` on the add, `leaves_qty` on an update, `last_qty` on a trade) now
+  use the same names in `matching_engine` and `market_data`, differing only in
+  the strong type each domain owns (`types::quantity` vs `types::order_qty` and
+  friends). Each is a single term carried by both domains, with no alias. The
+  skill must not invent an alias for a name the domains share.
 - **A README/code conflict worth flagging**: the repo README says the public
   market_data feed never carries identity, but the projected book-delta messages
   currently carry `user`/`user_order_id`. A good run documents what the messages
@@ -299,9 +320,13 @@ around the points above.
    across order_routing, matching_engine, and market_data." (Full mode. Assert:
    single root file, compact `AGENT_DICTIONARY.md`, no empty module files;
    `AGENTS.md` loads the compact file and keeps the full dictionary on demand;
-   `symbol` is one concept with no alias; the FIX names appear as aliases on
-   price/quantity; the report flags the market_data identity question. Diff
-   against the existing `DICTIONARY.md` and `AGENT_DICTIONARY.md`.)
+   `symbol` is one concept with no alias; `last_px` is recorded as a bare alias
+   on `trade_price`/`price`, while the quantity FIX names `order_qty` /
+   `leaves_qty` / `last_qty` are terms carried by both `matching_engine` and
+   `market_data` (not aliases); `carried by` names types and domains, not field
+   paths; no cross-domain-naming or maintenance section; the report flags the
+   market_data identity question. Diff against the existing `DICTIONARY.md` and
+   `AGENT_DICTIONARY.md`.)
 2. "I just renamed a field and added an enum in matching_engine -- refresh the
    dictionary." (Incremental mode. Assert: it diffs the vocabulary-bearing files
    since the last commit, touches only affected terms, and writes a changes
