@@ -42,7 +42,7 @@ Sections in this order. Include a section only when it has real content -- an em
 | Goal | What this session/phase was trying to achieve. One short paragraph. Skip if the plan already states it and nothing changed. |
 | What landed | What actually changed, grouped by phase/theme/workstream. `file:line` refs, not pasted code. Name the commits if they exist. This is the heart of the document. |
 | Decisions taken | Calls made during execution that the plan did not pre-decide -- naming, scope cuts, a chosen approach among alternatives. One line each, with the why. |
-| Verification | The exact commands run and their results: `./build.sh asan` clean, `mil_strong_type_test` 74 assertions in 14 cases passing. Real output, not "tests pass". |
+| Verification | The exact commands run and their results: `./build.sh asan` clean, `core_strong_type_test` 74 assertions in 14 cases passing. Real output, not "tests pass". |
 | What's pending / Next steps | What remains, numbered and actionable. For a phased plan, this is the next phase with any adjustments the current phase forced. |
 | Open questions | Things whose answer changes what the next agent does. Phrase as questions; when you have a recommendation, state it ("Recommend option 1: skip entirely, note the deviation in the commit message."). |
 | How to resume | The first concrete moves: which files to read (this doc + the plan), which commands confirm current state. A bash block when the moves are mechanical. |
