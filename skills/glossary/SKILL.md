@@ -10,8 +10,9 @@ description: >-
   don't say the word "glossary". It surfaces terms from the code's types,
   messages, and boundary translations, aligns each definition with the field's
   authoritative glossaries, and writes a flat compact GLOSSARY.md plus a reviewer
-  report. Not for navigation maps (use an index skill), per-field data
-  dictionaries, READMEs, or ADRs.
+  report -- and, for a glossary too large to always-load, an always-loaded
+  term-name index that fronts it. Not for navigation maps (use an index skill),
+  per-field data dictionaries, READMEs, or ADRs.
 license: MIT
 ---
 
@@ -25,8 +26,15 @@ concept wears one name, and anchors agent context in domain terms.
 It is reference material in the Diataxis sense -- neutral, factual, built for
 quick lookup, no narrative. It is a single compact file: a flat, grouped list of
 terse one-line entries, small enough to load into agent context and complete
-enough to be the human reference. It does not split into a verbose "full" file
-plus a compact "agent" file; one file serves both.
+enough to be the human reference. One file serves both roles -- it does not
+split into a verbose "full" file plus a hand-written compact "agent" summary.
+
+The one split the skill does make is mechanical, not editorial. Once a glossary
+grows too large to load on every run, a *names-only index* (`GLOSSARY-INDEX.md`)
+sits beside it -- a flat list of every headword, one per line, nothing else --
+and `AGENTS.md` loads that index instead of the full file, which moves to
+grep-on-demand. The index is the headwords verbatim, never a reworded digest.
+See "The term index" below; a small glossary needs none.
 
 This skill is the glossary counterpart to an index skill. An index is a map --
 it points at *where things live*. A glossary is a dictionary -- it says *what the
@@ -124,6 +132,14 @@ A doc tree parallel to the README tree (orientation prose) and any INDEX tree
   one: it owns vocabulary genuinely local to that subdomain, which the root
   should not absorb. Per-subdomain files back-link to the root. Do not create
   empty module files; bias hard toward the single root file.
+- **`GLOSSARY-INDEX.md`** -- *only when its sibling glossary is too large to load
+  on every run.* A flat list of every headword in the glossary it sits beside,
+  one per line, no definitions and no prose. It sits next to that glossary (the
+  root index beside the root `GLOSSARY.md`; a per-subdomain glossary that grows
+  large earns its own sibling index), and indexes only that file's terms.
+  `AGENTS.md` loads the index in place of the full glossary, and agents grep the
+  full file for a definition. A small glossary needs no index -- the full file is
+  already the compact loadable artifact. See "The term index".
 
 The two levels form one hierarchy with a single allocation rule: a term shared
 across subdomains lives at the root and is stated once there; a term only one
@@ -142,8 +158,13 @@ definition leaned on an external glossary (with the source), and anything
 deliberately left out. The glossary is for downstream agents and humans alike;
 the report is for the human.
 
-When the project wires docs into agents via `AGENTS.md`, the skill points that
-import at `GLOSSARY.md` directly; there is no separate agent-only glossary file.
+When the project wires docs into agents via `AGENTS.md`, the import points at
+`GLOSSARY.md` directly for a small glossary. For a large one it points at
+`GLOSSARY-INDEX.md` instead, and `GLOSSARY.md` becomes on-demand (grep a
+headword). Either way there is no hand-written agent-only *summary*: the index,
+when it exists, is the headwords verbatim, not a reworded digest. How the index
+is used and kept in sync is stated in `AGENTS.md`, not in the index file -- the
+file is the term list and nothing more.
 
 ## What it is for, and what it is not
 
@@ -162,9 +183,40 @@ This skill does not:
 - document foundation/tooling libraries that are out of scope;
 - rename code (it surfaces naming questions; the human decides).
 
-It may update `AGENTS.md` only to wire the glossary into agent context: load
-`GLOSSARY.md`, and state the rule that vocabulary changes update it. It surfaces
-and defines domain terms -- nothing else.
+It may update `AGENTS.md` only to wire the glossary into agent context: load the
+always-loaded layer, and state the rule that vocabulary changes update it. It
+surfaces and defines domain terms -- nothing else.
+
+## The term index
+
+A small glossary is its own loadable artifact: the full file is compact enough
+to ride in every agent session. A large one is not -- a few hundred entries cost
+real tokens on every run, most of them unread on any given task. When a glossary
+crosses that line (roughly 120-plus entries, or a rendered file past a few
+hundred lines / a few thousand tokens -- judge against the project's always-load
+budget, not a hard count), write a `GLOSSARY-INDEX.md` beside it and let
+`AGENTS.md` load the index in place of the full file, which becomes
+grep-on-demand.
+
+The index is nothing but a flat list of headwords, one per line, in the same
+order as the glossary. No framing paragraph, no `Domain context:` line, no
+grouping, no usage note -- those either duplicate the glossary or belong in the
+agent instructions that load the file. A reader (or grep) has the exact spelling
+from a line, then greps that headword in the glossary for the definition.
+
+Each index sits next to the glossary it indexes and lists **only that file's
+terms.** The root index covers the root `GLOSSARY.md`; a per-subdomain glossary
+that is itself large enough earns its own sibling index over its own terms. An
+index never reaches into another glossary's vocabulary.
+
+The index is mechanically derived, not authored: every line is a headword copied
+*verbatim* from the sibling glossary -- including any parenthetical, so `grep`
+matches (`BOE (Binary Order Entry)`, not `BOE`). It holds no term the glossary
+does not define and omits none that it does: **the index term set equals the
+glossary headword set, exactly.** Regenerate the index in the same run that
+writes or splices the glossary, in every mode, so the two never drift. The how
+(grep a headword for a definition) and the sync rule live in `AGENTS.md`, not in
+the index file.
 
 ## Scope
 
@@ -302,9 +354,11 @@ Representation is deliberately omitted.
 
 ### Be concise
 
-The root glossary is loaded into agent context on every run, so every word costs
-tokens on every load. Keep each definition to the concept itself, in as few words
-as carry the meaning.
+The always-loaded layer -- the full `GLOSSARY.md` for a small glossary, or
+`GLOSSARY-INDEX.md` for a large one -- rides in agent context on every run, so
+every word costs tokens on every load. Keep each definition to the concept
+itself, in as few words as carry the meaning; a tighter definition also keeps
+the on-demand grep'd entry cheap.
 
 **Do not enumerate.** A definition states what the term is, not the full set of
 values it can take or fields it contains. Name the concept; add one or two
@@ -371,8 +425,9 @@ unclear.
 ## Output formats
 
 See `references/output-template.md` for a complete worked example -- the root
-file, an earned per-subdomain file, the `AGENTS.md` wiring, and the report,
-against a realistic layout. The shapes in brief:
+file, an earned per-subdomain file, the large-glossary `GLOSSARY-INDEX.md` with
+its alternate `AGENTS.md` wiring, and the report, against a realistic layout. The
+shapes in brief:
 
 **Root `GLOSSARY.md`:**
 
@@ -411,16 +466,33 @@ the root frames the whole system, a back-link to the root
 to the module's actual location), and the subdomain's genuinely local terms in
 the same compact form.
 
+**`GLOSSARY-INDEX.md`** (only when its sibling glossary is too large to
+always-load): a flat list of the sibling glossary's headwords, one per line, in
+the same order as the glossary, copied verbatim. No title, no framing, no
+`Domain context:` line, no grouping, no usage note -- just the terms.
+
+```
+<Term>
+<Next term>
+<Next term>
+...
+```
+
 **`GLOSSARY-report.md`:** grouped by category -- ambiguities, divergences
 (unify-or-keep, with the concrete cross-boundary name mapping), README/code
 conflicts (both sides quoted), external-source notes (term -> glossary used),
 decisions, and skipped. **Keep empty sections with a "none" note** so the human
 knows the run checked.
 
-**`AGENTS.md` integration:** when the project has `AGENTS.md`, add `@GLOSSARY.md`
-to the always-loaded context and the sync instruction that `GLOSSARY.md` changes
-when domain vocabulary changes. Reference any per-subdomain files as on-demand
-drill-downs.
+**`AGENTS.md` integration:** when the project has `AGENTS.md`, wire in the
+glossary. For a small glossary, add `@GLOSSARY.md` to the always-loaded context.
+For a large one, add `@GLOSSARY-INDEX.md` to the always-loaded context instead,
+list `GLOSSARY.md` under on-demand context with the grep-a-headword workflow, and
+note that the index's term names ride in every session while definitions are
+grepped on demand. Either way, state the sync rule: domain-vocabulary changes
+update `GLOSSARY.md` (and, when an index exists, splice the matching headword
+into or out of `GLOSSARY-INDEX.md` in the same change). Reference any
+per-subdomain files as on-demand drill-downs.
 
 Drafting follows the project's documentation conventions: have subagents consult
 the `documentation` skill for structure and `writing-clearly-and-concisely` for
@@ -447,6 +519,11 @@ Three modes, with explicit user instruction taking precedence over project state
   cross-boundary rename even when no type changed), derive the affected terms,
   and run scoped against them. Produce a changes report.
 
+In every mode, when a `GLOSSARY-INDEX.md` exists -- or the glossary has grown
+large enough to warrant one (see "The term index") -- regenerate or
+splice it in the same run, so its headword set stays exactly equal to the
+glossary's.
+
 ### Phases
 
 Parallelized one subagent per domain module (use `dispatching-parallel-agents`
@@ -469,7 +546,8 @@ message so they run concurrently):
    `-- report-fragments/<module>.md
    ```
    The folder is not cleaned on completion; final artifacts go to the repo
-   (`GLOSSARY.md`, `GLOSSARY-report.md`, any `<module>/GLOSSARY.md`).
+   (`GLOSSARY.md`, `GLOSSARY-report.md`, any `<module>/GLOSSARY.md`, and
+   `GLOSSARY-INDEX.md` when the root glossary is large enough to warrant one).
 2. **Identify the domain and subdomains** from `README.md`, `docs/`, and
    `AGENTS.md`. Write `domain.md`. Do not proceed until the domain is named.
 3. **Locate the vocabulary-bearing files and translators**, and **launch
@@ -480,7 +558,10 @@ message so they run concurrently):
    to `terms/<module>.md` and findings to `report-fragments/<module>.md`.
 5. **Assemble** the single compact root file (plus any earned subdomain files)
    from the working folder, the report from the fragments, and the `AGENTS.md`
-   wiring when present.
+   wiring when present. For each glossary file large enough to warrant it, also
+   assemble its sibling `GLOSSARY-INDEX.md` -- a flat list of that file's
+   headwords, one per line, term set identical to it -- and point the `AGENTS.md`
+   always-loaded import at the index instead of the full file.
 6. **Verify** (below), then stop and report.
 
 ### Verification
@@ -510,7 +591,17 @@ Before declaring done, check:
 - each definition is self-contained and conceptual: it defines what the term is
   and is for, not its consumers, and not the steps, flow, or order of operations
   -- and makes no claim a different configuration would falsify;
-- `AGENTS.md`, when present, loads `GLOSSARY.md` and states the sync rule.
+- when a glossary is large enough to warrant an index, a `GLOSSARY-INDEX.md`
+  sits beside it as a flat list of headwords, one per line, with no framing,
+  grouping, or other prose, and its term set is exactly equal to that glossary's
+  headword set -- no missing terms, no extra terms, no duplicates, no terms drawn
+  from any other glossary;
+- index lines are verbatim copies of the headwords (parentheticals included), so
+  a grep of a line matches in the sibling glossary;
+- `AGENTS.md`, when present, wires the glossary into agent context (the full
+  `GLOSSARY.md` always-loaded for a small glossary, or `GLOSSARY-INDEX.md`
+  always-loaded with `GLOSSARY.md` on-demand for a large one) and states the
+  sync rule.
 
 If verification fails, stop and report -- do not hand-wave. The glossary is
 consumed as ground truth by downstream agents.
@@ -526,5 +617,6 @@ run made.
 
 - `references/output-template.md` -- a complete worked example of the root
   `GLOSSARY.md`, an earned per-subdomain `GLOSSARY.md`, the `AGENTS.md` wiring,
-  and `GLOSSARY-report.md`, so a subagent drafting the glossary has the target
-  shape in front of it.
+  `GLOSSARY-report.md`, and the large-glossary `GLOSSARY-INDEX.md` with its
+  alternate `AGENTS.md` wiring, so a subagent drafting the glossary has the
+  target shape in front of it.

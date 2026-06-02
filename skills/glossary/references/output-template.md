@@ -20,6 +20,11 @@ The glossary lives in three or four places on disk:
 - `acme-exchange/GLOSSARY-report.md` -- the companion report for the human.
 - `acme-exchange/AGENTS.md` -- the wiring snippet (an edit, not a new file).
 
+This example glossary is small (under thirty terms), so it produces no
+`GLOSSARY-INDEX.md` -- the full root file is already the compact always-loaded
+artifact. The last section below shows the index shape for a glossary that has
+grown too large to load on every run.
+
 The trading definitions below align with NASDAQ, CME Group, and the FIX field
 dictionary. A run in another domain aligns with that field's authorities
 instead (clinical: SNOMED/LOINC; logistics: Incoterms); the *shape* is identical.
@@ -303,4 +308,84 @@ checklist.
 - `src/*/v1/`, `src/*/v2/` -- versioned implementation variants. Terms are
   version-stable; the glossary sits at the subdomain root, not under a version
   folder.
+```
+
+---
+
+## The term index (large glossaries)
+
+`acme-exchange` above is small, so the full `GLOSSARY.md` is the loadable
+artifact and no index exists. The shape below is for a different, larger
+project -- a full order-routing and risk stack whose root glossary runs to a
+couple of hundred terms, too many to load on every run. There, a
+`GLOSSARY-INDEX.md` sits beside the glossary and `AGENTS.md` loads it in place of
+the full file, which becomes grep-on-demand.
+
+### Index: `GLOSSARY-INDEX.md`
+
+The index is nothing but the sibling glossary's headwords, one per line, in the
+same order, copied verbatim. No title, no framing, no `Domain context:` line, no
+grouping, no usage note -- the grep workflow and the sync rule live in
+`AGENTS.md`, not here. Abridged (a real index lists every term):
+
+```
+Account
+Add liquidity
+Aggressor
+Ask
+B3
+Bid
+BOE (Binary Order Entry)
+Client order ID
+Exchange
+FIX
+FIX session
+Fill
+Firewall
+Leaves quantity
+Limit
+Liquidity
+Maker
+Matching engine
+Order
+Order book
+...
+```
+
+Notes:
+
+- Each line is a headword copied verbatim, including the parenthetical
+  (`BOE (Binary Order Entry)`), so `grep '**BOE'` lands in `GLOSSARY.md`.
+- The index term set equals the sibling glossary's headword set, exactly -- the
+  list above is abridged for the example, but a real index lists every term and
+  no term from any other glossary.
+
+### Alternate `AGENTS.md` wiring (large glossary)
+
+The always-loaded import points at the index, and the full file moves to
+on-demand. The how-to-use and sync instructions live here, in the agent rules --
+not in the index file:
+
+```markdown
+## Always-loaded context
+
+- Root navigation map: @INDEX.md
+- Domain term index: @GLOSSARY-INDEX.md -- a flat list of every term defined in
+  `GLOSSARY.md`, so the vocabulary stays in view with the exact spelling.
+
+## On-demand context
+
+- `GLOSSARY.md` -- the full domain glossary, one terse definition per term. When
+  you need one, grep the bold headword here and read that entry
+  (`grep -n '**Aggressor' GLOSSARY.md`). The index gives the exact spelling, so
+  the grep matches. This is a plain grep -- no search subagent needed.
+```
+
+Maintenance / sync rule:
+
+```markdown
+- `GLOSSARY.md` -- update when a change adds, removes, renames, or changes the
+  meaning of a domain term. Any added, renamed, or retired term also changes
+  `GLOSSARY-INDEX.md`: add or remove the matching line in the same change, so its
+  term list stays exactly equal to the headwords in `GLOSSARY.md`.
 ```
