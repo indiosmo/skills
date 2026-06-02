@@ -10,15 +10,16 @@ The page reads top to bottom as:
 
 1. **Title and lede** -- one `<h1>` naming the change, followed by a one-paragraph `<p class="lede">`. Two or three sentences: what the change is, why it exists, where it lands. The reader who only reads the lede should know what brief they are holding.
 2. **Goal** -- a short `<section class="goal">` with `<h2>Goal</h2>` and either one paragraph or three bullets. The outcome the change must produce, stated as an outcome (not as a list of tasks).
-3. **Assumptions** (optional) -- the same `.assumptions` block decision-matrix uses. Premises the brief takes as settled. Omit when there are none.
-4. **Open Questions** (optional) -- the same `.open-questions` block decision-matrix uses. Questions whose answer would change the design. Omit when there are none.
-5. **Requirements** -- a `<section class="requirements">` with `<h2>Requirements</h2>` and a `<ul>` of verifiable requirements.
-6. **Impact map** -- a `<section class="impact">` with `<h2>Impact map</h2>` and one sub-section per module touched. See "Impact map" below.
-7. **Decision points** -- a `<section class="decisions">` with `<h2>Decision points</h2>` and one `<h3 class="subdecision">` per decision. Each decision either embeds a full matrix (see "Embedded matrices") or carries a one-line trade-off note plus a Decision block when resolved.
-8. **Code samples** (optional) -- one or more code-sample blocks (decision-matrix's `.code-samples` chrome) placed under the decision point they support, *not* in a separate section at the end.
-9. **Risks and edge cases** (optional) -- a `<section class="risks">` with `<h2>Risks and edge cases</h2>` and a `<ul>` of risks, each citing the `file:line` where the risk lives.
+3. **Terminology** (optional) -- a `<section class="terminology">` establishing the shared language the rest of the brief is written in. See "Terminology" below. Omit when the change introduces no term worth pinning down.
+4. **Assumptions** (optional) -- the same `.assumptions` block decision-matrix uses. Premises the brief takes as settled. Omit when there are none.
+5. **Open Questions** (optional) -- the same `.open-questions` block decision-matrix uses. Questions whose answer would change the design. Omit when there are none.
+6. **Requirements** -- a `<section class="requirements">` with `<h2>Requirements</h2>` and a `<ul>` of verifiable requirements.
+7. **Impact map** -- a `<section class="impact">` with `<h2>Impact map</h2>` and one sub-section per module touched. See "Impact map" below.
+8. **Decision points** -- a `<section class="decisions">` with `<h2>Decision points</h2>` and one `<h3 class="subdecision">` per decision. Each decision either embeds a full matrix (see "Embedded matrices") or carries a one-line trade-off note plus a Decision block when resolved.
+9. **Code samples** (optional) -- one or more code-sample blocks (decision-matrix's `.code-samples` chrome) placed under the decision point they support, *not* in a separate section at the end.
+10. **Risks and edge cases** (optional) -- a `<section class="risks">` with `<h2>Risks and edge cases</h2>` and a `<ul>` of risks, each citing the `file:line` where the risk lives.
 
-The reader's eye flows: orient (lede, goal), check premises (Assumptions), see what is in flight (Open Questions), see what the change must do (Requirements), see where it lands (Impact map), see the calls being made (Decision points with embedded matrices), then risks. The order matches a reader's thinking order: outcome -> shape -> blast radius -> trade-offs -> watch-outs.
+The reader's eye flows: orient (lede, goal), learn the language (Terminology), check premises (Assumptions), see what is in flight (Open Questions), see what the change must do (Requirements), see where it lands (Impact map), see the calls being made (Decision points with embedded matrices), then risks. The order matches a reader's thinking order: outcome -> vocabulary -> shape -> blast radius -> trade-offs -> watch-outs.
 
 Omit any optional section that would be empty. A header with "TBD" underneath is worse than no header.
 
@@ -37,6 +38,40 @@ The outcome, not the task list. One paragraph or three bullets. If it reads as "
 Good: "Users can sign in with Google or GitHub. Existing username/password users see no change. Admin tooling can audit which identity provider issued a session."
 
 Bad: "Add OAuth provider config, write the callback handler, store provider IDs in the user table."
+
+## Terminology
+
+The shared-language block. It establishes what the domain words in the rest of the brief mean, so requirements and decisions written on top of them inherit one reading, not several. It is the working surface for the language: settled terms that are genuine domain vocabulary promote to `GLOSSARY.md` (the durable home); terms that are only a local clarification for this change stay here.
+
+A `<dl>` of terms. Each `<dt>` is the headword; each `<dd>` is either a one-sentence definition (what the term *is*) or, while still in flight, the ambiguity plus an `.unresolved` flag. Two entry shapes:
+
+- **Settled** -- a one-sentence definition. If the term is already in `GLOSSARY.md`, quote that definition and mark it so the reader knows the durable home holds it.
+- **Unresolved** -- the term the change hinges on whose meaning is not yet pinned down, with a one-line note on what is ambiguous (overloaded between two concepts, conflicts with the glossary, undefined). These are the terminology items the interview walks down; as each resolves, replace the flag with a definition.
+
+```html
+<section class="terminology">
+  <h2>Terminology</h2>
+  <dl>
+    <dt>Identity provider</dt>
+    <dd>The external service (Google, GitHub) that authenticates the user and issues the token the callback exchanges. <span class="glossary-ref">in GLOSSARY.md</span></dd>
+
+    <dt>Session</dt>
+    <dd class="unresolved">Unresolved: the glossary defines a session as a server-side auth record, but the OAuth flow also calls the provider's token grant a "session" -- the brief needs one word per concept.</dd>
+  </dl>
+</section>
+```
+
+Style (small additions on top of decision-matrix's base):
+
+```css
+.terminology dl { margin: 0; }
+.terminology dt { font-weight: 600; font-size: 14px; margin: 12px 0 2px; }
+.terminology dd { margin: 0 0 4px; padding-left: 16px; font-size: 14px; }
+.terminology dd.unresolved { color: var(--accent); font-style: italic; }
+.terminology .glossary-ref { font-size: 12px; color: var(--muted); font-style: italic; }
+```
+
+Reuse decision-matrix's `--accent` and `--muted` custom properties; do not introduce new colours. Define a term only when a newcomer to the domain would have to look it up -- a word used in its ordinary English sense does not earn an entry.
 
 ## Requirements
 
@@ -156,6 +191,6 @@ If the brief lives alongside a ticket or ADR, place it next to that document. If
 
 ## Iterating
 
-A brief is not write-once. See SKILL.md "Iterate" for the mechanics: promote answered Open Questions into Assumptions, add the Decision block under each resolved decision-point matrix, re-read the impact map and requirements against the new premise, fix anything that drifted. The Assumptions block is the audit log; do not silently delete entries.
+A brief is not write-once. See SKILL.md "Interview to resolution" for the mechanics: replace each unresolved Terminology flag with a definition (and promote durable terms to `GLOSSARY.md`), promote answered Open Questions into Assumptions, add the Decision block under each resolved decision-point matrix (and an ADR under `docs/adr/` for a hard-to-reverse call), re-read the impact map and requirements against the new premise, fix anything that drifted. The Assumptions block and the glossary are the audit log; do not silently delete entries.
 
-When every Open Question is gone and every decision point carries a Decision block, the brief is done.
+When every Terminology entry is defined, every Open Question is gone, and every decision point carries a Decision block, the brief is done.
