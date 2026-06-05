@@ -1,6 +1,6 @@
 ---
 name: design
-description: Iterate on the design of a proposed change until what to build and how to build it are clear. A parallel-agent discovery pass surfaces requirements, codebase impact, terminology, open questions, and decision points; an interview then walks every open item to resolution -- defining terms in the glossary, recording calls as decision matrices and ADRs, or deferring them out of scope. Produces an HTML design brief that feeds a later implementation plan.
+description: Produce an HTML design brief for a proposed change through parallel discovery and an interview that resolves every open item.
 ---
 
 # Design

@@ -1,18 +1,6 @@
 ---
 name: glossary
-description: >-
-  Generate or update a domain glossary (GLOSSARY.md) for a codebase -- the
-  ubiquitous-language layer that gives a team and its agents one shared,
-  consistent vocabulary for the domain. Use this skill whenever the user wants a
-  glossary, a domain dictionary, a terms list, a ubiquitous-language reference,
-  or wants to define, standardize, or document the domain terms and naming in a
-  codebase -- in any language (C++, Python, TypeScript, ...) -- even if they
-  don't say the word "glossary". It surfaces terms from the code's types,
-  messages, and boundary translations, aligns each definition with the field's
-  authoritative glossaries, and writes a flat compact GLOSSARY.md plus a reviewer
-  report -- and, for a glossary too large to always-load, an always-loaded
-  term-name index that fronts it. Not for navigation maps (use an index skill),
-  per-field data dictionaries, READMEs, or ADRs.
+description: Generate or update a domain glossary (GLOSSARY.md) for a codebase, aligned with the field's authoritative glossaries.
 license: MIT
 ---
 

@@ -1,19 +1,6 @@
 ---
 name: add-guidance
-description: >-
-  Fold a correction you just made into durable agent guidance, in the shape that
-  maximizes how reliably the model follows it next time. Use this skill whenever
-  you have corrected the agent and want it to get the thing right on the first
-  try in a future session -- "add this to the guidelines", "capture this
-  correction", "update the cpp guidelines so it stops doing X", "make a rule out
-  of this", "/add-guidance". Also use it to restructure an existing
-  rules-and-examples guidance file (a coding-standards doc, a style guide, a
-  CLAUDE.md / AGENTS.md idioms section, a cpp-agent-examples-style file of
-  good/bad pairs) into the adherence-optimized shape: the good example
-  load-bearing and last, a bad example kept only where its tell is non-obvious
-  and then flagged, paired, corrected, and held to a short minority. Reach for
-  this any time you are editing a guidance document made of rules plus good/bad
-  examples and you want the agent to actually imitate the good and avoid the bad.
+description: Fold a correction into durable agent guidance, or restructure a rules-and-examples guidance file into the adherence-optimized shape.
 ---
 
 # Add guidance
