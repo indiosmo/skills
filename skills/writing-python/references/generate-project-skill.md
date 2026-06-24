@@ -312,7 +312,7 @@ Python in this project. Use a description shaped like:
 ```yaml
 ---
 name: <project>-python
-description: Write, change, and review Python in the <project> codebase using its real packages, validators, and conventions - <one clause naming the project's domain packages, error model, and runtime shell>. Use whenever editing or reviewing <project> Python under src/ or tests/, parsing inputs at adapters, adding domain values or error codes, wiring runtime tasks, or writing pytest tests. Maps the generic writing-python guidelines onto <project>'s actual symbols.
+description: Guidelines for writing Python in the <project> codebase.
 ---
 ```
 

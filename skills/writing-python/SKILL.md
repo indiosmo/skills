@@ -1,6 +1,6 @@
 ---
 name: writing-python
-description: Write, refactor, and review modern Python (target 3.14, support 3.13) the way a careful team would - domain ownership, parse-at-the-boundary validation, exception-first error handling, a functional core with a runtime shell, typed contracts where they clarify, and pytest that encodes intent. Use whenever authoring, changing, or reviewing Python (.py), shaping packages, types, error paths, async or concurrency, or test structure, or when a task mentions pytest, Pydantic, Pandera, uv, Ruff, Pyright, dataclasses, asyncio/anyio, or Dagster. Also generates a self-contained, committed project-local `<project>-python` skill that maps these guidelines onto a specific codebase's packages, helpers, fixtures, commands, and examples - trigger that on requests to "apply these Python guidelines to this repo", "set up the Python skill for this project", or "generate the project Python skill".
+description: Guidelines for writing python".
 ---
 
 # Writing Python
