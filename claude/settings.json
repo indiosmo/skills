@@ -8,11 +8,12 @@
   "permissions": {
     "deny": []
   },
+  "model": "opus[1m]",
   "hooks": {},
   "enabledPlugins": {
     "pyright-lsp@claude-plugins-official": false,
-    "frontend-design@claude-plugins-official": true,
-    "allium@juxt-plugins": true
+    "frontend-design@claude-plugins-official": false,
+    "allium@juxt-plugins": false
   },
   "extraKnownMarketplaces": {
     "juxt-plugins": {
@@ -22,13 +23,13 @@
       }
     }
   },
-  "effortLevel": "xhigh",
+  "effortLevel": "high",
   "promptSuggestionEnabled": false,
   "autoMemoryEnabled": false,
+  "skipWorkflowUsageWarning": false,
   "verbose": true,
   "skipAutoPermissionPrompt": true,
   "feedbackSurveyState": {
     "lastShownTime": 1754148821130
-  },
-  "skipWorkflowUsageWarning": false
+  }
 }
