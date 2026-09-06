@@ -8,7 +8,6 @@
   "permissions": {
     "deny": []
   },
-  "model": "opus[1m]",
   "hooks": {},
   "enabledPlugins": {
     "pyright-lsp@claude-plugins-official": false,
@@ -27,9 +26,11 @@
   "promptSuggestionEnabled": false,
   "autoMemoryEnabled": false,
   "skipWorkflowUsageWarning": false,
+  "theme": "dark",
   "verbose": true,
   "skipAutoPermissionPrompt": true,
   "feedbackSurveyState": {
     "lastShownTime": 1754148821130
-  }
+  },
+  "tui": "fullscreen"
 }
