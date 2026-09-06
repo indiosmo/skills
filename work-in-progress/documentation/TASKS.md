@@ -12,6 +12,14 @@ during implementation; preserve task identifiers for tracking.
 
 ## Scope and working assumptions
 
+- Write produced documents and local references for human readers, including
+  the skill's own reference material. Each base reference has a clear purpose,
+  sufficient context, coherent structure, and useful examples and source links,
+  so a person can use it independently of the skill.
+- Reuse a human reference directly when it also meets the agent's needs. Where
+  needed, add a thin skill-oriented layer of routing, instructions, checklists,
+  and section links over that base. Keep substantive guidance in the base
+  reference and follow creating-skills' progressive disclosure in the layer.
 - Keep `SKILL.md` focused on routing and workflow. Delegate established guidance
   to public references and mechanical checks to existing tools and rule packages.
   Local notes cover specific adaptations, workflow decisions, and editorial
@@ -79,13 +87,25 @@ is usable as an input with its evidence limitations made explicit.
   instruction. Define which source sections each route consults and how to report
   unavailable sources. Check interactions with writing, glossary, diagram, and
   language skills.
+- [ ] Identify the human audience and purpose of each proposed local document or
+  reference. Record whether the agent can use it directly or needs an additional
+  skill-oriented layer, and what that layer contributes.
+- [ ] Design that layer as task routing, actionable instructions, checklists, and
+  links to base-reference sections. Keep substantive guidance in the base and
+  define how changes to it trigger review of the layer.
+- [ ] Apply creating-skills' loading structure: concise metadata, a focused
+  `SKILL.md` ideally under 500 lines, and task- or domain-specific resources read
+  on demand. Give explicit read conditions and section pointers; include a table
+  of contents in reference files over 300 lines.
 
-**Deliverables:** Skeleton `SKILL.md`; resource map and stage contracts.
+**Deliverables:** Skeleton `SKILL.md`; resource map identifying human base
+references and any additional skill-oriented layers; stage contracts.
 
 **Depends on:** DOC-01.
 
 **Done when:** Each supported entry route leads to a concrete output and its
-required checks without loading every reference.
+required checks without loading every reference, and each planned base reference
+has a clear use for a human reader independently of the skill.
 
 ## 2. Document contract, evidence, and structure
 
@@ -511,6 +531,10 @@ record distinguishes validation results from completed or pending human review.
   links, an existing site, and source comments with style violations.
 - [ ] Define expected routing, artifacts, findings, and validation outcomes. Add
   expert review criteria where quality requires judgment.
+- [ ] Review representative base references as standalone human documents for
+  purpose, context, structure, and usability. Exercise both direct agent use of a
+  base reference and a route needing an additional skill-oriented layer; check
+  section selection, loading scope, and consistency with the base guidance.
 - [ ] Run representative end-to-end scenarios and record defects for the owning
   tasks. Verify that the workflow stays focused on the selected document or group.
 
@@ -519,7 +543,8 @@ record distinguishes validation results from completed or pending human review.
 **Depends on:** Draft the rubric after DOC-02; run full acceptance after DOC-21.
 
 **Done when:** Each goal requirement is exercised, automated checks catch their
-target defects, and reviewed examples demonstrate usable documentation.
+target defects, reviewed examples demonstrate usable documentation for humans,
+and agents can locate and apply the relevant guidance through either resource path.
 
 ### DOC-23: Finish the skill and replace the existing version
 
@@ -531,6 +556,10 @@ target defects, and reviewed examples demonstrate usable documentation.
 - [ ] Check that durable resources use durable references, that upstream links
   resolve to the relevant guidance, and that local instructions cover specific
   needs. Remove duplicated upstream explanations and rules already owned by tools.
+- [ ] Verify that base references read as ordinary human documents and that each
+  additional skill-oriented layer has a demonstrated need, accurate section
+  links, and instructions consistent with its base. Check progressive disclosure,
+  read conditions, and tables of contents against DOC-02.
 - [ ] Document maintenance of source references, rule catalogs, tool versions,
   style packages, integrations, and regression fixtures.
 - [ ] Run the applicable skill-format checks and DOC-22 acceptance scenarios on

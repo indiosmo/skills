@@ -14,6 +14,10 @@ The skill focuses on writing a single document (or related group of documents if
 
 Keep the skill small. Delegate established guidance to publicly available sources and mechanical checks to existing tools and rule packages. Link to the relevant upstream sections and consult them when needed. Local guidance covers the skill's workflow, project-specific adaptations, and editorial decisions that tools such as Vale cannot assess. Add custom automation only for demonstrated gaps. Use concise templates and checklists where they help perform a task; avoid reproducing upstream guides or maintaining large local rulebooks.
 
+Write the documents and references we produce as ordinary documents for humans. This includes the skill's own reference material: give each document a clear purpose, enough context for its intended reader, a coherent structure, and examples and source links where useful. A person should be able to read and use the base reference independently of the skill.
+
+Reuse that human document directly when it also serves the agent well. Where the agent needs a different organization, add a thin skill-oriented layer over the base reference: task routing, instructions, checklists, and links to the relevant sections. Keep substantive guidance in the base reference and maintain the layer's links as it changes. Follow creating-skills' progressive disclosure: concise metadata, a focused SKILL.md (ideally under 500 lines), and resources loaded as needed, with explicit guidance on when to read them. Organize resources by task or domain and include a table of contents in reference files over 300 lines.
+
 The skill should follow best practices and standards of technical writing ( see work-in-progress/documentation/Tech Writing AI Skill Research.md )
 
 Before writing a document we should establish the audience, the task, the source of truth, output structure.
