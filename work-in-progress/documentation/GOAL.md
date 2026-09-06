@@ -1,6 +1,12 @@
 # Goal
 
-Create a documentation skill for producing documentation following the diataxis framework, publishing with mkdocs, using doxygen to generate documentation from code (to serve as the reference part of diataxis).
+Create a documentation skill for writing and maintaining documents following the Diataxis framework, including documentation comments in source code.
+
+The documents live in a MkDocs and Doxygen environment: MkDocs presents the documentation site, and Doxygen generates code reference from source comments. These tools establish the authoring and validation context. Publication and verification happen through CI jobs maintained by the consuming project.
+
+The skill owns document creation, updates, review, drift analysis, and the tools and instructions needed to verify the documents. It produces changes and validation results suitable for the project's CI jobs. Configuring generation pipelines, choosing publication integrations, provisioning hosting, and deploying the site are outside the skill's scope.
+
+Validation may require running the project's existing Doxygen generation and MkDocs build, including in a temporary directory, to inspect rendered output and check links or diagnostics. Those runs verify documentation changes; the project's generation and publication setup remains the context in which the skill operates.
 
 https://vale.sh/ for linting both docs and comments in code (https://vale.sh/features/code), starting from google's style guide (https://vale.sh/explorer/google).
 
@@ -41,8 +47,9 @@ Contextual pass
   Potential links, explanations in terms of or in connection with something else, analogies, "see also" sections, etc. Potential updates to other existing docs in light of the one being worked on (e.g. a backlink, etc.)
 
 Validation
-  Validate like code, lint with vale, build with mkdocs --strict (validating links, etc), use lychee (https://github.com/lycheeverse/lychee) for external link validation.
+  Validate like code, lint with vale, run the project's mkdocs --strict build where applicable, and use lychee (https://github.com/lycheeverse/lychee) for external link validation. Verify which links and anchors each check covers in the project's configuration.
   Validate doxygen comments according to the style guide (both vale and the doxygen style guide below.)
+  Run existing Doxygen generation when needed to validate comments, generated reference, and cross-references. Use temporary output where appropriate. Supply repeatable checks and diagnostics usable locally and by CI jobs, and report checks that could not run.
 
 Changelogs
   Reviewing git history for changes to keep changelogs, for the code, and another for docs themselves (e.g. added a page, changed something on a page, ...)
