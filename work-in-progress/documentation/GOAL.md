@@ -12,6 +12,8 @@ https://vale.sh/ for linting both docs and comments in code (https://vale.sh/fea
 
 The skill focuses on writing a single document (or related group of documents if multi-part for organization reasons, like a multi step tutorial).
 
+Keep the skill small. Delegate established guidance to publicly available sources and mechanical checks to existing tools and rule packages. Link to the relevant upstream sections and consult them when needed. Local guidance covers the skill's workflow, project-specific adaptations, and editorial decisions that tools such as Vale cannot assess. Add custom automation only for demonstrated gaps. Use concise templates and checklists where they help perform a task; avoid reproducing upstream guides or maintaining large local rulebooks.
+
 The skill should follow best practices and standards of technical writing ( see work-in-progress/documentation/Tech Writing AI Skill Research.md )
 
 Before writing a document we should establish the audience, the task, the source of truth, output structure.
@@ -81,6 +83,6 @@ work-in-progress/documentation/Tech Writing AI Skill Research.md
 https://www.writethedocs.org/guide/writing/beginners-guide-to-docs/
 https://www.writethedocs.org/guide/writing/docs-principles/
 
-https://micro-os-plus.github.io/develop/doxygen-style-guide/ (this specifically should become one of the skill documents, with all the rules, so that both agents and humans can refer to, and ideally a linter script that we can point to a directory and lints docstrings in every file there. can be a python tool (use uv for dependency mangement), can use tree-siter if it helps, etc.).
+https://micro-os-plus.github.io/develop/doxygen-style-guide/ is the upstream Doxygen style reference for agents and humans. Keep local notes limited to adoption, specific adaptations, and enforcement coverage. Provide a directory-level linter for checks that existing tools do not cover; use uv for custom Python tooling and evaluate parser support such as tree-sitter if needed. Link diagnostics and coverage records to the upstream rules.
 
 https://developers.google.com/style

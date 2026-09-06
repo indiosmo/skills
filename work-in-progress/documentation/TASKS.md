@@ -12,8 +12,15 @@ during implementation; preserve task identifiers for tracking.
 
 ## Scope and working assumptions
 
-- Keep `SKILL.md` focused on routing and workflow. Put detailed rules in
-  references, reusable starting points in templates, and automation in tools.
+- Keep `SKILL.md` focused on routing and workflow. Delegate established guidance
+  to public references and mechanical checks to existing tools and rule packages.
+  Local notes cover specific adaptations, workflow decisions, and editorial
+  judgment that automation cannot supply.
+- Treat the reference paths below as proposed homes for necessary local content,
+  not a requirement to create a guide for every task. Consolidate short notes and
+  link directly to upstream sections wherever those already meet the need.
+- Keep templates and checklists concise. Add local prose or custom rules only when
+  they address a demonstrated gap; assess that gap before creating each resource.
 - Support creating, updating, reviewing, and checking drift in a selected document.
   Context review can identify related edits and navigation changes.
 - Use Diataxis for tutorials, how-to guides, reference, and explanation. Give
@@ -68,8 +75,10 @@ is usable as an input with its evidence limitations made explicit.
 - [ ] Define how existing project conventions and explicit user instructions apply.
 - [ ] Define where working records live, how a task resumes, and what belongs in
   the final delivery. Keep durable skill resources independent of temporary plans.
-- [ ] Assign each rule one owning reference and define which references each route
-  loads. Check interactions with writing, glossary, diagram, and language skills.
+- [ ] Assign each concern to an upstream source, existing tool, or necessary local
+  instruction. Define which source sections each route consults and how to report
+  unavailable sources. Check interactions with writing, glossary, diagram, and
+  language skills.
 
 **Deliverables:** Skeleton `SKILL.md`; resource map and stage contracts.
 
@@ -137,29 +146,38 @@ reader task, with conditional sections clearly marked.
 
 ## 3. Writing references and templates
 
-### DOC-06: Write the Google-based house style
+### DOC-06: Adopt Google style and identify editorial guidance gaps
 
-- [ ] Distill actionable guidance from the [Google style guide](https://developers.google.com/style)
-  and Write the Docs [writing guide](https://www.writethedocs.org/guide/writing/beginners-guide-to-docs/)
-  and [principles](https://www.writethedocs.org/guide/writing/docs-principles/).
-- [ ] Cover titles, headings, voice, word choice, procedures, links, code formatting,
-  placeholders, expected output, errors, warnings, and terminology.
-- [ ] Cover scanability, progressive disclosure, accessibility, alt text, table
-  readability, inclusive language, and translation-friendly phrasing.
+- [ ] Adopt the [Google Vale package](https://vale.sh/explorer/google) as the
+  baseline for automated style checks; DOC-12 owns installation and configuration.
+- [ ] Link authors to relevant sections of the
+  [Google style guide](https://developers.google.com/style), with the upstream
+  package owning its lint rules and the upstream guide owning its full guidance.
+- [ ] Identify guidance requiring editorial judgment, such as audience-appropriate
+  terminology, adequate prerequisites, useful expected outcomes, scanability,
+  accessible descriptions, and placement of warnings. Place each item in its
+  owning structure, example, or review reference.
+- [ ] Use Write the Docs' [writing guide](https://www.writethedocs.org/guide/writing/beginners-guide-to-docs/)
+  and [principles](https://www.writethedocs.org/guide/writing/docs-principles/)
+  to inform those editorial checks.
 - [ ] Preserve useful existing guidance on information ownership, duplication,
   rationale, and positive descriptions of current behavior.
 - [ ] Define how to establish idiomatic domain vocabulary and manage project terms.
-- [ ] Label each rule as automatable, heuristic, or requiring editorial judgment.
-  Include examples and explicit house adaptations.
+- [ ] Record only necessary project or house adaptations, with rationale. Propose
+  custom Vale rules only for demonstrated gaps in the adopted package.
 
-**Deliverables:** `references/house-style.md`; terminology conventions and examples.
+**Deliverables:** A short `references/house-style.md` describing adoption, source
+links, and necessary adaptations; editorial checks in their owning references.
 
 **Depends on:** DOC-01, DOC-05.
 
-**Done when:** Authors and reviewers can apply the same rules, and the Vale work
-has a defined rule set to implement.
+**Done when:** The skill uses the upstream Google baseline, editorial checks cover
+the relevant gaps, and any custom rules or overrides have an explicit justification.
 
-### DOC-07: Produce Diataxis references and document templates
+### DOC-07: Connect Diataxis guidance to concise document templates
+
+- [ ] Route to the upstream Diataxis guidance for each type. Keep local notes
+  focused on applying it within the contract, evidence, and verification workflow.
 
 - [ ] Tutorial: learning outcome, prepared environment, tested path, observable
   progress, cleanup where needed, and next learning step.
@@ -171,9 +189,9 @@ has a defined rule set to implement.
 - [ ] Provide a completed example for each type and a short review checklist.
 - [ ] Make template instructions removable and sections conditional on reader need.
 
-**Deliverables:** Four references and four templates named `tutorial.md`,
-`how-to.md`, `reference.md`, and `explanation.md` in their respective directories;
-completed examples under `examples/`.
+**Deliverables:** Upstream links in the document-type router; concise templates
+named `tutorial.md`, `how-to.md`, `reference.md`, and `explanation.md`; completed
+examples under `examples/`. Add local reference notes only for specific gaps.
 
 **Depends on:** DOC-05, DOC-06.
 
@@ -182,7 +200,7 @@ the distinction from adjacent document types.
 
 ### DOC-08: Preserve and extend the other document types
 
-- [ ] Adapt the existing README guidance for root, module, and component orientation.
+- [ ] Retain concise, specific README guidance for root, module, and component orientation.
 - [ ] Adapt runbook guidance for operational preconditions, risk, verification,
   recovery, and escalation paths grounded in project evidence.
 - [ ] Adapt ADR guidance for context, alternatives, decision, consequences, status,
@@ -191,9 +209,9 @@ the distinction from adjacent document types.
 - [ ] Define article intent, attribution, argument structure, and fact checking.
 - [ ] Add a worked example for each type; reuse the common style and evidence rules.
 
-**Deliverables:** Updated `references/readme.md`, `references/runbooks.md`, and
-`references/adr.md`; new `references/release-notes.md`, `references/changelogs.md`,
-and `references/articles.md`; corresponding templates and examples.
+**Deliverables:** Concise routing and specific adaptations for these document
+types, linked to suitable public guidance; corresponding templates and examples.
+Consolidate or shorten the existing references as appropriate.
 
 **Depends on:** DOC-01, DOC-05, DOC-06.
 
@@ -202,26 +220,27 @@ template, and review criteria, and the existing skill's useful guidance is cover
 
 ## 4. Doxygen documentation and custom linter
 
-### DOC-09: Create the complete local Doxygen style reference
+### DOC-09: Adopt the upstream Doxygen style and map enforcement gaps
 
 - [ ] Inventory every rule in the
   [micro-os-plus Doxygen style guide](https://micro-os-plus.github.io/develop/doxygen-style-guide/).
-- [ ] Produce a complete attributed local rule reference, checking reuse terms and
-  using original wording or paraphrase as those terms require.
-- [ ] Give every rule a stable identifier, source section, applicability, examples,
-  and an enforcement classification: Vale, Doxygen, custom linter, or human review.
+- [ ] Keep the upstream guide as the human and agent reference. Record a compact
+  enforcement map using source-section links and classifications: Vale, Doxygen,
+  custom linter, or human review.
+- [ ] Give implemented checks stable identifiers and test cases. Keep detailed
+  mechanical rule definitions with their implementation and tests.
 - [ ] Record house adaptations and decide the supported languages, declarations,
   comment forms, tags, and file types.
-- [ ] Explain how to document meaningful API contracts, including relevant
+- [ ] Add short review prompts for meaningful API contracts where needed, including
   preconditions, lifetime, ownership, errors, and concurrency guarantees.
 
-**Deliverables:** `references/doxygen-style.md`; a machine-readable rule catalog
-if needed by DOC-11.
+**Deliverables:** Short Doxygen adoption notes with upstream links, adaptations,
+and enforcement coverage; a machine-readable check catalog if needed by DOC-11.
 
 **Depends on:** DOC-01, DOC-06.
 
-**Done when:** Every upstream rule has an explicit disposition and authors can
-consult the local document without needing to reconstruct the rules from links.
+**Done when:** Upstream guidance is directly accessible from the workflow, coverage
+gaps are explicit, and custom checks have a justified scope.
 
 ### DOC-10: Design the Doxygen linter
 
@@ -270,8 +289,8 @@ status, valid fixtures pass, and coverage matches the published rule catalog.
 
 ### DOC-12: Configure Vale for documents and source comments
 
-- [ ] Start from the [Google Vale package](https://vale.sh/explorer/google) and map
-  house rules to upstream rules, overrides, vocabulary, and custom rules.
+- [ ] Use the [Google Vale package](https://vale.sh/explorer/google) directly and
+  configure only necessary overrides, project vocabulary, and justified gap checks.
 - [ ] Verify [code-aware linting](https://vale.sh/features/code) for the selected
   languages and Doxygen comment forms using the chosen Vale version.
 - [ ] Configure markup handling so identifiers, commands, tags, URLs, and executable
@@ -281,8 +300,9 @@ status, valid fixtures pass, and coverage matches the published rule catalog.
 - [ ] Test prose and source-comment fixtures, including original source positions
   and false-positive cases. Record which house rules remain manual checks.
 
-**Deliverables:** `assets/vale/` containing `.vale.ini`, house rules, vocabulary,
-and fixtures; `references/vale.md`.
+**Deliverables:** `assets/vale/` containing `.vale.ini`, necessary vocabulary,
+fixtures, and any justified custom rules; concise invocation notes with upstream
+configuration links.
 
 **Depends on:** DOC-06, DOC-09.
 
@@ -508,7 +528,9 @@ target defects, and reviewed examples demonstrate usable documentation.
 - [ ] Finish the migration checklist from DOC-01 and reconcile duplicated rules.
 - [ ] Verify reference and template links, tool paths, dependency setup, and example
   commands from a consuming project.
-- [ ] Check that durable resources are self-contained and use durable references.
+- [ ] Check that durable resources use durable references, that upstream links
+  resolve to the relevant guidance, and that local instructions cover specific
+  needs. Remove duplicated upstream explanations and rules already owned by tools.
 - [ ] Document maintenance of source references, rule catalogs, tool versions,
   style packages, integrations, and regression fixtures.
 - [ ] Run the applicable skill-format checks and DOC-22 acceptance scenarios on
