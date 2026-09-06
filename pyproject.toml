@@ -8,23 +8,57 @@ dependencies = []
 
 [dependency-groups]
 dev = [
+    "defusedxml>=0.7.1",
+    "documentation-doxygen-linter",
+    "documentation-validation",
+    "lxml>=6.0.0",
+    "lychee-bin==0.24.2",
+    "markdown>=3.8.2",
+    "mkdocs==1.6.1",
     "pdf2image>=1.17.0",
+    "pdfplumber>=0.11.0",
     "pillow>=12.1.0",
     "pypdf>=6.6.2",
     "pyyaml>=6.0.3",
     "pytest>=8.0.0",
     "openpyxl>=3.1.5",
+    "pyright>=1.1.408",
+    "ruff==0.15.0",
 ]
 
+[tool.uv.sources]
+documentation-doxygen-linter = { path = "skills/documentation/tools/doxygen_linter", editable = true }
+documentation-validation = { path = "skills/documentation/tools/validation", editable = true }
+
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "skills/documentation/tools"]
 pythonpath = [
     "skills/pdf/scripts",
     "skills/xlsx/scripts",
 ]
 
 [tool.pyright]
+include = ["skills/documentation/tools"]
+typeCheckingMode = "standard"
+pythonVersion = "3.11"
+venvPath = "."
+venv = ".venv"
 extraPaths = [
     "skills/pdf/scripts",
     "skills/xlsx/scripts",
+    "skills/documentation/tools/doxygen_linter/src",
+    "skills/documentation/tools/validation/src",
 ]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+include = ["skills/documentation/tools/**/*.py"]
+respect-gitignore = true
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "I", "N", "Q", "UP", "C4", "ARG", "NPY", "PD", "PERF", "PL"]
+ignore = ["E501", "PLR0911", "PLR0912", "PLR0913", "PLR0915", "PLC0414"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**/*.py" = ["ARG001", "ARG002", "ARG005", "PLR2004"]

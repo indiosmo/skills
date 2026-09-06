@@ -44,6 +44,9 @@ every upstream convention. The [design and CLI reference](../../references/doxyg
 contains parser comparisons, supported syntax, performance evidence and detailed
 configuration semantics.
 
+For maintainers, the [architecture guide](ARCHITECTURE.md) explains rule modules,
+shared analysis, registration, and the workflow for adding and testing a check.
+
 ## Configuration and results
 
 Supply an explicit TOML file with `--config lint.toml`:

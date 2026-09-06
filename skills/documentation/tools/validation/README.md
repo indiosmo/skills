@@ -3,8 +3,7 @@
 `documentation-validate` executes a consuming project's ordered checks and writes
 a JSON evidence record. It suits projects that have native lint/build commands
 but need one report containing pass, fail, skipped and blocked outcomes, tool
-versions, checked scope and native diagnostic logs. The
-[decision matrix](validation-decision.html) records the reporting gap and options.
+versions, checked scope and native diagnostic logs.
 
 ## Install and run
 
@@ -114,3 +113,14 @@ execution explicitly skipped for the offline fixture run. Empty-selection and
 all-excluded cases assert blocked verification. Provide Doxygen, jq, a C++
 compiler and the prepared Vale assets; MkDocs and lychee use the locked
 environment fixture project.
+
+For module responsibilities, design rationale and extension steps, read the
+[architecture guide](ARCHITECTURE.md) and [decision matrix](architecture-decision.html).
+
+Run linting and type checking from the skills repository root using its locked
+development environment:
+
+```sh
+uv run --frozen ruff check skills/documentation/tools/validation
+uv run --frozen pyright skills/documentation/tools/validation
+```

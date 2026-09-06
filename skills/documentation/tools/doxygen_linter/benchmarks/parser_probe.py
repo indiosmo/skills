@@ -1,17 +1,16 @@
 """Compare parsing evidence and measure directory checking on a generated fixture corpus."""
 
 import json
-from pathlib import Path
 import re
 import shutil
 import subprocess
 import tempfile
 import time
+from pathlib import Path
 
 from doxygen_linter.checks import lint
 from doxygen_linter.cli import Configuration, discover
 from doxygen_linter.parsing import parse
-
 
 fixtures = Path(__file__).resolve().parents[1] / "tests" / "fixtures"
 source_file = fixtures / "representative.hpp"
@@ -56,9 +55,7 @@ if compiler:
             "-fsyntax-only",
             str(fixtures / filename),
         ]
-        dialect_result = subprocess.run(
-            dialect_command, capture_output=True, text=True, check=False, timeout=30
-        )
+        dialect_result = subprocess.run(dialect_command, capture_output=True, text=True, check=False, timeout=30)
         report["dialect_probes"].append(
             {
                 "standard": standard,

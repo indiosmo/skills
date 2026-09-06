@@ -22,8 +22,16 @@ The `setup.sh` script checks for required tools (uv, npm), installs Python depen
 ## Commands
 
 ```bash
+# Install Python development dependencies and editable documentation tools
+uv sync --locked
+
 # Run tests
 uv run pytest
+
+# Check documentation tool Python (source, tests, and benchmarks)
+uv run ruff check skills/documentation/tools
+uv run ruff format --check skills/documentation/tools
+uv run pyright
 
 # Run a single test
 uv run pytest tests/pdf/test_check_bounding_boxes.py
@@ -47,4 +55,12 @@ uv run skills/creating-skills/scripts/package_skill.py <path/to/skill-folder>
 
 - Python 3.13 required (see `.python-version`)
 - Dev dependencies managed via `uv` in `pyproject.toml`
+- Select the repository's `.venv/bin/python` interpreter in VS Code/Pylance.
+  The root environment includes both documentation tool packages and their
+  runtime dependencies, including Pydantic and tree-sitter.
+- Ruff and Pyright currently check `skills/documentation/tools`; the tools
+  retain Python 3.11 compatibility. Root pytest discovery includes their tests.
+- Documentation integration tests can be run with `uv run pytest
+  skills/documentation/tests`. They also use Doxygen, a C++ compiler, and the
+  Vale installation described in the documentation skill's assets.
 - Skills load from: Enterprise > Personal (`~/.claude/skills/`) > Project (`.claude/skills/`) > Plugin

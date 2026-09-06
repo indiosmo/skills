@@ -4,7 +4,7 @@ import json
 import os
 
 import pytest
-
+from doxygen_linter.catalog import RULES
 from doxygen_linter.cli import main
 
 
@@ -106,7 +106,7 @@ def test_text_output_and_catalog(tmp_path, capsys):
     assert "Correction:" in output
     assert main(["--catalog"]) == 0
     catalog = json.loads(capsys.readouterr().out)
-    assert len(catalog) == 12
+    assert catalog.keys() == RULES.keys()
     assert catalog["DOX003"]["source"].endswith("#explicit-brief")
 
 
@@ -130,6 +130,4 @@ def test_explicit_source_through_symlink_ancestor_is_skipped(tmp_path, capsys):
     status, report = run(capsys, linked_directory / "valid.c")
     assert status == 2
     assert report["checked_files"] == 0
-    assert any(
-        item["status"] == "skipped" and "Symlinks" in item["reason"] for item in report["coverage"]
-    )
+    assert any(item["status"] == "skipped" and "Symlinks" in item["reason"] for item in report["coverage"])

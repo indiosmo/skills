@@ -1,13 +1,13 @@
 """Read files and configuration, then report diagnostics for local or CI use."""
 
 import argparse
-from dataclasses import asdict
 import fnmatch
 import json
 import os
-from pathlib import Path
 import sys
 import tomllib
+from dataclasses import asdict
+from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
@@ -47,18 +47,16 @@ class Configuration(BaseModel):
 
     @field_validator("severity")
     @classmethod
-    def known_rules(cls, values):
+    def known_rules(cls, values: dict[str, Literal["warning", "error"]]) -> dict[str, Literal["warning", "error"]]:
         if not values.keys() <= RULES.keys():
             raise ValueError("Severity overrides require known rule identifiers")
         return values
 
     @field_validator("extensions")
     @classmethod
-    def known_extensions(cls, values):
+    def known_extensions(cls, values: list[str]) -> list[str]:
         if not values or not set(values) <= LANGUAGES.keys():
-            raise ValueError(
-                "Extensions must be a nonempty selection from supported C/C++ extensions"
-            )
+            raise ValueError("Extensions must be a nonempty selection from supported C/C++ extensions")
         return values
 
 
@@ -118,17 +116,11 @@ def discover(inputs: list[Path], configuration: Configuration) -> tuple[list[Pat
             files.add(path.absolute())
         elif path.is_dir():
 
-            def walk_error(error):
-                coverage.append(
-                    Coverage(error.filename or str(path), 1, "file", "blocked", str(error))
-                )
+            def walk_error(error: OSError, input_path: Path = path) -> None:
+                coverage.append(Coverage(error.filename or str(input_path), 1, "file", "blocked", str(error)))
 
-            for directory, directories, filenames in os.walk(
-                path, followlinks=False, onerror=walk_error
-            ):
-                directories[:] = sorted(
-                    name for name in directories if include(Path(directory, name))
-                )
+            for directory, directories, filenames in os.walk(path, followlinks=False, onerror=walk_error):
+                directories[:] = sorted(name for name in directories if include(Path(directory, name)))
                 for filename in sorted(filenames):
                     candidate = Path(directory, filename)
                     if include(candidate):
@@ -147,9 +139,7 @@ def discover(inputs: list[Path], configuration: Configuration) -> tuple[list[Pat
 
 
 def main(arguments: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Check C/C++ Doxygen comments; findings retain source locations."
-    )
+    parser = argparse.ArgumentParser(description="Check C/C++ Doxygen comments; findings retain source locations.")
     parser.add_argument("paths", nargs="*", type=Path)
     parser.add_argument("--config", type=Path, help="Explicit TOML configuration")
     parser.add_argument("--language", choices=["auto", "c", "cpp"], default="auto")
@@ -163,10 +153,7 @@ def main(arguments: list[str] | None = None) -> int:
     if options.catalog:
         print(
             json.dumps(
-                {
-                    identifier: asdict(rule) | {"source": rule.source}
-                    for identifier, rule in RULES.items()
-                },
+                {identifier: asdict(rule) | {"source": rule.source} for identifier, rule in RULES.items()},
                 indent=2,
             )
         )
@@ -176,9 +163,7 @@ def main(arguments: list[str] | None = None) -> int:
     files = []
     checked = 0
     try:
-        raw_configuration = (
-            tomllib.loads(options.config.read_text(encoding="utf-8")) if options.config else {}
-        )
+        raw_configuration = tomllib.loads(options.config.read_text(encoding="utf-8")) if options.config else {}
         if options.extensions:
             raw_configuration["extensions"] = options.extensions
         configuration = Configuration.model_validate(raw_configuration)
@@ -192,25 +177,17 @@ def main(arguments: list[str] | None = None) -> int:
                 source.decode("utf-8")
                 if b"\x00" in source:
                     raise ValueError("Source contains a NUL byte")
-                language = (
-                    LANGUAGES[path.suffix] if options.language == "auto" else options.language
-                )
-                file_diagnostics, file_coverage = lint(
-                    source, str(path), language, configuration.severity
-                )
+                language = LANGUAGES[path.suffix] if options.language == "auto" else options.language
+                file_diagnostics, file_coverage = lint(source, str(path), language, configuration.severity)
                 diagnostics.extend(file_diagnostics)
                 coverage.extend(file_coverage)
                 checked += 1
             except (OSError, UnicodeError, ValueError) as error:
                 coverage.append(Coverage(str(path), 1, "file", "blocked", str(error)))
     except (OSError, UnicodeError, ValueError, ValidationError) as error:
-        coverage.append(
-            Coverage(str(options.config or "<input>"), 1, "configuration", "blocked", str(error))
-        )
+        coverage.append(Coverage(str(options.config or "<input>"), 1, "configuration", "blocked", str(error)))
     if not checked:
-        coverage.append(
-            Coverage("<input>", 1, "file", "blocked", "No supported source files were checked.")
-        )
+        coverage.append(Coverage("<input>", 1, "file", "blocked", "No supported source files were checked."))
     diagnostics.sort(
         key=lambda diagnostic: (
             diagnostic.path,
@@ -220,9 +197,7 @@ def main(arguments: list[str] | None = None) -> int:
         )
     )
     blocked = any(item.status == "blocked" for item in coverage)
-    failed = any(
-        options.fail_on == "warning" or diagnostic.severity == "error" for diagnostic in diagnostics
-    )
+    failed = any(options.fail_on == "warning" or diagnostic.severity == "error" for diagnostic in diagnostics)
     exit_status = 2 if blocked else 1 if failed else 0
     report = {
         "version": VERSION,

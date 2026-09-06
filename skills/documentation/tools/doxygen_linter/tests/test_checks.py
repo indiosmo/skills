@@ -1,9 +1,7 @@
 """Behavioral examples for every advertised rule and parser boundary."""
 
 import pytest
-
 from doxygen_linter.checks import lint
-
 
 VALID = """/**
  * @brief Read a value.
@@ -105,9 +103,7 @@ def test_multiline_parameter_description():
 
 
 def test_original_unicode_and_crlf_positions():
-    diagnostics, _ = findings(
-        "// cafe\r\n/** @brief Lire.\r\n * @param count invalid\r\n */\r\nint read(int count);"
-    )
+    diagnostics, _ = findings("// cafe\r\n/** @brief Lire.\r\n * @param count invalid\r\n */\r\nint read(int count);")
     parameter = next(diagnostic for diagnostic in diagnostics if diagnostic.rule == "DOX006")
     assert (parameter.line, parameter.column) == (3, 4)
     diagnostics, _ = findings("/** cafe é @param count invalid */")
@@ -127,9 +123,7 @@ def test_callback_parameter_is_not_confused_with_nested_parameters():
 
 
 def test_default_argument_and_qualified_method():
-    source = (
-        "class Store { public:\n" + VALID.replace("int count);", "int count = 3) const;") + "};"
-    )
+    source = "class Store { public:\n" + VALID.replace("int count);", "int count = 3) const;") + "};"
     assert findings(source) == ([], [])
 
 
@@ -146,9 +140,7 @@ def test_template_defaults_and_non_type_parameters():
 
 
 def test_zero_parameters_and_void_return():
-    source = (
-        "/** @brief Clear.\n@par Parameters\nNone.\n@par Returns\nNothing. */\nvoid clear(void);"
-    )
+    source = "/** @brief Clear.\n@par Parameters\nNone.\n@par Returns\nNothing. */\nvoid clear(void);"
     assert findings(source) == ([], [])
 
 
@@ -164,9 +156,7 @@ def test_details_only_definition():
     )
 
 
-@pytest.mark.parametrize(
-    "declaration", ["DECLARE(read);", "#define DECLARE(name) int name(int count)", ""]
-)
+@pytest.mark.parametrize("declaration", ["DECLARE(read);", "#define DECLARE(name) int name(int count)", ""])
 def test_macro_or_detached_contract_has_visible_skipped_association(declaration):
     _, coverage = findings("/** @brief Read. */\n" + declaration)
     assert any(item.status == "skipped" for item in coverage)
@@ -190,10 +180,7 @@ def test_trailing_comment_has_visible_skip():
 
 def test_duplicate_parameter_tag_is_rejected():
     assert "DOX010" in {
-        item.rule
-        for item in findings(
-            VALID.replace(" * @return", " * @param [in] count Number.\n * @return")
-        )[0]
+        item.rule for item in findings(VALID.replace(" * @return", " * @param [in] count Number.\n * @return"))[0]
     }
 
 
@@ -216,9 +203,7 @@ def test_ordinary_comment_between_documentation_and_function_is_visible():
     assert any(item.status == "skipped" for item in coverage)
 
 
-@pytest.mark.parametrize(
-    "declaration", ["int (*reader)(int count);", "int read(int count), read_more(int count);"]
-)
+@pytest.mark.parametrize("declaration", ["int (*reader)(int count);", "int read(int count), read_more(int count);"])
 def test_ambiguous_declarators_are_skipped(declaration):
     diagnostics, coverage = findings(VALID.replace("int read(int count);", declaration))
     assert diagnostics == []
@@ -226,18 +211,12 @@ def test_ambiguous_declarators_are_skipped(declaration):
 
 
 def test_operator_overload_has_parameter_contract():
-    source = (
-        "class Store { public:\n"
-        + VALID.replace("int read(int count);", "int operator+(int count) const;")
-        + "};"
-    )
+    source = "class Store { public:\n" + VALID.replace("int read(int count);", "int operator+(int count) const;") + "};"
     assert findings(source) == ([], [])
 
 
 def test_trailing_return_is_explicitly_skipped():
-    diagnostics, coverage = findings(
-        VALID.replace("int read(int count);", "auto read(int count) -> int;")
-    )
+    diagnostics, coverage = findings(VALID.replace("int read(int count);", "auto read(int count) -> int;"))
     assert diagnostics == []
     assert any(item.checks == "DOX012:return" for item in coverage)
 

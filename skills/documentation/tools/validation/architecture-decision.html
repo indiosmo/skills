@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Validation runner architecture decision</title>
+<style>
+  :root {
+    --bg: #fafaf7; --fg: #1a1a1a; --muted: #6b6b6b;
+    --rule: #d8d6cf; --accent: #6b5b3a;
+    --good-bg: #d8ebd2; --good-fg: #1f4a26;
+    --ok-bg: #f4ecc6; --ok-fg: #5a4a10;
+    --bad-bg: #f0c8bc; --bad-fg: #6a1d12;
+    --na-bg: #ececec; --na-fg: #555;
+  }
+  html, body { background: var(--bg); color: var(--fg); }
+  body { font: 15px/1.55 -apple-system, "Segoe UI", system-ui, sans-serif; margin: 0; padding: 32px 40px 80px; max-width: 1280px; }
+  h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h1 .sub { font-weight: 400; color: var(--muted); font-size: 15px; margin-left: 8px; }
+  h2 { font-size: 16px; margin: 28px 0 10px; color: var(--accent); letter-spacing: 0.02em; text-transform: uppercase; }
+  p.lede { color: var(--muted); margin: 0 0 24px; max-width: 78ch; }
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; min-width: 740px; border-collapse: collapse; background: white; font-size: 13.5px; margin-bottom: 8px; }
+  th, td { border: 1px solid var(--rule); padding: 10px 12px; text-align: left; vertical-align: top; }
+  th { background: #f3f1ea; font-weight: 600; }
+  th .opt-sub { display: block; font-weight: 400; color: var(--muted); font-size: 12px; margin-top: 3px; line-height: 1.4; }
+  td.criterion { width: 14%; font-weight: 600; background: #faf8f1; }
+  td.weight { width: 5%; text-align: center; font-variant-numeric: tabular-nums; color: var(--muted); background: #faf8f1; }
+  td.good { background: var(--good-bg); color: var(--good-fg); }
+  td.ok { background: var(--ok-bg); color: var(--ok-fg); }
+  td.bad { background: var(--bad-bg); color: var(--bad-fg); }
+  td.na { background: var(--na-bg); color: var(--na-fg); font-style: italic; }
+  .score-badge { display: inline-block; min-width: 18px; padding: 1px 6px; margin-right: 8px; border-radius: 3px; background: rgba(0, 0, 0, 0.08); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 12.5px; text-align: center; vertical-align: 1px; }
+  tfoot td { background: #f3f1ea; font-weight: 600; }
+  tfoot td.total { text-align: center; font-size: 16px; font-variant-numeric: tabular-nums; }
+  code { background: #f3f1ea; padding: 1px 5px; border-radius: 3px; font-size: 12.5px; }
+  .decision-body { margin: 8px 0; max-width: 78ch; }
+  .assumptions { margin: 0 0 18px; padding: 16px 20px; background: white; border: 1px solid var(--rule); border-radius: 6px; }
+  .assumptions h2 { margin-top: 0; }
+  .assumptions ul { margin: 0; padding-left: 20px; }
+  .assumptions li { margin: 4px 0; }
+  .assumptions li b { color: var(--accent); }
+  @media (max-width: 650px) { body { padding: 20px 16px 40px; } }
+</style>
+</head>
+<body>
+<h1>Validation runner architecture <span class="sub">decision matrix</span></h1>
+<p class="lede">Choose maintainable boundaries for <code>documentation-validate</code> 0.1.0.
+The tool executes ordered native checks and records versions, diagnostics and outcomes.
+Scores express engineering judgment: 5 is appealing, 3 is mixed and 1 is a serious cost.
+Equal weights expose the trade-offs; the scores are not benchmark measurements.</p>
+<div class="assumptions">
+  <h2>Assumptions</h2>
+  <ul>
+    <li><b>Compatibility:</b> existing manifests, CLI output, report fields and exit statuses remain supported.</li>
+    <li><b>Execution:</b> manifests provide ordered dependencies and arbitrary native argument arrays.</li>
+    <li><b>Policy scope:</b> version readiness and native command outcomes are the two implemented validation policies.</li>
+    <li><b>Environment:</b> consuming projects prepare tool binaries, dependencies and native configuration.</li>
+  </ul>
+</div>
+<div class="table-scroll">
+<table>
+  <caption>Architecture options, scored from 1 to 5 with equal criterion weights</caption>
+  <thead><tr>
+    <th scope="col">Criterion</th><th scope="col">Wt</th>
+    <th scope="col">A. Single module<span class="opt-sub">Keep configuration, execution, policies and reporting together.</span></th>
+    <th scope="col">B. Explicit modules<span class="opt-sub">Separate policies and shared boundaries with direct typed calls.</span></th>
+    <th scope="col">C. Dynamic plugins<span class="opt-sub">Discover extensions and schedule a general dependency graph.</span></th>
+  </tr></thead>
+  <tbody>
+    <tr><td class="criterion">Structural complexity</td><td class="weight">1</td>
+      <td class="good"><span class="score-badge">5</span>One small file gives a complete overview.</td>
+      <td><span class="score-badge">3</span>More files and imports; each boundary has one purpose.</td>
+      <td class="bad"><span class="score-badge">1</span>Discovery, lifecycle and scheduling add separate contracts.</td></tr>
+    <tr><td class="criterion">Execution performance</td><td class="weight">1</td>
+      <td><span class="score-badge">3</span>Sequential execution retains the current process costs.</td>
+      <td><span class="score-badge">3</span>The same subprocess sequence retains those costs.</td>
+      <td><span class="score-badge">3</span>Parallel scheduling may help independent checks; workload benefit is unmeasured.</td></tr>
+    <tr><td class="criterion">Reversibility</td><td class="weight">1</td>
+      <td class="good"><span class="score-badge">5</span>The current layout requires no migration.</td>
+      <td class="good"><span class="score-badge">5</span>Internal extraction preserves manifests and public exports.</td>
+      <td class="bad"><span class="score-badge">2</span>Published plugin contracts would constrain later simplification.</td></tr>
+    <tr><td class="criterion">Blast radius of policy edits</td><td class="weight">1</td>
+      <td class="bad"><span class="score-badge">2</span>Outcome changes share a function with execution and report assembly.</td>
+      <td class="good"><span class="score-badge">5</span>Policy modules isolate classification edits.</td>
+      <td><span class="score-badge">3</span>Plugin isolation helps; scheduler changes affect every check.</td></tr>
+    <tr><td class="criterion">Maintenance cost</td><td class="weight">1</td>
+      <td><span class="score-badge">3</span>Few files, but each change needs broader context.</td>
+      <td><span class="score-badge">3</span>Small functions offset the additional module navigation.</td>
+      <td class="bad"><span class="score-badge">2</span>Extension compatibility and discovery need ongoing support.</td></tr>
+    <tr><td class="criterion">Adding a native check</td><td class="weight">1</td>
+      <td><span class="score-badge">3</span>A manifest entry defines commands and scope.</td>
+      <td><span class="score-badge">3</span>The same manifest workflow remains sufficient.</td>
+      <td><span class="score-badge">3</span>Manifest checks remain straightforward if the generic adapter stays available.</td></tr>
+    <tr><td class="criterion">Boundary testability</td><td class="weight">1</td>
+      <td class="bad"><span class="score-badge">2</span>Policies are tested through the execution loop.</td>
+      <td class="good"><span class="score-badge">5</span>Pure classifiers and an injected executor support focused tests.</td>
+      <td><span class="score-badge">3</span>Plugin tests gain isolation while lifecycle tests expand.</td></tr>
+    <tr><td class="criterion">Coupling</td><td class="weight">1</td>
+      <td class="bad"><span class="score-badge">2</span>Configuration, process outcomes and JSON records share one implementation.</td>
+      <td class="good"><span class="score-badge">5</span>Typed results connect execution, policies and reporting explicitly.</td>
+      <td><span class="score-badge">3</span>Plugin interfaces separate behavior but couple extensions to framework lifecycle.</td></tr>
+  </tbody>
+  <tfoot><tr><td colspan="2">Weighted score (sum of score * weight; tune weights to taste)</td>
+    <td class="total">25</td><td class="total">32</td><td class="total">20</td>
+  </tr></tfoot>
+</table>
+</div>
+<h2>Decision</h2>
+<p class="decision-body"><b>Use explicit modules.</b> Pure version and command policies, a shared executor,
+ordered orchestration and reporting provide focused tests and contain policy changes.
+The additional navigation is proportionate to these existing responsibilities.</p>
+<p class="decision-body">The static registration surface consists of explicit exports in
+<code>validators/__init__.py</code>. Direct typed calls expose each policy's inputs.
+Native tool families remain ordinary manifest checks.</p>
+<p class="decision-body">Revisit plugin discovery when validators need independent distribution;
+revisit scheduling when measured pipeline duration justifies concurrent execution.</p>
+<p class="decision-body">The <a href="ARCHITECTURE.md">architecture guide</a> maps modules,
+explains extension steps and cites the primary research behind these boundaries.</p>
+</body>
+</html>

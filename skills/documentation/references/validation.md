@@ -51,9 +51,7 @@ the site. Example execution depends on its setup or compilation.
 
 Use an existing project orchestrator if it already captures the required record.
 Otherwise the small [validation runner](../tools/validation/README.md) executes a
-reviewed project manifest and saves native output plus JSON outcomes. Its
-[scored decision matrix](../tools/validation/validation-decision.html) explains why
-the reporting gap merits this optional adapter.
+reviewed project manifest and saves native output plus JSON outcomes.
 
 From the consuming project root, after setting the two absolute paths:
 

@@ -1,10 +1,11 @@
 """Locate comments and nearby declarations using the C and C++ concrete syntax trees."""
 
+from collections.abc import Iterator
 from dataclasses import dataclass
 
-from tree_sitter import Language, Node, Parser
 import tree_sitter_c
 import tree_sitter_cpp
+from tree_sitter import Language, Node, Parser
 
 
 @dataclass(frozen=True, slots=True)
@@ -14,7 +15,7 @@ class Comment:
     declaration: Node | None
 
 
-def descendants(node: Node):
+def descendants(node: Node) -> Iterator[Node]:
     pending = [node]
     while pending:
         current = pending.pop()
@@ -43,14 +44,14 @@ def declarator_name(node: Node | None) -> str | None:
     if node is None:
         return None
     if node.type in {"identifier", "field_identifier", "type_identifier"}:
-        return node.text.decode("utf-8")
+        text = node.text
+        assert text is not None, "Parsed identifiers retain their source text"
+        return text.decode("utf-8")
     declarator = node.child_by_field_name("declarator")
     if declarator is not None:
         return declarator_name(declarator)
     if node.type in {"parenthesized_declarator", "variadic_declarator"}:
-        return next(
-            (name for child in node.named_children if (name := declarator_name(child))), None
-        )
+        return next((name for child in node.named_children if (name := declarator_name(child))), None)
     return None
 
 
@@ -91,11 +92,7 @@ def template_names(template: Node) -> tuple[list[str], bool]:
             "optional_type_parameter_declaration",
         }:
             name = next(
-                (
-                    child.text.decode("utf-8")
-                    for child in parameter.named_children
-                    if child.type == "type_identifier"
-                ),
+                (declarator_name(child) for child in parameter.named_children if child.type == "type_identifier"),
                 None,
             )
         if name:
