@@ -1,0 +1,72 @@
+[[checks]]
+name = "vale"
+scope = "docs and include source comments"
+command = ["{skill}/assets/vale/bin/vale", "--no-global", "--config={skill}/assets/vale/.vale.ini", "--output=JSON", "docs", "include"]
+version_command = ["{skill}/assets/vale/bin/vale", "--version"]
+
+[[checks]]
+name = "doxygen-style"
+scope = "include/*.hpp"
+command = ["uv", "run", "--project", "{skill}/tools/doxygen_linter", "--frozen", "doxygen-lint", "--format", "json", "include"]
+version_command = ["uv", "run", "--project", "{skill}/tools/doxygen_linter", "--frozen", "doxygen-lint", "--version"]
+blocked_exit_codes = [2]
+
+[[checks]]
+name = "reference"
+scope = "Doxyfile inputs and examples"
+command = ["doxygen", "-"]
+version_command = ["doxygen", "--version"]
+stdin = '''
+@INCLUDE = "{project}/Doxyfile"
+OUTPUT_DIRECTORY = "{project}/docs/reference"
+'''
+
+[[checks]]
+name = "site"
+scope = "mkdocs.yml navigation and docs"
+depends_on = ["reference"]
+command = ["uv", "run", "--project", "{skill}/tests/environment", "--frozen", "mkdocs", "build", "--strict", "--config-file", "{project}/mkdocs.yml", "--site-dir", "{output}/site"]
+version_command = ["uv", "run", "--project", "{skill}/tests/environment", "--frozen", "mkdocs", "--version"]
+
+[[checks]]
+name = "link-inputs"
+scope = "inventory of HTML files selected for local link validation"
+depends_on = ["site"]
+command = ["uv", "run", "--project", "{skill}/tests/environment", "--frozen", "lychee", "--config", "{skill}/assets/lychee/lychee.toml", "--dump-inputs", "--", "{output}/site/**/*.html"]
+version_command = ["uv", "run", "--project", "{skill}/tests/environment", "--frozen", "lychee", "--version"]
+
+[[checks]]
+name = "local-links"
+scope = "built site including Doxygen reference"
+depends_on = ["link-inputs"]
+command = ["uv", "run", "--project", "{skill}/tests/environment", "--frozen", "lychee", "--config", "{skill}/assets/lychee/lychee.toml", "--offline", "--root-dir", "{output}/site", "--index-files", "index.html", "--output", "{output}/local-links.json", "--", "{output}/site/**/*.html"]
+version_command = ["uv", "run", "--project", "{skill}/tests/environment", "--frozen", "lychee", "--version"]
+
+[[checks]]
+name = "link-coverage"
+scope = "the selected fixture must contain links and at least one checked successful local target; excluded URLs remain unchecked"
+depends_on = ["local-links"]
+command = ["jq", "-e", ".total > 0 and .successful > 0", "{output}/local-links.json"]
+version_command = ["jq", "--version"]
+blocked_exit_codes = [1]
+
+[[checks]]
+name = "compile-example"
+scope = "examples/gain.cpp with include/gain.hpp; C++17"
+command = ["c++", "-std=c++17", "-Iinclude", "examples/gain.cpp", "-o", "{output}/gain-example"]
+version_command = ["c++", "--version"]
+
+[[checks]]
+name = "run-example"
+scope = "apply_gain(0.25, 2.0) equals 0.5"
+depends_on = ["compile-example"]
+command = ["{output}/gain-example"]
+version_command = ["c++", "--version"]
+timeout_seconds = 5
+
+[[checks]]
+name = "external-links"
+scope = "external URLs in source Markdown"
+command = ["uv", "run", "--project", "{skill}/tests/environment", "--frozen", "lychee", "--config", "{skill}/assets/lychee/lychee.toml", "--", "docs/**/*.md"]
+version_command = ["uv", "run", "--project", "{skill}/tests/environment", "--frozen", "lychee", "--version"]
+skip_reason = "Offline fixture acceptance; network results belong to the consuming project's online check."

@@ -1,0 +1,22 @@
+# Replace values with the example's actual reproduction contract.
+[[examples]]
+id = "apply-gain"
+kind = "runnable" # runnable, fragment, pseudocode, interactive, service-dependent
+source = "examples/gain.cpp"
+page = "docs/gain.md#verify-the-result"
+language = "C++17"
+target_revision = "Record the consuming project's revision."
+setup = ["Provide the project's C++ compiler."]
+dependencies = ["Record compiler version and dependency lock path."]
+working_directory = "Record the project root."
+inputs = "sample=0.25; gain=2.0"
+placeholders = "Replace the output directory with a unique scratch directory."
+commands = ["c++ -std=c++17 -Iinclude examples/gain.cpp -o <scratch>/gain-example", "<scratch>/gain-example"]
+expected_exit_status = 0
+expected_stdout = "0.5\n"
+timeout_seconds = 5
+cleanup = "Remove the generated executable with the task scratch directory."
+validation_status = "unverified"
+validation_evidence = "Record command, version, timestamp, result and log location."
+validation_limit = "Record any unexecuted portion and the required follow-up."
+reviewer = "Record the reviewer for manual execution or meaning review."

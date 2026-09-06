@@ -1,0 +1,55 @@
+{
+  "skill_name": "documentation",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Write a two-page tutorial teaching a developer to predict newline counts using only the Text Workshop evidence fixture. The reader can use a terminal but is new to newline counting. Verify the path, preserve the source files, and deliver supporting review records separately.",
+      "expected_output": "A shared contract, two linked pages with observable outcomes, evidence-backed exact commands, validation report, findings-only final output and pending human review.",
+      "files": [
+        "examples/document-types/evidence/",
+        "examples/document-types/commands.json"
+      ],
+      "assertions": [
+        "Two pages have distinct learning outcomes and working continuation links.",
+        "Commands are reproducible from a stated directory with prerequisites and observed results.",
+        "A shared contract and claim evidence preserve the target fixture scope.",
+        "Validation and human review status are recorded separately from findings-only output.",
+        "Source files remain unchanged and no unsupported portability or performance claim is added."
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "Review the flawed line-counter how-to against the supplied source contract. Return the final skeptical review in the skill's required format; record validation and human review separately. Do not invent missing commands or performance evidence.",
+      "expected_output": "Located findings in all eight prescribed categories, with exact unsupported sentence and missing support; no invented evidence or approval.",
+      "files": [
+        "tests/editorial/final/source.md",
+        "tests/editorial/final/draft.md"
+      ],
+      "assertions": [
+        "Detects all eight categories substantively.",
+        "Uses findings-only JSON with exact categories, unsupported sentence and missing evidence.",
+        "Correction preserves supported command and meaning without invented behavior.",
+        "Clean review is [] and separate from validation and pending human review.",
+        "Execution limits and source preservation remain explicit."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Use the bounded synthetic history to prepare separate code/documentation changelogs and release notes. Then compare the drift page with its after evidence. Retain unresolved release claims, account for reverts, and distinguish unchanged claims from unavailable evidence.",
+      "expected_output": "Distinct supported history outputs and a drift report covering six defects and the unchanged claim, with human review pending.",
+      "files": [
+        "tests/editorial/history/history.patch",
+        "tests/editorial/history/README.md",
+        "tests/editorial/drift/guide-before.md",
+        "tests/editorial/drift/evidence-after.md"
+      ],
+      "assertions": [
+        "History outputs separate code and documentation changes and deduplicate related changes.",
+        "Fully reverted binary support is excluded and Python 3.15 compatibility remains unverified.",
+        "Drift identifies six defects plus unchanged claim with exact text, evidence and proposed corrections.",
+        "Context review locates duplicate explanation and contradictory parent page.",
+        "Human review and evidence/execution limits remain explicit without fabricated verification."
+      ]
+    }
+  ]
+}

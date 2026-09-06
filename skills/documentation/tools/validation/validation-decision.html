@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documentation validation command decision</title>
+<style>
+:root { --bg:#fafaf7; --fg:#1a1a1a; --muted:#6b6b6b; --rule:#d8d6cf; --accent:#6b5b3a; --good-bg:#d8ebd2; --good-fg:#1f4a26; --ok-bg:#f4ecc6; --ok-fg:#5a4a10; --bad-bg:#f0c8bc; --bad-fg:#6a1d12; --na-bg:#ececec; --na-fg:#555; }
+body { margin:32px auto; max-width:1200px; padding:0 24px; background:var(--bg); color:var(--fg); font:15px/1.5 system-ui,sans-serif; }
+h2 { color:var(--accent); font-size:16px; text-transform:uppercase; letter-spacing:.04em; }
+.lede { color:var(--muted); max-width:85ch; }
+.assumptions { padding:12px 20px; background:white; border:1px solid var(--rule); border-radius:6px; }
+.matrix { overflow-x:auto; margin-top:24px; } table { border-collapse:collapse; width:100%; min-width:750px; background:white; }
+th,td { border:1px solid var(--rule); padding:12px; text-align:left; vertical-align:top; }
+.criterion { background:#faf8f1; font-weight:600; width:17%; }
+.good { background:var(--good-bg); color:var(--good-fg); } .ok { background:var(--ok-bg); color:var(--ok-fg); } .bad { background:var(--bad-bg); color:var(--bad-fg); }
+.score-badge { font-weight:700; margin-right:.5em; } .opt-sub { display:block; font-weight:400; font-size:13px; color:var(--muted); }
+</style>
+<h1>Documentation validation command</h1>
+<p class="lede">Choose a repeatable command surface for project-owned checks. Scores use 1 (weak fit) through 5 (strong fit), with equal weights. They express local engineering judgment about the stated requirements.</p>
+<div class="assumptions"><h2>Assumptions</h2><ul>
+<li>Existing tools and project commands own generation, linting and execution.</li>
+<li>The delivery record needs command, version, scope, native diagnostics and four explicit outcomes.</li>
+<li>Consuming projects have different build commands and dependency paths.</li>
+</ul></div>
+<div class="matrix"><table>
+<thead><tr><th>Criterion</th><th>Native commands<span class="opt-sub">Current commands plus manual report</span></th><th>Manifest runner<span class="opt-sub">Ordered commands and JSON report</span></th><th>Pytest entry<span class="opt-sub">Project checks implemented as tests</span></th></tr></thead>
+<tbody>
+<tr><td class="criterion">Reporting completeness</td><td class="bad"><span class="score-badge">2</span>Author joins distinct logs and records skips by hand.</td><td class="good"><span class="score-badge">5</span>Every declared check has a status, scope and evidence paths.</td><td class="ok"><span class="score-badge">3</span>JUnit captures outcomes; versions and blocked distinction need custom reporting.</td></tr>
+<tr><td class="criterion">Implementation complexity</td><td class="good"><span class="score-badge">5</span>Existing commands run directly.</td><td class="ok"><span class="score-badge">3</span>Small command executor, manifest validation and reporting.</td><td><span class="score-badge">3</span>Fixtures wrap each command and dependency.</td></tr>
+<tr><td class="criterion">Performance</td><td><span class="score-badge">5</span>Native runtime dominates.</td><td><span class="score-badge">4</span>Sequential checks plus explicit version probes.</td><td><span class="score-badge">4</span>Test startup plus native tools.</td></tr>
+<tr><td class="criterion">Reversibility</td><td><span class="score-badge">5</span>Commands already belong to the project.</td><td><span class="score-badge">4</span>Manifest arguments can be run directly.</td><td><span class="score-badge">3</span>Commands are embedded in Python tests.</td></tr>
+<tr><td class="criterion">Blast radius</td><td><span class="score-badge">4</span>Each command has its existing scope.</td><td><span class="score-badge">4</span>Explicit commands and dependency edges determine scope.</td><td><span class="score-badge">4</span>Selected tests determine scope.</td></tr>
+<tr><td class="criterion">Maintenance cost</td><td class="ok"><span class="score-badge">3</span>Repeated reporting procedures can drift between projects.</td><td><span class="score-badge">3</span>Maintain one small runner and its schema.</td><td><span class="score-badge">3</span>Maintain project-specific test wrappers.</td></tr>
+<tr><td class="criterion">Local and CI ergonomics</td><td class="ok"><span class="score-badge">2</span>Several commands and manual report assembly.</td><td class="good"><span class="score-badge">5</span>One invocation retains native output and a machine-readable summary.</td><td><span class="score-badge">4</span>One invocation with familiar test summaries.</td></tr>
+<tr><td class="criterion">Testability</td><td><span class="score-badge">3</span>Tool regressions are tested; report assembly remains manual.</td><td class="good"><span class="score-badge">5</span>Planted command failures exercise aggregation and dependency skips.</td><td><span class="score-badge">4</span>Tool assertions need meta-tests to verify reporting behavior.</td></tr>
+<tr><td class="criterion">Project coupling</td><td><span class="score-badge">5</span>Project conventions determine commands.</td><td><span class="score-badge">4</span>Project-owned manifest; runner treats commands as argument arrays.</td><td class="ok"><span class="score-badge">2</span>Reusable test fixtures must accommodate each project's generators.</td></tr>
+</tbody><tfoot><tr><th>Total / 45</th><td>34</td><td>37</td><td>30</td></tr></tfoot>
+</table></div>
+<h2>Decision</h2>
+<p><b>Use the manifest runner for repeatable reporting.</b> The observed native-tool outputs establish the gap: Vale and lychee expose findings, generation emits diagnostics, and pytest summarizes tests, while none supplies the complete ordered project-check record. Keep commands in a reviewed project manifest and native diagnostics in separate logs.</p>
+<p>Native commands remain a suitable choice when the consuming CI already produces the required record. Revisit the runner when a project-standard orchestrator supplies equivalent outcomes and provenance.</p>
+</html>

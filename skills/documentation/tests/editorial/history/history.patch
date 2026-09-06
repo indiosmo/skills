@@ -1,0 +1,44 @@
+commit fixture-01
+Subject: Explain invalid UTF-8 and document empty input
+
+--- a/counter.py
++++ b/counter.py
+@@
+-except UnicodeError: raise
++except UnicodeError: raise SystemExit("Input must be UTF-8 text")
+--- a/docs/count.md
++++ b/docs/count.md
+@@
+ Count newline characters in a UTF-8 text file.
++An empty file produces 0.
+
+commit fixture-02
+Subject: Add binary input
+
+--- a/counter.py
++++ b/counter.py
+@@
+-text = input_path.read_text(encoding="utf-8")
++text = input_path.read_bytes()
+-count = text.count("\n")
++count = text.count(b"\n")
+
+commit fixture-03
+Subject: Revert binary input after contract review
+
+--- a/counter.py
++++ b/counter.py
+@@
+-text = input_path.read_bytes()
++text = input_path.read_text(encoding="utf-8")
+-count = text.count(b"\n")
++count = text.count("\n")
+
+commit fixture-04
+Subject: Clarify input error; ready for Python 3.15
+
+--- a/counter.py
++++ b/counter.py
+@@
+-except UnicodeError: raise SystemExit("Input must be UTF-8 text")
++except UnicodeError: raise SystemExit("Provide a UTF-8 text file")

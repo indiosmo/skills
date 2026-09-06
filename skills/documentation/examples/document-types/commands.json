@@ -1,0 +1,17 @@
+{
+  "working_directory": "directory containing this manifest",
+  "timeout_seconds": 5,
+  "setup": "Bash 4.4 or later, wc and cat; checked-in evidence files",
+  "cleanup": "Read-only commands",
+  "target": "checked-in Text Workshop fixture",
+  "commands": [
+    {"arguments": ["cat", "evidence/sample.txt"], "stdout": "alpha\nbeta\n", "exit_status": 0},
+    {"arguments": ["bash", "evidence/count_lines.sh", "evidence/sample.txt"], "stdout_number": 2, "exit_status": 0},
+    {"arguments": ["bash", "evidence/count_lines.sh", "evidence/empty.txt"], "stdout_number": 0, "exit_status": 0},
+    {"arguments": ["bash", "evidence/count_lines.sh", "evidence/unterminated.txt"], "stdout_number": 1, "exit_status": 0},
+    {"arguments": ["bash", "evidence/count_lines.sh"], "stderr": "Usage: count_lines.sh TEXT_FILE\n", "exit_status": 2},
+    {"arguments": ["bash", "evidence/count_lines.sh", "evidence/missing.txt"], "stderr": "Input must be a readable regular file.\n", "exit_status": 1},
+    {"arguments": ["bash", "evidence/count_lines.sh", "evidence"], "stderr": "Input must be a readable regular file.\n", "exit_status": 1},
+    {"arguments": ["bash", "evidence/count_lines.sh", "evidence/sample.txt", "evidence/empty.txt"], "stderr": "Usage: count_lines.sh TEXT_FILE\n", "exit_status": 2}
+  ]
+}

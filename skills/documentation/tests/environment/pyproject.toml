@@ -1,0 +1,8 @@
+[project]
+name = "documentation-environment-checks"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = ["mkdocs==1.6.1", "pytest==8.4.2", "lychee-bin==0.24.2"]
+
+[tool.pytest.ini_options]
+testpaths = ["."]

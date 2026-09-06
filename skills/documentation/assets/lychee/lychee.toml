@@ -1,0 +1,17 @@
+# Baseline for lychee 0.24.2; final verification uses fresh responses.
+mode = "plain"
+format = "json"
+no_progress = true
+include_fragments = "full"
+cache = false
+max_cache_age = "1d"
+cache_exclude_status = "401,403,429,500..=599"
+max_redirects = 5
+max_retries = 2
+retry_wait_time = 2
+timeout = 20
+max_concurrency = 8
+host_concurrency = 2
+host_request_interval = "250ms"
+accept = ["200..=299"]
+exclude = []
