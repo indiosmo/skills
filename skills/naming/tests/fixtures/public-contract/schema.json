@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Retry configuration",
+  "description": "Automatic retry configuration accepted and emitted by the adapter. An omitted retry field resolves to false; emitted objects include retry.",
+  "type": "object",
+  "properties": {
+    "retry": {
+      "description": "Whether configuration enables automatic retries after failures.",
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "additionalProperties": false
+}

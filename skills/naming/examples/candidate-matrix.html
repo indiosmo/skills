@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Download concurrency bound -- candidate matrix</title>
+<style>
+  :root {
+    --bg: #fafaf7;
+    --fg: #1a1a1a;
+    --muted: #6b6b6b;
+    --rule: #d8d6cf;
+    --accent: #6b5b3a;
+
+    --good-bg: #d8ebd2;
+    --good-fg: #1f4a26;
+    --ok-bg:   #f4ecc6;
+    --ok-fg:   #5a4a10;
+    --bad-bg:  #f0c8bc;
+    --bad-fg:  #6a1d12;
+    --na-bg:   #ececec;
+    --na-fg:   #555;
+
+    --code-bg:   #282828;
+    --code-fg:   #d4be98;
+    --code-rule: #504945;
+    --code-head: #1d2021;
+  }
+  html, body { background: var(--bg); color: var(--fg); }
+  body {
+    font: 15px/1.55 -apple-system, "Segoe UI", system-ui, sans-serif;
+    margin: 0;
+    padding: 32px 40px 80px;
+    max-width: 1280px;
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h1 .sub { font-weight: 400; color: var(--muted); font-size: 15px; margin-left: 8px; }
+  h2 {
+    font-size: 16px;
+    margin: 36px 0 10px;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+  h2.subdecision {
+    font-size: 18px;
+    margin-top: 44px;
+    color: var(--fg);
+    text-transform: none;
+    letter-spacing: 0;
+    border-top: 2px solid var(--rule);
+    padding-top: 20px;
+  }
+  h3.decision {
+    font-size: 15px;
+    margin: 22px 0 8px;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+  .decision-body { margin: 8px 0; max-width: 78ch; }
+  p.lede { color: var(--muted); margin: 0 0 24px; max-width: 78ch; }
+
+  table { width: 100%; border-collapse: collapse; background: white; font-size: 13.5px; margin-bottom: 8px; }
+  th, td {
+    border: 1px solid var(--rule);
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: #f3f1ea; font-weight: 600; }
+  th .opt-sub {
+    display: block;
+    font-weight: 400;
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 3px;
+    line-height: 1.4;
+  }
+
+  td.criterion { width: 14%; font-weight: 600; background: #faf8f1; }
+
+  td.good { background: var(--good-bg); color: var(--good-fg); }
+  td.ok   { background: var(--ok-bg);   color: var(--ok-fg); }
+  td.bad  { background: var(--bad-bg);  color: var(--bad-fg); }
+  td.na   { background: var(--na-bg);   color: var(--na-fg); font-style: italic; }
+
+  .assumptions, .open-questions {
+    margin: 0 0 18px;
+    padding: 16px 20px;
+    background: white;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+  }
+  .assumptions h2, .open-questions h2 { margin-top: 0; }
+  .assumptions ul, .open-questions ul { margin: 0; padding-left: 20px; }
+  .assumptions li, .open-questions li { margin: 4px 0; }
+  .assumptions li b, .open-questions li b { color: var(--accent); }
+
+  code { background: #f3f1ea; padding: 1px 5px; border-radius: 3px; font-size: 12.5px; }
+
+  .samples {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 14px;
+    margin: 14px 0 18px;
+  }
+  .sample {
+    background: var(--code-bg);
+    border: 1px solid var(--code-rule);
+    border-radius: 6px;
+    color: var(--code-fg);
+    min-width: 0;
+    overflow: hidden;
+  }
+  .sample h3 {
+    background: var(--code-head);
+    color: #fabd2f;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    margin: 0;
+    padding: 8px 12px;
+    text-transform: uppercase;
+  }
+  .sample pre {
+    font: 12.5px/1.5 "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    margin: 0;
+    overflow-x: auto;
+    padding: 12px 14px 14px;
+  }
+  .sample pre code { background: transparent; border-radius: 0; color: inherit; font-size: inherit; padding: 0; }
+  .sample .kw   { color: #fb4934; }
+  .sample .type { color: #fabd2f; }
+  .sample .fn   { color: #b8bb26; }
+  .sample .ns   { color: #83a598; }
+  .sample .str  { color: #b8bb26; }
+  .sample .com  { color: #928374; font-style: italic; }
+  td.weight { width: 5%; text-align: center; background: #faf8f1; }
+  .score-badge {
+    display: inline-block;
+    min-width: 18px;
+    padding: 1px 6px;
+    margin-right: 8px;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.07);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    font-size: 12.5px;
+    text-align: center;
+    vertical-align: 1px;
+  }
+  td.good .score-badge { background: rgba(31, 74, 38, 0.18); }
+  td.ok   .score-badge { background: rgba(90, 74, 16, 0.18); }
+  td.bad  .score-badge { background: rgba(106, 29, 18, 0.18); }
+
+  tfoot td { background: #f3f1ea; font-weight: 600; }
+  tfoot td.total { text-align: center; font-size: 16px; font-variant-numeric: tabular-nums; }
+
+</style>
+</head>
+<body>
+<h1>Download concurrency bound <span class="sub">candidate matrix</span></h1>
+<p class="lede">Compare three names for the maximum number of simultaneous downloads.
+This original design example weighs guide terminology against clarity in isolated keywords
+and scheduler comparisons. Selection status: proposed, awaiting reader review.</p>
+<div class="assumptions"><h2>Assumptions</h2><ul>
+<li><b>Behavior (E1):</b> A positive integer bounds simultaneous downloads. Admission requires occupied slots below the bound; reservation precedes start, and completion releases the slot.</li>
+<li><b>Vocabulary (E2):</b> The draft heading is "Download concurrency." Its definition states the maximum number of simultaneous downloads, with a minimum of one.</li>
+<li><b>Audience (E3):</b> Engineers read isolated keywords and receiver-qualified fields. Both contexts matter equally in this design packet.</li>
+<li><b>Scope (E4):</b> The field is unpublished. Neighboring names are <code>downloads_in_progress</code> and <code>download_timeout_seconds</code>.</li>
+</ul></div>
+<div class="open-questions"><h2>Open Questions</h2><ul>
+<li><b>Which reader context deserves priority?</b> Observed use frequency or reader feedback could break the equal-weight tie in either direction.</li>
+<li><b>Does implementation preserve the design contract?</b> Inspect admission, slot reservation and release, declarations, and exposed representations before applying the name.</li>
+</ul></div>
+<h2>Eligibility and scoring</h2>
+<p>All three candidates describe E1's bound under E2's definition and use the draft's full-word convention.
+<code>downloads_in_progress</code> is excluded: E4 reserves that spelling for current occupancy.
+A preference score cannot override that conflict. Complexity, performance, coupling, testability,
+reversibility, and blast radius are equal for these unpublished spelling alternatives.</p>
+<p>Each weight is 1 because E3 supplies no priority among the reading tasks.
+Scores are local judgments: 1 is weak fit, 3 adequate or mixed fit, and 5 strong fit.
+Each row gives concrete anchors. Guide lookup, isolated keywords, comparisons with occupied slots,
+and receiver-qualified expressions provide four evidence contexts.</p>
+<table><caption>Eligible candidate names; larger scores indicate better fit</caption>
+<thead><tr><th scope="col">Criterion and anchors</th><th scope="col">Weight</th>
+<th scope="col">download_concurrency <span class="opt-sub">Current unpublished draft; repeats the guide phrase.</span></th>
+<th scope="col">concurrent_download_limit <span class="opt-sub">Names the bounded activity and its limit.</span></th>
+<th scope="col">maximum_concurrent_downloads <span class="opt-sub">States the maximum simultaneous count.</span></th></tr></thead>
+<tbody>
+<tr><td class="criterion">Guide phrase lookup: 5 repeats E2's phrase; 3 changes its grammatical form; 1 loses its subject</td><td class="weight">1</td><td class="good"><span class="score-badge">5</span>repeats "Download concurrency."</td><td><span class="score-badge">3</span>changes concurrency to concurrent and reorders the subject.</td><td><span class="score-badge">3</span>changes concurrency to concurrent and introduces maximum.</td></tr>
+<tr><td class="criterion">Isolated bound clarity: 5 explicitly states a maximum count; 3 needs E2's counting sentence; 1 suggests current occupancy</td><td class="weight">1</td><td><span class="score-badge">3</span>concurrency needs the bound definition.</td><td><span class="score-badge">3</span>limit names a bound; E2 establishes its count meaning.</td><td class="good"><span class="score-badge">5</span>maximum plus plural downloads states the count bound.</td></tr>
+<tr><td class="criterion">Contrast with occupied slots: 5 pairs the current count with an explicit maximum; 3 distinguishes the setting through its defined term; 1 repeats E4's counter</td><td class="weight">1</td><td><span class="score-badge">3</span>comparison relies on concurrency's defined meaning.</td><td><span class="score-badge">3</span>comparison names a limit through its defined term.</td><td class="good"><span class="score-badge">5</span><code>downloads_in_progress</code> reads directly against a maximum.</td></tr>
+<tr><td class="criterion">Qualified expression rhythm: 5 supplies the concept in two words after the receiver; 3 adds a third qualifier useful mainly in isolation; 1 repeats the entire receiver name</td><td class="weight">1</td><td class="good"><span class="score-badge">5</span><code>settings.download_concurrency</code> supplies the two-word concept.</td><td><span class="score-badge">3</span><code>settings.concurrent_download_limit</code> adds the bound qualifier.</td><td><span class="score-badge">3</span><code>settings.maximum_concurrent_downloads</code> adds the bound qualifier.</td></tr>
+</tbody><tfoot><tr><td colspan="2">Weighted score (sum of score * weight; weights reflect stated priorities)</td>
+<td class="total">16</td><td class="total">12</td><td class="total">16</td></tr></tfoot></table>
+<p>Illustrative pseudocode: each sample is an alternative for the same field and comparison.</p>
+<div class="samples">
+<div class="sample"><h3>download_concurrency</h3><pre><code>DownloadSettings(download_concurrency=4)
+downloads_in_progress &lt; settings.download_concurrency</code></pre></div>
+<div class="sample"><h3>concurrent_download_limit</h3><pre><code>DownloadSettings(concurrent_download_limit=4)
+downloads_in_progress &lt; settings.concurrent_download_limit</code></pre></div>
+<div class="sample"><h3>maximum_concurrent_downloads</h3><pre><code>DownloadSettings(maximum_concurrent_downloads=4)
+downloads_in_progress &lt; settings.maximum_concurrent_downloads</code></pre></div>
+</div>
+<h2>Decision</h2>
+<p class="decision-body"><b>Proposed: maximum_concurrent_downloads.</b> Its explicit count bound fits
+isolated keywords and the comparison with current occupancy. Equal weights tie it with the draft
+at 16; preferring those two contexts is an explicit naming judgment awaiting reader review.</p>
+<p class="decision-body">The current <code>download_concurrency</code> preserves exact guide wording
+and a shorter receiver-qualified expression. Giving guide lookup weight 2 yields totals 21, 15,
+and 19, favoring that draft. Giving isolated-bound clarity weight 2 instead yields 19, 15, and 21,
+favoring the proposed maximum. <code>concurrent_download_limit</code> remains viable but has neither
+advantage under these anchors.</p>
+<h2>Distinct contextual review</h2>
+<p>Static review of E1 confirms the described boundary: with bound 4, occupied counts 0 and 3
+permit admission; 4 requires waiting for a released slot. E4 distinguishes the bound from current
+occupancy and duration. The three sample pairs preserve that interpretation. Outcome: description-level
+fit supported for <code>maximum_concurrent_downloads</code>.</p>
+<p>Implementation, binding, serialization, and executed behavior checks remain pending. Inspect the
+parser's minimum of one and the scheduler's reservation and release paths, including failures.
+Actual user acceptance and reader-priority evidence remain open.</p>
+<h2>Artifact verification and provenance</h2>
+<p>Arithmetic and HTML source structure were checked. Actual visual inspection remains pending:
+the available browser failed during sandboxed startup with a crashpad <code>setsockopt</code> error.</p>
+<p>The companion <a href="comparing-candidates.md">worked comparison</a> contains the full evidence packet
+and completed naming record. Layout and inline CSS adapt the decision-matrix skill's
+<a href="../../decision-matrix/assets/example-lean.html">lean example</a>, with scoring styles from its
+<a href="../../decision-matrix/assets/example.html">full example</a>. Content is original scenario evidence
+and local judgment under <a href="../references/selection.md">naming selection guidance</a>.</p>
+</body></html>
